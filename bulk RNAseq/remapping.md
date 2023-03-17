@@ -53,13 +53,12 @@ STAR --runThreadN 12\
         --clip3pNbases 1  --outSAMstrandField intronMotif \
         --outSAMattrIHstart 0  --outFilterMultimapNmax 20  --outSAMattributes NH HI AS NM MD\
         --outSAMattrRGline  --outSAMtype BAM SortedByCoordinate 
-
-
 ```
 
 ### Need to test (mapping parameters) (changed one at a time):
 
 * Default
+
 ```
 STAR --runThreadN 12\
         --genomeDir /md01/nieyg/ref/STAR/Amel_HAv3_STAR \
@@ -118,7 +117,7 @@ samtools view -h -b -q 10 D1-filter_junction_unique_Intron_range_filtergap_sorte
 ```
 
 ### test the parameter in AaegL5.0
-
+```
 STAR --runThreadN 12\
         --genomeDir /md01/nieyg/ref/STAR/Amel_HAv3_STAR \
         --readFilesIn ../01_fastp/trimmed_D1_R1.fastq.gz ../01_fastp/trimmed_D1_R2.fastq.gz \
@@ -130,4 +129,4 @@ STAR --runThreadN 12\
         --clip3pNbases 1  --outSAMstrandField intronMotif \
         --outSAMattrIHstart 0  --outFilterMultimapNmax 20  --outSAMattributes NH HI AS NM MD\
         --outSAMtype BAM SortedByCoordinate 
-
+```
