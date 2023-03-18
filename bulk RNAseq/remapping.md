@@ -25,7 +25,9 @@ fastp -i ${samplename}_1P.fastq.gz \
 
 2. STAR mapping 
 
+
 ```
+
 ## PBS configure 
 #PBS -N align
 #PBS -j oe
@@ -97,6 +99,7 @@ STAR --runThreadN 12\
 ### subtract the mapping quality high reads 
 * mapping quality plot 
 * subtract reads (MAPQ> 10)
+
 ```
 samtools sort -@ 12 -O bam -o D1-Default_sorted.bam D1-DefaultAligned.out.bam
 samtools index D1-Default_sorted.bam

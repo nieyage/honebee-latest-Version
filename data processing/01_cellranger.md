@@ -1,7 +1,9 @@
 ## editing ref
 1. get fasta and gff3 file from NCBI (Amel_HAv3.1)
-`wget https://ftp.ncbi.nlm.nih.gov/genomes/refseq/invertebrate/Apis_mellifera/latest_assembly_versions/GCF_003254395.2_Amel_HAv3.1/GCF_003254395.2_Amel_HAv3.1_genomic.gtf.gz`
-`wget https://ftp.ncbi.nlm.nih.gov/genomes/refseq/invertebrate/Apis_mellifera/latest_assembly_versions/GCF_003254395.2_Amel_HAv3.1/GCF_003254395.2_Amel_HAv3.1_genomic.fna.gz`
+```
+wget https://ftp.ncbi.nlm.nih.gov/genomes/refseq/invertebrate/Apis_mellifera/latest_assembly_versions/GCF_003254395.2_Amel_HAv3.1/GCF_003254395.2_Amel_HAv3.1_genomic.gtf.gz
+wget https://ftp.ncbi.nlm.nih.gov/genomes/refseq/invertebrate/Apis_mellifera/latest_assembly_versions/GCF_003254395.2_Amel_HAv3.1/GCF_003254395.2_Amel_HAv3.1_genomic.fna.gz
+```
 
 
 2. change the chr name to group 
@@ -36,7 +38,7 @@ done
 
 3. manually annotated chemoreceptors
 
-### back to R
+* back to R
 ```
 library(Biostrings)
 gtf <- rtracklayer::import('/md01/nieyg/ref/10X/Amel_HAv3.1/GCF_003254395.2_Amel_HAv3.1_genomic.gtf')
@@ -86,25 +88,29 @@ rtracklayer::export(gtf,"GCF_003254395.2_Amel_HAv3.1_genomic_UPDATED_chemorecept
 5. get the protein sequence of chemoreceptor
 
 * get cds (all gene)
+
 `gffread GCF_003254395.2_Amel_HAv3.1_genomic_UPDATED_chemoreceptors_CORRECTED_geneid.gtf -g GCF_003254395.2_Amel_HAv3.1_genomic.fna -x GCF_003254395.2_Amel_HAv3.1_genomic_UPDATED_chemoreceptors_CORRECTED_geneid_cds.fa`
 
 * get pep (all gene)
+
 `gffread GCF_003254395.2_Amel_HAv3.1_genomic_UPDATED_chemoreceptors_CORRECTED_geneid.gtf -g GCF_003254395.2_Amel_HAv3.1_genomic.fna -y GCF_003254395.2_Amel_HAv3.1_genomic_UPDATED_chemoreceptors_CORRECTED_geneid_pep.fa`
 
 * protein domain scan by pfam_scan
+
 `nohup pfam_scan.pl -outfile GCF_003254395.2_Amel_HAv3.1_genomic_UPDATED_chemoreceptors_CORRECTED_geneid_pfam_scan.csv -fasta GCF_003254395.2_Amel_HAv3.1_genomic_UPDATED_chemoreceptors_CORRECTED_geneid_pep.fa -dir /data/R02/nieyg/software/pfamdb &`
 
 
-[pfam_scan](https://github.com/aziele/pfam_scan)
+[Tutorial pfam_scan](https://github.com/aziele/pfam_scan)
 
 
 ## get cell * gene/peak matrix by CellRanger 
 1. create a cellranger-arc-compatible reference by cellranger
 
 * "records for gene_id Mir2-1 are not contiguous in the file"  This is probably because the gtf is sorted by location, and if a gene overlaps another, then the gene records aren't going to be contiguous in the gtf.
+
 (ref link) [https://github.com/10XGenomics/cellranger/issues/133]
 
-fix_gtf.py
+* fix_gtf.py
 ```
 #!/usr/bin/env python3
 
