@@ -85,7 +85,7 @@ gtf[which(is.na(gtf$gene_id))]$gene_id=gtf[which(is.na(gtf$gene_id))]$gene_name
 rtracklayer::export(gtf,"GCF_003254395.2_Amel_HAv3.1_genomic_UPDATED_chemoreceptors_CORRECTED_geneid.gtf" ,format = "gtf")
 ```
 
-5. get the protein sequence of chemoreceptor
+5. get the protein sequence 
 
 * get cds (all gene)
 

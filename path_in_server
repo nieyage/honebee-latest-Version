@@ -1,0 +1,27 @@
+Honebee antenna genome and annotation file: 
+
+/data/R02/nieyg/ref/10X/Amel_HAv3.1/Amel_HAv3_1
+
+Bulk honebee antenna RNA data pipeline and results: 
+
+/md01/nieyg/project/honeybee/bulk-RNAseq/03_STAR_remapping
+
+Bulk honebee antenna ATAC data pipeline and results: 
+
+/md01/nieyg/project/honeybee/bulk-ATAC
+
+chemoreceptor gene list:
+
+/data/R02/nieyg/ref/10X/Amel_HAv3.1/chemoreceptor_info_data.csv
+
+OR gene protein sequence:
+/data/R02/nieyg/ref/10X/Amel_HAv3.1/OR_transcript_pep.aa
+
+IR gene protein sequence:
+/data/R02/nieyg/ref/10X/Amel_HAv3.1/IR_transcript_pep.aa
+
+GR gene protein sequence:
+/data/R02/nieyg/ref/10X/Amel_HAv3.1/GR_transcript_pep.aa
+
+
+

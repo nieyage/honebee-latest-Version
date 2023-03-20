@@ -59,15 +59,15 @@ srat.raw <- CreateSeuratObject(
     srat    <- FindNeighbors(srat,reduction = 'pca', dims = 1:30, verbose = F)
     srat    <- FindClusters(srat, verbose = T,resolution =1.2)
 
-    pdf('Original_UMAP_tSNE_F.pdf',width=15, height=6)
+    pdf('./decontX_outs/Original_UMAP_tSNE_F.pdf',width=15, height=6)
     print(DimPlot(srat, reduction = "umap", label = TRUE) + DimPlot(srat, reduction = "tsne", label = TRUE))
     dev.off()
     
-    pdf('Original_coreceptor_VlnPlot_F.pdf', width=15, height=8)
+    pdf('./decontX_outs/Original_coreceptor_VlnPlot_F.pdf', width=15, height=8)
     print( VlnPlot(srat, features = c('Or2',"Or51","Or52","Or4"), ncol = 1, pt.size = 0) )
     dev.off()
     
-    pdf('Original_coreceptor_FeaturePlot_F.pdf', width=16, height=16)
+    pdf('./decontX_outs/Original_coreceptor_FeaturePlot_F.pdf', width=16, height=16)
     print(FeaturePlot(srat, reduction = 'tsne', features = c('Or2',"Or51","Or52","Or4"), ncol = 2))
     dev.off()
    # remove ambient RNAs
@@ -83,16 +83,16 @@ srat.raw <- CreateSeuratObject(
     # Cluster labels on UMAP
     umap <- reducedDim(sce.decontX, "decontX_UMAP")
 
-    pdf('decontX_contamination_F.pdf',width=15, height=6)
+    pdf('./decontX_outs/decontX_contamination_F.pdf',width=15, height=6)
     print(plotDimReduceCluster(x = sce.decontX$decontX_clusters, dim1 = umap[, 1], dim2 = umap[, 2]) + 
             plotDecontXContamination(sce.decontX))
     dev.off()
-    DropletUtils:::write10xCounts("./F_decontXcounts", round(decontXcounts(sce.decontX)),
+    DropletUtils:::write10xCounts("./decontX_outs/F_decontXcounts", round(decontXcounts(sce.decontX)),
                                   barcodes = rownames(colData(data_full_sce)))  
     #########################################
     ### decontX
       sratDecontx  <- 
-      Read10X("./F_decontXcounts") %>%
+      Read10X("./decontX_outs/F_decontXcounts") %>%
       CreateSeuratObject(project = "Forager", min.cells = 3, min.features = 200)   
     sratDecontx[["percent.mt"]] <- PercentageFeatureSet(sratDecontx, pattern = "^MT-") 
     sratDecontx    <- SCTransform(sratDecontx, verbose = F)
@@ -101,15 +101,15 @@ srat.raw <- CreateSeuratObject(
     sratDecontx    <- RunTSNE(sratDecontx, dims = 1:50, verbose = F)
     sratDecontx    <- FindNeighbors(sratDecontx, dims = 1:30, reduction = 'pca',verbose = F)
     sratDecontx    <- FindClusters(sratDecontx, verbose = T,resolution =1.2)   
-    pdf('decontX_UMAP_tSNE_F.pdf', width=15, height=6)
+    pdf('./decontX_outs/decontX_UMAP_tSNE_F.pdf', width=15, height=6)
     print( DimPlot(sratDecontx, reduction = "umap", label = TRUE) + DimPlot(sratDecontx, reduction = "tsne", label = TRUE) )
     dev.off()
-    
-    pdf('decontX_coreceptor_VlnPlot_F.pdf',width=15, height=8)
+
+    pdf('./decontX_outs/decontX_coreceptor_VlnPlot_F.pdf',width=15, height=8)
     print( VlnPlot(sratDecontx, features = c('Or2',"Or51","Or52","Or4"), ncol = 1, pt.size = 0) )
     dev.off()
     
-    pdf('decontX_coreceptor_FeaturePlot_F.pdf', width=16, height=16)
+    pdf('./decontX_outs/decontX_coreceptor_FeaturePlot_F.pdf', width=16, height=16)
     print(FeaturePlot(sratDecontx, reduction = 'tsne', features = c('Or2',"Or51","Or52","Or4"), ncol = 2))
     dev.off()
 ```
@@ -142,15 +142,15 @@ srat.raw <- CreateSeuratObject(
     srat    <- FindNeighbors(srat,reduction = 'pca', dims = 1:30, verbose = F)
     srat    <- FindClusters(srat, verbose = T,resolution =1.2)
 
-    pdf('Original_UMAP_tSNE_Nurse.pdf',width=15, height=6)
+    pdf('./decontX_outs/Original_UMAP_tSNE_Nurse.pdf',width=15, height=6)
     print(DimPlot(srat, reduction = "umap", label = TRUE) + DimPlot(srat, reduction = "tsne", label = TRUE))
     dev.off()
     
-    pdf('Original_coreceptor_VlnPlot_Nurse.pdf', width=15, height=8)
+    pdf('./decontX_outs/Original_coreceptor_VlnPlot_Nurse.pdf', width=15, height=8)
     print( VlnPlot(srat, features = c('Or2',"Or51","Or52","Or4"), ncol = 1, pt.size = 0) )
     dev.off()
     
-    pdf('Original_coreceptor_FeaturePlot_Nurse.pdf', width=16, height=16)
+    pdf('./decontX_outs/Original_coreceptor_FeaturePlot_Nurse.pdf', width=16, height=16)
     print(FeaturePlot(srat, reduction = 'tsne', features = c('Or2',"Or51","Or52","Or4"), ncol = 2))
     dev.off()
 
@@ -166,17 +166,17 @@ srat.raw <- CreateSeuratObject(
    sce.decontX<-data_full_sce
    # Cluster labels on UMAP
    umap <- reducedDim(sce.decontX, "decontX_UMAP")
-   pdf('decontX_contamination_Nurse.pdf',width=15, height=6)
+   pdf('./decontX_outs/decontX_contamination_Nurse.pdf',width=15, height=6)
    print(plotDimReduceCluster(x = sce.decontX$decontX_clusters, dim1 = umap[, 1], dim2 = umap[, 2]) + 
            plotDecontXContamination(sce.decontX))
    dev.off()
-   DropletUtils:::write10xCounts("./Nurse_decontXcounts", round(decontXcounts(sce.decontX)),
+   DropletUtils:::write10xCounts("./decontX_outs/Nurse_decontXcounts", round(decontXcounts(sce.decontX)),
                                  barcodes = rownames(colData(data_full_sce)))
        
     #########################################
     ### decontX
     sratDecontx  <- 
-    Read10X("./Nurse_decontXcounts") %>%
+    Read10X("./decontX_outs/Nurse_decontXcounts") %>%
     CreateSeuratObject(project = "Nurse", min.cells = 3, min.features = 200)
     sratDecontx[["percent.mt"]] <- PercentageFeatureSet(sratDecontx, pattern = "^MT-")
     sratDecontx    <- SCTransform(sratDecontx, verbose = F)
@@ -185,13 +185,13 @@ srat.raw <- CreateSeuratObject(
     sratDecontx    <- RunTSNE(sratDecontx, dims = 1:50, verbose = F)
     sratDecontx    <- FindNeighbors(sratDecontx, dims = 1:30, reduction = 'pca',verbose = F)
     sratDecontx    <- FindClusters(sratDecontx, verbose = T,resolution =1.2)
-    pdf('decontX_UMAP_tSNE_Nurse.pdf', width=15, height=6)
+    pdf('./decontX_outs/decontX_UMAP_tSNE_Nurse.pdf', width=15, height=6)
     print( DimPlot(sratDecontx, reduction = "umap", label = TRUE) + DimPlot(sratDecontx, reduction = "tsne", label = TRUE) )
     dev.off()
-    pdf('decontX_coreceptor_VlnPlot_Nurse.pdf',width=15, height=8)
+    pdf('./decontX_outs/decontX_coreceptor_VlnPlot_Nurse.pdf',width=15, height=8)
     print( VlnPlot(sratDecontx, features = c('Or2',"Or51","Or52","Or4"), ncol = 1, pt.size = 0) )
     dev.off()
-    pdf('decontX_coreceptor_FeaturePlot_Nurse.pdf', width=16, height=16)
+    pdf('./decontX_outs/decontX_coreceptor_FeaturePlot_Nurse.pdf', width=16, height=16)
     print(FeaturePlot(sratDecontx, reduction = 'tsne', features = c('Or2',"Or51","Or52","Or4"), ncol = 2))
     dev.off()
 ```
@@ -224,15 +224,15 @@ srat.raw <- CreateSeuratObject(
     srat    <- FindNeighbors(srat,reduction = 'pca', dims = 1:30, verbose = F)
     srat    <- FindClusters(srat, verbose = T,resolution =1.2)
 
-    pdf('Original_UMAP_tSNE_NE.pdf',width=15, height=6)
+    pdf('./decontX_outs/Original_UMAP_tSNE_NE.pdf',width=15, height=6)
     print(DimPlot(srat, reduction = "umap", label = TRUE) + DimPlot(srat, reduction = "tsne", label = TRUE))
     dev.off()
     
-    pdf('Original_coreceptor_VlnPlot_NE.pdf', width=15, height=8)
+    pdf('./decontX_outs/Original_coreceptor_VlnPlot_NE.pdf', width=15, height=8)
     print( VlnPlot(srat, features = c('Or2',"Or51","Or52","Or4"), ncol = 1, pt.size = 0) )
     dev.off()
     
-    pdf('Original_coreceptor_FeaturePlot_NE.pdf', width=16, height=16)
+    pdf('./decontX_outs/Original_coreceptor_FeaturePlot_NE.pdf', width=16, height=16)
     print(FeaturePlot(srat, reduction = 'tsne', features = c('Or2',"Or51","Or52","Or4"), ncol = 2))
     dev.off()
 
@@ -251,18 +251,18 @@ srat.raw <- CreateSeuratObject(
     # Cluster labels on UMAP
     umap <- reducedDim(sce.decontX, "decontX_UMAP")
 
-    pdf('decontX_contamination_NE.pdf',width=15, height=6)
+    pdf('./decontX_outs/decontX_contamination_NE.pdf',width=15, height=6)
     print(plotDimReduceCluster(x = sce.decontX$decontX_clusters, dim1 = umap[, 1], dim2 = umap[, 2]) + 
             plotDecontXContamination(sce.decontX))
     dev.off()
 
-    DropletUtils:::write10xCounts("./NE_decontXcounts", round(decontXcounts(sce.decontX)),
+    DropletUtils:::write10xCounts("./decontX_outs/NE_decontXcounts", round(decontXcounts(sce.decontX)),
                                   barcodes = rownames(colData(data_full_sce)))
         
     #########################################
     ### decontX
       sratDecontx  <- 
-      Read10X("./NE_decontXcounts") %>%
+      Read10X("./decontX_outs/NE_decontXcounts") %>%
       CreateSeuratObject(project = "NE", min.cells = 3, min.features = 200)
     
     sratDecontx[["percent.mt"]] <- PercentageFeatureSet(sratDecontx, pattern = "^MT-")
@@ -276,15 +276,15 @@ srat.raw <- CreateSeuratObject(
     sratDecontx    <- FindClusters(sratDecontx, verbose = T,resolution =1.2)
     
     
-    pdf('decontX_UMAP_tSNE_NE.pdf', width=15, height=6)
+    pdf('./decontX_outs/decontX_UMAP_tSNE_NE.pdf', width=15, height=6)
     print( DimPlot(sratDecontx, reduction = "umap", label = TRUE) + DimPlot(sratDecontx, reduction = "tsne", label = TRUE) )
     dev.off()
     
-    pdf('decontX_coreceptor_VlnPlot_NE.pdf',width=15, height=8)
+    pdf('./decontX_outs/decontX_coreceptor_VlnPlot_NE.pdf',width=15, height=8)
     print( VlnPlot(sratDecontx, features = c('Or2',"Or51","Or52","Or4"), ncol = 1, pt.size = 0) )
     dev.off()
     
-    pdf('decontX_coreceptor_FeaturePlot_NE.pdf', width=16, height=16)
+    pdf('./decontX_outs/decontX_coreceptor_FeaturePlot_NE.pdf', width=16, height=16)
     print(FeaturePlot(sratDecontx, reduction = 'tsne', features = c('Or2',"Or51","Or52","Or4"), ncol = 2))
     dev.off()
 ```
