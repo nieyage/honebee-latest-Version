@@ -126,4 +126,4 @@ do
         sed -i "s/${transcript}/${gene_name}/g" GR_transcript_pep.aa 
         sed -i "s/${transcript}/${gene_name}/g" IR_transcript_pep.aa 
 done
-```
+``` 
