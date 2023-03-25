@@ -139,13 +139,14 @@ sed -i '/#/d;' AaegL5-ChemoreceptorPeptides.fasta
 
 
 ```
+
 library(Biostrings)
 library(muscle)
 library(ape);
 library(ggtree)
 library(tidytree)
 AaegL5_fasta<-readAAStringSet("/md01/nieyg/ref/10X/Amel_HAv3.1/AaegL5-ChemoreceptorPeptides.fasta", format="fasta",nrec=-1L, skip=0L, seek.first.rec=FALSE, use.names=TRUE)
-
+names_in_myXStringSet <- names(AaegL5_fasta)
 #select names from your XStringSet
 Aaeg_OR <- AaegL5_fasta[names_in_myXStringSet[grep("AaegOr",names_in_myXStringSet)],]
 Aaeg_IR <- AaegL5_fasta[names_in_myXStringSet[grep("AaegIr",names_in_myXStringSet)],]
@@ -201,7 +202,7 @@ Aaeg <- names(c(Aaeg_OR,Aaeg_IR,Aaeg_GR))
 chemo_info <- data.frame(gene=c(Amel,fly,Aaeg),
 species=c(rep("Amel",length(Amel)),rep("Dmel",length(fly)),rep("Aaeg",length(Aaeg))))
 rownames(chemo_info) <- chemo_info$gene
-groupInfo <- split(row.names(chemo_info), chemo_info$species)
+groupInfo <- split(chemo_info$gene, chemo_info$species)
 
 # For OR 
 aln <- muscle::muscle(All_OR_fasta)
@@ -214,6 +215,31 @@ pdf("/data/R02/nieyg/project/honeybee/honebee-latest-Version/04_chemoreceptor/th
 ggtree(tree, layout="fan", ladderize = FALSE, branch.length = "none",aes(color=group)) + geom_tiplab2(size=3) + theme(legend.position = "right")
 dev.off()
 
+# get the similarity rate matrix 
+dist_matrix <- as.matrix(sdist)
+dist_percent<-(max(dist_matrix)-dist_matrix)/max(dist_matrix)*100
+dist_percent[dist_percent==100.00]<-0;
+
+data<-data.frame()
+for (i in 1:nrow(dist_percent)){
+	j=i
+	row=i;
+	col=j+1;
+	if(dist_percent[row,col]>50){
+		row_name<-rownames(dist_percent)[row];
+		col_name<-rownames(dist_percent)[col];
+		if(row_name!=col_name){
+			data_subset<-data.frame(gene1=row_name,gene2=col_name,rate=dist_percent[row,col]);
+			data<- rbind(data,data_subset)
+			}
+	}
+}
+data<-data[order(data$rate,decreasing=TRUE),]
+write.csv(data,"/data/R02/nieyg/project/honeybee/honebee-latest-Version/04_chemoreceptor/cross_species_OR_fasta_aa_similarity_50.csv");
+write.csv(dist_percent,"/data/R02/nieyg/project/honeybee/honebee-latest-Version/04_chemoreceptor/cross_species_OR_fasta_aa_similarity.csv");
+
+
+
 # For IR 
 aln <- muscle::muscle(All_IR_fasta)
 auto <- maskGaps(aln, min.fraction=0.5, min.block.width=4)
@@ -225,6 +251,30 @@ pdf("/data/R02/nieyg/project/honeybee/honebee-latest-Version/04_chemoreceptor/th
 ggtree(tree, layout="fan", ladderize = FALSE, branch.length = "none",aes(color=group)) + geom_tiplab2(size=3) + theme(legend.position = "right")
 dev.off()
 
+# get the similarity rate matrix 
+dist_matrix <- as.matrix(sdist)
+dist_percent<-(max(dist_matrix)-dist_matrix)/max(dist_matrix)*100
+dist_percent[dist_percent==100.00]<-0;
+
+data<-data.frame()
+for (i in 1:nrow(dist_percent)){
+	j=i
+	row=i;
+	col=j+1;
+	if(dist_percent[row,col]>50){
+		row_name<-rownames(dist_percent)[row];
+		col_name<-rownames(dist_percent)[col];
+		if(row_name!=col_name){
+			data_subset<-data.frame(gene1=row_name,gene2=col_name,rate=dist_percent[row,col]);
+			data<- rbind(data,data_subset)
+			}
+	}
+}
+data<-data[order(data$rate,decreasing=TRUE),]
+write.csv(data,"/data/R02/nieyg/project/honeybee/honebee-latest-Version/04_chemoreceptor/cross_species_IR_fasta_aa_similarity_50.csv");
+write.csv(dist_percent,"/data/R02/nieyg/project/honeybee/honebee-latest-Version/04_chemoreceptor/cross_species_IR_fasta_aa_similarity.csv");
+
+
 # For GR 
 aln <- muscle::muscle(All_GR_fasta)
 auto <- maskGaps(aln, min.fraction=0.5, min.block.width=4)
@@ -235,6 +285,28 @@ tree <- groupOTU(tree, groupInfo)
 pdf("/data/R02/nieyg/project/honeybee/honebee-latest-Version/04_chemoreceptor/three_species_GR_sequence_protein_similarity-tree.pdf",width=20,height=20)
 ggtree(tree, layout="fan", ladderize = FALSE, branch.length = "none",aes(color=group)) + geom_tiplab2(size=3) + theme(legend.position = "right")
 dev.off()
+# get the similarity rate matrix 
+dist_matrix <- as.matrix(sdist)
+dist_percent<-(max(dist_matrix)-dist_matrix)/max(dist_matrix)*100
+dist_percent[dist_percent==100.00]<-0;
+
+data<-data.frame()
+for (i in 1:nrow(dist_percent)){
+	j=i
+	row=i;
+	col=j+1;
+	if(dist_percent[row,col]>50){
+		row_name<-rownames(dist_percent)[row];
+		col_name<-rownames(dist_percent)[col];
+		if(row_name!=col_name){
+			data_subset<-data.frame(gene1=row_name,gene2=col_name,rate=dist_percent[row,col]);
+			data<- rbind(data,data_subset)
+			}
+	}
+}
+data<-data[order(data$rate,decreasing=TRUE),]
+write.csv(data,"/data/R02/nieyg/project/honeybee/honebee-latest-Version/04_chemoreceptor/cross_species_GR_fasta_aa_similarity_50.csv");
+write.csv(dist_percent,"/data/R02/nieyg/project/honeybee/honebee-latest-Version/04_chemoreceptor/cross_species_GR_fasta_aa_similarity.csv");
 
 ```
 
