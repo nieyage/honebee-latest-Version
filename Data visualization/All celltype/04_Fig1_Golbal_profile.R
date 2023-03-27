@@ -286,7 +286,7 @@ GR_gene<- unique(chemoreceptor[chemoreceptor$gene_type=="GR",]$gene_name)
 IR_gene<- unique(chemoreceptor[chemoreceptor$gene_type=="IR",]$gene_name)
 Apis_mellifera<-c(length(OR_gene),length(IR_gene),length(GR_gene));
 Drosophila_melanogaster<-c(60,66,60)
-Aedes_aegypti<-c(117,135,72)
+Aedes_aegypti<-c(114,135,107)
 
 cross_species_genenumber<-data.frame(species=c(rep("Apis_mellifera",3),rep("Drosophila_melanogaster",3),rep("Aedes_aegypti",3)),
   genetype=rep(c("ORs","IRs","GRs"),3),

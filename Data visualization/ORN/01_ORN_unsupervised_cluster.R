@@ -13,9 +13,9 @@ ORN <- subset(honeybee,idents=as.character("Orco+Neuron"))
 ORN.list <- SplitObject(ORN, split.by = "orig.ident");
 for (i in 1:length(ORN.list)) {
   DefaultAssay(ORN.list[[i]]) <- "raw_RNA"
-  ORN.list[[i]] <- SCTransform(ORN.list[[i]], verbose = FALSE,return.only.var.genes = FALSE,variable.features.n=5000,verbose = FALSE)
+  ORN.list[[i]] <- SCTransform(ORN.list[[i]],return.only.var.genes = FALSE,variable.features.n=4000,verbose = FALSE)
 }
-ORN.features <- SelectIntegrationFeatures(object.list = ORN.list, nfeatures = 3000);
+ORN.features <- SelectIntegrationFeatures(object.list = ORN.list, nfeatures = 4000);
 ORN.list <- PrepSCTIntegration(object.list = ORN.list, anchor.features = ORN.features)
 #integrate RNA using rpca
 Neuron_list <- lapply(
@@ -38,10 +38,13 @@ integration_anchors <- FindIntegrationAnchors(
   reduction = "rpca",
   k.anchor = 20,
 )
+all_features <- lapply(Neuron_list, row.names) %>% Reduce(intersect,.) 
+
 ORN <- IntegrateData(
   anchorset = integration_anchors,
   normalization.method = "SCT",
   new.assay.name = "integratedRNA_ORN",
+  features.to.integrate = all_features,
   dims = 1:30
 )
 
@@ -66,7 +69,7 @@ library(dplyr)
 #first cluster for ORN
 # vst
 DefaultAssay(ORN) <- "integratedRNA_ORN"
-ORN <- FindVariableFeatures(ORN, selection.method = "vst",features=500)
+ORN <- FindVariableFeatures(ORN, selection.method = "vst")
 top200 <- head(VariableFeatures(ORN),200)
 hvf.info <- HVFInfo(object = ORN,status = TRUE)
 hvf.info<-hvf.info[order(hvf.info$variance.standardized,decreasing=T),]
@@ -81,11 +84,11 @@ geom_point(aes(color=var.status))+xlim(0,10)
 dev.off()
 DefaultAssay(ORN) <- "integratedRNA_ORN"
 ORN <- ScaleData(ORN,features=rownames(ORN))
-ORN <- RunPCA(ORN,features=top200)
+ORN <- RunPCA(ORN)
 ORN <- RunUMAP(ORN,dims = 1:50, reduction.name = 'umap.rna', reduction.key = 'rnaUMAP_')
 ORN <- RunTSNE(ORN,dims = 1:50, min.dist = 0.001,check_duplicates = FALSE, reduction.name = 'tsne.rna', reduction.key = 'rnaTSNE_')
 ORN <- FindNeighbors(object = ORN, reduction = 'pca', dims = 1:50)
-ORN <- FindClusters(object = ORN, verbose = FALSE,  resolution =4, algorithm = 3)
+ORN <- FindClusters(object = ORN, verbose = FALSE,  resolution =6, algorithm = 3)
 table(ORN$seurat_clusters)
 
 Idents(ORN)<-ORN$orig.ident
@@ -131,14 +134,14 @@ saveRDS(ORN,"./05_ORN_cluster/01_first_cluster/ORN_integrated_antenna_first_clus
 #Step2: remove cluster without Orco 
 ORN <- readRDS("./05_ORN_cluster/01_first_cluster/ORN_integrated_antenna_first_cluster.rds")
 all_cluster<-levels(ORN$seurat_clusters)
-rm_cluster<-c("44")
+rm_cluster<-c("42")
 onecluster <- subset(ORN,idents=setdiff(all_cluster,rm_cluster))
 onecluster.list <- SplitObject(onecluster, split.by = "orig.ident")
 for (i in 1:length(onecluster.list)) {
   DefaultAssay(onecluster.list[[i]]) <- "raw_RNA"
-  onecluster.list[[i]] <- SCTransform(onecluster.list[[i]],return.only.var.genes = FALSE,variable.features.n=5000,verbose = FALSE)
+  onecluster.list[[i]] <- SCTransform(onecluster.list[[i]],return.only.var.genes = FALSE,variable.features.n=3000,verbose = FALSE)
 }
-onecluster.features <- SelectIntegrationFeatures(object.list = onecluster.list, nfeatures = 2000)
+onecluster.features <- SelectIntegrationFeatures(object.list = onecluster.list, nfeatures = 3000)
 onecluster.list <- PrepSCTIntegration(object.list = onecluster.list, anchor.features = onecluster.features)
 
 #integrate RNA using rpca
@@ -188,9 +191,10 @@ onecluster_atac <- IntegrateEmbeddings(
 #copy integrated LSI from duplicate seurat object to original object
 onecluster@reductions$integratedLSI_onecluster <- onecluster_atac@reductions$integratedLSI_onecluster
 
-DefaultAssay(onecluster) <- "integratedRNA_onecluster"
-onecluster <- FindVariableFeatures(onecluster, selection.method = "vst",features=500)
-top300 <- head(VariableFeatures(onecluster),300)
+#DefaultAssay(onecluster) <- "integratedRNA_onecluster"
+#onecluster <- FindVariableFeatures(onecluster, selection.method = "vst")
+
+top1000 <- head(VariableFeatures(onecluster),1000)
 hvf.info <- HVFInfo(object = onecluster,status = TRUE)
 hvf.info<-hvf.info[order(hvf.info$variance.standardized,decreasing=T),]
 hvf.info$variable$vst.variable<-as.numeric(hvf.info$variable$vst.variable)
@@ -206,13 +210,13 @@ dev.off()
 # RNA analysis
 DefaultAssay(onecluster) <- "integratedRNA_onecluster"
 onecluster <- ScaleData(onecluster, features =rownames(onecluster),verbose = FALSE)
-onecluster <- RunPCA(onecluster,features=top300) 
+onecluster <- RunPCA(onecluster,features=top1000) 
 pdf("./05_ORN_cluster/02_second_cluster/ElbowPlot.pdf")
 ElbowPlot(onecluster,ndims = 50, reduction = "pca")
 dev.off()
 #build a tSNE visualization
 onecluster <- FindNeighbors(object = onecluster, reduction = 'pca', dims = 1:50)
-onecluster <- FindClusters( object = onecluster, verbose = FALSE, resolution =4,algorithm = 3)
+onecluster <- FindClusters( object = onecluster, verbose = FALSE, resolution =6,algorithm = 3)
 table(onecluster$seurat_clusters)
 onecluster <- RunTSNE(
   object = onecluster,
@@ -222,24 +226,24 @@ onecluster <- RunTSNE(
   check_duplicates = FALSE,
   reduction.name = "tsne.rna",
   reduction.key = "rnatSNE_",
-  dims = 1:40
+  dims = 1:50
 )
 
-pdf("./05_ORN_cluster/02_second_cluster/second_ORN_cluster_WNN.pdf",width=6,height=5)
+pdf("./05_ORN_cluster/02_second_cluster/second_ORN_cluster_WNN_top1000.pdf",width=6,height=5)
 DimPlot(onecluster, label = TRUE, repel = TRUE,pt.size=0.01,reduction = "tsne.rna",group.by = "orig.ident")
 DimPlot(onecluster, label = TRUE, repel = TRUE,pt.size=0.01,reduction = "tsne.rna",group.by = "seurat_clusters")
 dev.off()
 # plot the dotplot by all receptor gene 
 DefaultAssay(onecluster) <- "raw_RNA"
 Idents(onecluster)<-onecluster$seurat_clusters
-pdf("./05_ORN_cluster/02_second_cluster/second_raw_OR_dotplot_rawRNA.pdf",width=25, height=12)
+pdf("./05_ORN_cluster/02_second_cluster/second_raw_OR_dotplot_rawRNA_top1000.pdf",width=25, height=12)
 p<-DotPlot(onecluster, features = all_receptor_gene) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
 p
 dev.off()
-pdf('./05_ORN_cluster/02_second_cluster/second_coreceptor_VlnPlot_WNN.pdf',width=15, height=10)
+pdf('./05_ORN_cluster/02_second_cluster/second_coreceptor_VlnPlot_WNN_top1000.pdf',width=15, height=10)
 print( VlnPlot(onecluster, features =Orco, ncol = 1, pt.size = 0) )
 dev.off()
-saveRDS(onecluster,"./05_ORN_cluster/02_second_cluster/ORN_integrated_antenna_withOr2_second.rds")
+saveRDS(onecluster,"./05_ORN_cluster/02_second_cluster/ORN_integrated_antenna_withOr2_second_top1000.rds")
 
 # Step3: distinguish the OR cluster 
  
@@ -256,7 +260,7 @@ dotplot_data<-dotplot_data[-which(dotplot_data$features.plot%in% Orco),];
 cluster_info<-as.data.frame(table(dotplot_data$id))
 all_cluster<-cluster_info$Var1;
 multiple_classes <- as.character(cluster_info[cluster_info$Freq>1,1])
-one_classes <- c("23","28","32","33","44")
+#one_classes <- c("23","28","32","33","44")
 
 # each multi OR cluster 
 library(pheatmap)
@@ -361,24 +365,29 @@ dev.off()
 # first subcluster 
 # multiple_stop_cluster log2FC < 0.05 pvalue < 0.01
 > log2FCdata
+> log2FCdata
    cluster       log2FC        pvalue
-1        0  0.361562447  0.000000e+00
-2        1  0.057765515  1.342092e-25
-3        2  0.010681568  2.994228e-01
-4        4  0.054940626  1.506329e-14
-5        7  0.027203784  1.778686e-03
-6        8  0.006426137  1.610359e-04
-7        9  0.086226159  9.504924e-17
-8       10  0.053994417  2.338018e-16
-9       11  0.064322690  7.200988e-08
-10      12  0.094915834  1.221055e-22
-11      19  0.045666546  3.854494e-03
-12      24 -0.055565720  1.686493e-02
-13      27  0.424511061 3.524018e-145
-14      29  0.276256828 1.847488e-118
-15      30  0.380640442  2.218520e-66
-16      37  0.028155310  6.751134e-01
-
+1        2 -0.009121856  7.105767e-01
+2        7  0.083630472  6.329715e-40
+3        9  0.033697345  8.701515e-04
+4       10  0.291274574 4.568649e-214
+5       11  0.105410921  1.010746e-26
+6       13  0.083373267  2.182624e-22
+7       15  0.126797530  4.377226e-30
+8       18  0.097819844  2.661615e-15
+9       19  0.072905075  8.777260e-23
+10      20  0.161670574  8.452432e-35
+11      21  0.096484287  1.369645e-38
+12      22  0.020073455  3.312448e-02
+13      24 -0.021448289  5.030784e-01
+14      25  0.202998549 1.201954e-114
+15      26  0.291508552  4.243742e-60
+16      27  0.086022125  6.794588e-06
+17      28  0.010526083  9.656112e-01
+18      31  0.364742746  9.682206e-85
+19      36  0.141460604  3.825397e-16
+20      37 -0.190000186  1.621083e-07
+21      41  0.232000870  1.917375e-05
 
 
 multiple_stop_cluster <- as.character(c(24))
