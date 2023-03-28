@@ -191,26 +191,25 @@ onecluster_atac <- IntegrateEmbeddings(
 #copy integrated LSI from duplicate seurat object to original object
 onecluster@reductions$integratedLSI_onecluster <- onecluster_atac@reductions$integratedLSI_onecluster
 
-#DefaultAssay(onecluster) <- "integratedRNA_onecluster"
+DefaultAssay(onecluster) <- "integratedRNA_onecluster"
 #onecluster <- FindVariableFeatures(onecluster, selection.method = "vst")
-
-top1000 <- head(VariableFeatures(onecluster),1000)
-hvf.info <- HVFInfo(object = onecluster,status = TRUE)
-hvf.info<-hvf.info[order(hvf.info$variance.standardized,decreasing=T),]
-hvf.info$variable$vst.variable<-as.numeric(hvf.info$variable$vst.variable)
-hvf.info$variable$vst.variable[301:length(hvf.info$variable$vst.variable)]=0
-hvf.info$variable$vst.variable<-as.logical(hvf.info$variable$vst.variable)
-var.status <- c("no", "yes")[unlist(x = hvf.info[, ncol(x = hvf.info)]) +  1]
-hvf.info$var.status <- var.status
-pdf("./05_ORN_cluster/02_second_cluster/Find_var_RNA_top300.pdf",width=20,height=6)
-ggplot(data = hvf.info,aes(x = mean, y =variance.standardized ) ) +
-geom_point(aes(color=var.status))+xlim(0,10)
-dev.off()
+top500 <- head(VariableFeatures(onecluster),500)
+#hvf.info <- HVFInfo(object = onecluster,status = TRUE)
+#hvf.info<-hvf.info[order(hvf.info$variance.standardized,decreasing=T),]
+#hvf.info$variable$vst.variable<-as.numeric(hvf.info$variable$vst.variable)
+#hvf.info$variable$vst.variable[501:length(hvf.info$variable$vst.variable)]=0
+#hvf.info$variable$vst.variable<-as.logical(hvf.info$variable$vst.variable)
+#var.status <- c("no", "yes")[unlist(x = hvf.info[, ncol(x = hvf.info)]) +  1]
+#hvf.info$var.status <- var.status
+#pdf("./05_ORN_cluster/02_second_cluster/Find_var_RNA_top500.pdf",width=20,height=6)
+#ggplot(data = hvf.info,aes(x = mean, y =variance.standardized ) ) +
+#geom_point(aes(color=var.status))+xlim(0,10)
+#dev.off()
 
 # RNA analysis
 DefaultAssay(onecluster) <- "integratedRNA_onecluster"
 onecluster <- ScaleData(onecluster, features =rownames(onecluster),verbose = FALSE)
-onecluster <- RunPCA(onecluster,features=top1000) 
+onecluster <- RunPCA(onecluster,features=top500) 
 pdf("./05_ORN_cluster/02_second_cluster/ElbowPlot.pdf")
 ElbowPlot(onecluster,ndims = 50, reduction = "pca")
 dev.off()
@@ -229,24 +228,25 @@ onecluster <- RunTSNE(
   dims = 1:50
 )
 
-pdf("./05_ORN_cluster/02_second_cluster/second_ORN_cluster_WNN_top1000.pdf",width=6,height=5)
+pdf("./05_ORN_cluster/02_second_cluster/second_ORN_cluster_WNN_top500.pdf",width=6,height=5)
 DimPlot(onecluster, label = TRUE, repel = TRUE,pt.size=0.01,reduction = "tsne.rna",group.by = "orig.ident")
 DimPlot(onecluster, label = TRUE, repel = TRUE,pt.size=0.01,reduction = "tsne.rna",group.by = "seurat_clusters")
 dev.off()
 # plot the dotplot by all receptor gene 
 DefaultAssay(onecluster) <- "raw_RNA"
 Idents(onecluster)<-onecluster$seurat_clusters
-pdf("./05_ORN_cluster/02_second_cluster/second_raw_OR_dotplot_rawRNA_top1000.pdf",width=25, height=12)
+pdf("./05_ORN_cluster/02_second_cluster/second_raw_OR_dotplot_rawRNA_top500.pdf",width=25, height=12)
 p<-DotPlot(onecluster, features = all_receptor_gene) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
 p
 dev.off()
-pdf('./05_ORN_cluster/02_second_cluster/second_coreceptor_VlnPlot_WNN_top1000.pdf',width=15, height=10)
+pdf('./05_ORN_cluster/02_second_cluster/second_coreceptor_VlnPlot_WNN_top500.pdf',width=15, height=10)
 print( VlnPlot(onecluster, features =Orco, ncol = 1, pt.size = 0) )
 dev.off()
-saveRDS(onecluster,"./05_ORN_cluster/02_second_cluster/ORN_integrated_antenna_withOr2_second_top1000.rds")
+saveRDS(onecluster,"./05_ORN_cluster/02_second_cluster/ORN_integrated_antenna_withOr2_second_top500.rds")
+
+onecluster <- readRDS("./05_ORN_cluster/02_second_cluster/ORN_integrated_antenna_withOr2_second_top500.rds")
 
 # Step3: distinguish the OR cluster 
- 
 dotplot_data<- p$data
 dotplot_data$state<-"No";
 for(i in 1:nrow(dotplot_data)){
@@ -260,7 +260,7 @@ dotplot_data<-dotplot_data[-which(dotplot_data$features.plot%in% Orco),];
 cluster_info<-as.data.frame(table(dotplot_data$id))
 all_cluster<-cluster_info$Var1;
 multiple_classes <- as.character(cluster_info[cluster_info$Freq>1,1])
-#one_classes <- c("23","28","32","33","44")
+one_classes <- c("29 ","28","31","33","36","39","41")
 
 # each multi OR cluster 
 library(pheatmap)
@@ -363,564 +363,34 @@ dev.off()
 
 # Step4: select the cluster to subcluster 
 # first subcluster 
-# multiple_stop_cluster log2FC < 0.05 pvalue < 0.01
+# multiple_stop_cluster #
 > log2FCdata
-> log2FCdata
-   cluster       log2FC        pvalue
-1        2 -0.009121856  7.105767e-01
-2        7  0.083630472  6.329715e-40
-3        9  0.033697345  8.701515e-04
-4       10  0.291274574 4.568649e-214
-5       11  0.105410921  1.010746e-26
-6       13  0.083373267  2.182624e-22
-7       15  0.126797530  4.377226e-30
-8       18  0.097819844  2.661615e-15
-9       19  0.072905075  8.777260e-23
-10      20  0.161670574  8.452432e-35
-11      21  0.096484287  1.369645e-38
-12      22  0.020073455  3.312448e-02
-13      24 -0.021448289  5.030784e-01
-14      25  0.202998549 1.201954e-114
-15      26  0.291508552  4.243742e-60
-16      27  0.086022125  6.794588e-06
-17      28  0.010526083  9.656112e-01
-18      31  0.364742746  9.682206e-85
-19      36  0.141460604  3.825397e-16
-20      37 -0.190000186  1.621083e-07
-21      41  0.232000870  1.917375e-05
+   cluster        log2FC        pvalue
+1        0  0.0230753005  1.031104e-07
+2        1  0.1789515684 6.185456e-279
+3        2  0.0144738119  4.809012e-02
+4        8  0.0912293291  1.585259e-64
+5       11  0.0599747219  3.149109e-16
+6       12  0.1298975457 1.320259e-100
+7       13  0.3130587464 8.426851e-241
+8       15  0.1496947161  1.281499e-28
+9       16  0.1458883903  4.914142e-90
+10      17  0.0061540033  4.968495e-01
+11      18  0.1880737310  1.747105e-50
+12      19  0.0840026033  1.707893e-16
+13      20  0.2316500074 3.931873e-212
+14      21  0.1384382719  4.128926e-26
+15      23  0.1703182858  6.566331e-25
+16      24  0.0149816559  3.843466e-02
+17      25 -0.0045763381  6.549179e-01
+18      27  0.6574946450  0.000000e+00
+19      30  0.3966415316 2.867794e-175
+20      34  0.1073482130  6.409149e-15
+21      38 -0.1254981630  2.931169e-01
+22      42  0.2058544503  2.855250e-05
+23      43  0.0006777749  3.540633e-01
 
 
-multiple_stop_cluster <- as.character(c(24))
+one_classes <- c("29 ","28","31","33","36","39","41")
+multiple_stop_cluster <- as.character(c(25,34,38))
 need2subcluster <- setdiff(all_cluster,c(one_classes,multiple_stop_cluster))
-
-first_subcluster <- subset(onecluster,idents=need2subcluster)
-
-# vst
-DefaultAssay(first_subcluster) <- "RNA"
-first_subcluster <- FindVariableFeatures(first_subcluster, selection.method = "vst",features=500)
-top300 <- head(VariableFeatures(first_subcluster),300)
-hvf.info <- HVFInfo(object = first_subcluster,status = TRUE)
-hvf.info<-hvf.info[order(hvf.info$variance.standardized,decreasing=T),]
-hvf.info$variable$vst.variable<-as.numeric(hvf.info$variable$vst.variable)
-hvf.info$variable$vst.variable[301:length(hvf.info$variable$vst.variable)]=0
-hvf.info$variable$vst.variable<-as.logical(hvf.info$variable$vst.variable)
-var.status <- c("no", "yes")[unlist(x = hvf.info[, ncol(x = hvf.info)]) +  1]
-hvf.info$var.status <- var.status
-pdf("./05_ORN_cluster/02_second_cluster/01_first_subcluster/Find_var_RNA_top300.pdf",width=20,height=6)
-ggplot(data = hvf.info,aes(x = mean, y =variance.standardized ) ) +
-geom_point(aes(color=var.status))+xlim(0,10)
-dev.off()
-# RNA analysis
-DefaultAssay(first_subcluster) <- "integratedRNA_onecluster"
-first_subcluster <- RunPCA(first_subcluster,features=top300) 
-#build a tSNE visualization
-first_subcluster <- FindNeighbors(object = first_subcluster, reduction = 'pca', dims = 1:50)
-first_subcluster <- RunTSNE(
-  object = first_subcluster,
-  assay = "integratedRNA_onecluster",
-  min.dist = 0.001,
-  verbose = TRUE,
-  check_duplicates = FALSE,
-  reduction.name = "tsne.rna",
-  reduction.key = "rnatSNE_",
-  dims = 1:50
-)
-first_subcluster <- FindClusters( object = first_subcluster, verbose = FALSE, resolution =3,algorithm = 3)
-table(first_subcluster$seurat_clusters)
-
-pdf("./05_ORN_cluster/02_second_cluster/01_first_subcluster/second_ORN_cluster_WNN_first_subcluster.pdf",width=6,height=5)
-DimPlot(first_subcluster, cols=myUmapcolors, label = TRUE, repel = TRUE,pt.size=0.01,reduction = "tsne.rna",group.by = "orig.ident")
-DimPlot(first_subcluster, cols=myUmapcolors, label = TRUE, repel = TRUE,pt.size=0.01,reduction = "tsne.rna",group.by = "seurat_clusters")
-dev.off()
-
-#ORfeatures<-dotplot_data[dotplot_data$id%in%as.character(multiple_cluster),]$features.plot #dotplot_data the second cluster results
-DefaultAssay(first_subcluster) <- "raw_RNA"
-Idents(first_subcluster)<-first_subcluster$seurat_clusters
-pdf("./05_ORN_cluster/02_second_cluster/01_first_subcluster/second_raw_OR_dotplot_rawRNA_first_subcluster.pdf",width=25, height=12)
-p<-DotPlot(first_subcluster, features = all_receptor_gene) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
-p
-dev.off()
-
-saveRDS(first_subcluster,"./05_ORN_cluster/02_second_cluster/01_first_subcluster/second_multiple_classes_first_subcluster.rds");
-
-# Step4: select the cluster to subcluster 
-# first_subcluster distinguish OR pipeline 
-
-p<-DotPlot(first_subcluster, features = all_receptor_gene) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
-dotplot_data<-p$data;
-dotplot_data$state<-"No";
-for(i in 1:nrow(dotplot_data)){
-   if(dotplot_data[i,]$pct.exp>25&&dotplot_data[i,]$avg.exp.scaled > 1.5){dotplot_data[i,]$state="Yes"};
-   if(dotplot_data[i,]$pct.exp>35&&dotplot_data[i,]$avg.exp.scaled > 1){dotplot_data[i,]$state="Yes"};
-   if(dotplot_data[i,]$pct.exp>20&&dotplot_data[i,]$avg.exp.scaled > 2.4){dotplot_data[i,]$state="Yes"};
- }
-dotplot_data<-dotplot_data[which(dotplot_data$state=="Yes"),]
-dotplot_data<-dotplot_data[-which(dotplot_data$features.plot%in% Orco),];
-
-cluster_info<-as.data.frame(table(dotplot_data$id))
-all_cluster<-cluster_info$Var1;
-multiple_classes <- as.character(cluster_info[cluster_info$Freq>1,1])
-one_classes <- c("27")
-
-# distinguish_multi_OR
-
-log2FCdata<-data.frame()
-pdf("./05_ORN_cluster/02_second_cluster/01_first_subcluster/first_subcluster_distinguish_multi_OR.pdf",width=14,height=6)
-for (cluster in multiple_classes){
-print(cluster)
-obj<-subset(first_subcluster,idents=cluster);
-obj_features<-dotplot_data[dotplot_data$id==cluster,]$features.plot
-# add max_exp OR label for each cell
-ORN_count<-obj@assays$raw_RNA
-ORN_count<-ORN_count[which(rownames(ORN_count)%in%obj_features),]
-ORN_matrix<-as.matrix(ORN_count)
-ORN_matrix<-ORN_matrix[,colSums(ORN_matrix)>0]
-ORN_matrix<-ORN_matrix[rowSums(ORN_matrix)>0,]
-barcode_label<-data.frame(barcode=colnames(ORN_matrix),label=rep("NA",length(colnames(ORN_matrix))))
-  for (i in 1:length(colnames(ORN_matrix))){
-    if(length(names(which(ORN_matrix[,i]==max(ORN_matrix[,i]))))==1){
-    barcode_label[i,2]=names(which(ORN_matrix[,i]==max(ORN_matrix[,i])))
-}
-  }
-
-barcode_label<-barcode_label[barcode_label$label!="NA",]
-barcode_label<-barcode_label[order(barcode_label$label),]
-
-##cell cosine simility heatmap 
-embeddings <- Embeddings(object = obj, reduction = "pca")[,1:50]
-embeddings <- embeddings[barcode_label$barcode,]
-trans_dist <- 1-cosine(t(embeddings))
-barcode_label_pheatmap<-data.frame(OR=barcode_label$label)
-rownames(barcode_label_pheatmap)<-barcode_label$barcode
-col<-myUmapcolors[1:length(unique(barcode_label_pheatmap$OR))]
-names(col)<-unique(barcode_label_pheatmap$OR)
-ann_colors= list(OR = col)
-p1<-pheatmap(trans_dist,
-         cluster_cols = TRUE,
-         cluster_rows = TRUE,
-         color = colorRampPalette(c("#4B0C1A", "#C25B3F","#F1ECEC", "#3082BD","#1C214F"))(100),
-         annotation_col = barcode_label_pheatmap,
-         annotation_colors = ann_colors,
-         annotation_row = barcode_label_pheatmap,
-         annotation_legend = TRUE,
-         show_rownames=F,
-         show_colnames=F
-  )
-#calculate the cosine simility within group and between groups;
-rownames(barcode_label)<-barcode_label$barcode
-within_group<-c()
-between_group<-c()
-for (i in 1:nrow(trans_dist)){
-  for (j in 1:ncol(trans_dist)){
-    if(i!=j){
-      if(barcode_label[rownames(trans_dist)[i],2]==barcode_label[colnames(trans_dist)[j],2]){
-        within_group<-c(within_group,trans_dist[i,j]);
-      }
-      else{between_group<-c(between_group,trans_dist[i,j])}
-    }
-  }
-}
-# calculate the FC 
-log2FC<-log2(median(between_group))-log2(median(within_group));
-test<-wilcox.test(within_group,between_group);
-pvalue<-test$p.value;
-data_subset<-data.frame(cluster,log2FC,pvalue)
-log2FCdata<-rbind(log2FCdata,data_subset)
-# plot density line 
-# manage data
-type<-c(rep("within-OR",length(within_group)),rep("between-OR",length(between_group)))
-var<-c(within_group,between_group)
-data<-data.frame(type,var)
-data$type<-factor(data$type,levels=c("within-OR","between-OR"))
-p2<-ggplot(data, aes(x=var, fill=type)) + xlab("Transcriptome distance")+
-              geom_density(alpha=.25) + theme_classic() 
-# t-test
-p3 <- ggboxplot(data, x="type", y="var", color = "type")+stat_compare_means()+guides(fill = "none")
-#method = "t.test"
-# plot OR heatmap 
-DefaultAssay(obj)<-"raw_RNA";
-obj<-ScaleData(obj,features=all_receptor_gene);
-#p4<-dittoHeatmap(obj,obj_features,slot ="scale.data",cluster_cols=T,scaled.to.max = TRUE)
-top_right<-plot_grid(p2,p3,labels = c("B","C"),ncol = 1)
-#right<-plot_grid(top_right,p4$gtable,ncol = 1,labels = c(" ","D"))
-last<-plot_grid(p1$gtable, top_right, labels = c('A', ''),rel_widths = c(1, 1),label_size = 12, ncol = 2)
-title <- ggdraw() + 
-  draw_label(
-    paste("Cluster",cluster,":","log2FC=",log2FC),
-    fontface = 'bold',
-    x = 0,
-    hjust = 0
-  )
-add_title<-plot_grid(title, last,ncol = 1 , rel_heights = c(0.1, 1) )
-print(add_title)
-}
-dev.off()
-
-> log2FCdata
-   cluster       log2FC        pvalue
-1        0  0.040918141  5.317597e-07
-2        2  0.171947152 5.438821e-184
-3        5  0.073465131  2.569478e-29
-4        7  0.014313027  1.767196e-01
-5        9  0.064773819  6.890063e-19
-6       11  0.060175748  1.499502e-07
-7       12  0.034070277  7.066169e-07
-8       13  0.273728525 1.648461e-258
-9       15  0.004260757  4.954401e-02
-10      19 -0.012378076  1.928976e-01
-11      20  0.383284281 2.443784e-147
-12      22  0.243415498 8.608567e-104
-13      25  0.219771920  2.244714e-24
-14      28  0.364610027 2.459936e-121
-15      33 -0.059067642  1.823119e-01
-
-
-#second recluster 
-
-multiple_stop_cluster <- as.character(c(19,20,22,25,33))
-need2subcluster <- setdiff(all_cluster,c(one_classes,multiple_stop_cluster))
-second_subcluster <- subset(first_subcluster,idents=need2subcluster)
-
-# vst
-DefaultAssay(second_subcluster) <- "RNA"
-second_subcluster <- FindVariableFeatures(second_subcluster, selection.method = "vst",features=500)
-top200 <- head(VariableFeatures(second_subcluster),200)
-hvf.info <- HVFInfo(object = second_subcluster,status = TRUE)
-hvf.info<-hvf.info[order(hvf.info$variance.standardized,decreasing=T),]
-hvf.info$variable$vst.variable<-as.numeric(hvf.info$variable$vst.variable)
-hvf.info$variable$vst.variable[201:length(hvf.info$variable$vst.variable)]=0
-hvf.info$variable$vst.variable<-as.logical(hvf.info$variable$vst.variable)
-var.status <- c("no", "yes")[unlist(x = hvf.info[, ncol(x = hvf.info)]) +  1]
-hvf.info$var.status <- var.status
-pdf("./05_ORN_cluster/02_second_cluster/02_second_subcluster/Find_var_RNA_top200.pdf",width=20,height=6)
-ggplot(data = hvf.info,aes(x = mean, y =variance.standardized ) ) +
-geom_point(aes(color=var.status))+xlim(0,10)
-dev.off()
-# RNA analysis
-DefaultAssay(second_subcluster) <- "integratedRNA_onecluster"
-second_subcluster <- RunPCA(second_subcluster,features=top200) 
-#build a tSNE visualization
-second_subcluster <- FindNeighbors(object = second_subcluster, reduction = 'pca', dims = 1:50)
-second_subcluster <- RunTSNE(
-  object = second_subcluster,
-  assay = "integratedRNA_onecluster",
-  min.dist = 0.001,
-  verbose = TRUE,
-  check_duplicates = FALSE,
-  reduction.name = "tsne.rna",
-  reduction.key = "rnatSNE_",
-  dims = 1:50
-)
-second_subcluster <- FindClusters( object = second_subcluster, verbose = FALSE, resolution =3,algorithm = 3)
-table(second_subcluster$seurat_clusters)
-
-pdf("./05_ORN_cluster/02_second_cluster/02_second_subcluster/second_ORN_cluster_WNN_second_subcluster.pdf",width=6,height=5)
-DimPlot(second_subcluster, cols=myUmapcolors, label = TRUE, repel = TRUE,pt.size=0.01,reduction = "tsne.rna",group.by = "orig.ident")
-DimPlot(second_subcluster, cols=myUmapcolors, label = TRUE, repel = TRUE,pt.size=0.01,reduction = "tsne.rna",group.by = "seurat_clusters")
-dev.off()
-
-#ORfeatures<-dotplot_data[dotplot_data$id%in%as.character(multiple_cluster),]$features.plot #dotplot_data the second cluster results
-DefaultAssay(second_subcluster) <- "raw_RNA"
-Idents(second_subcluster)<-second_subcluster$seurat_clusters
-pdf("./05_ORN_cluster/02_second_cluster/02_second_subcluster/second_raw_OR_dotplot_rawRNA_second_subcluster.pdf",width=25, height=12)
-p<-DotPlot(second_subcluster, features = all_receptor_gene) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
-p
-dev.off()
-
-saveRDS(second_subcluster,"./05_ORN_cluster/02_second_cluster/02_second_subcluster/second_multiple_classes_second_subcluster.rds");
-
-# Step4: select the cluster to subcluster 
-# second_subcluster distinguish OR pipeline 
-
-p<-DotPlot(second_subcluster, features = all_receptor_gene) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
-dotplot_data<-p$data;
-dotplot_data$state<-"No";
-for(i in 1:nrow(dotplot_data)){
-   if(dotplot_data[i,]$pct.exp>25&&dotplot_data[i,]$avg.exp.scaled > 1.5){dotplot_data[i,]$state="Yes"};
-   if(dotplot_data[i,]$pct.exp>35&&dotplot_data[i,]$avg.exp.scaled > 1){dotplot_data[i,]$state="Yes"};
-   if(dotplot_data[i,]$pct.exp>20&&dotplot_data[i,]$avg.exp.scaled > 2.4){dotplot_data[i,]$state="Yes"};
- }
-dotplot_data<-dotplot_data[which(dotplot_data$state=="Yes"),]
-dotplot_data<-dotplot_data[-which(dotplot_data$features.plot%in% Orco),];
-
-cluster_info<-as.data.frame(table(dotplot_data$id))
-all_cluster<-cluster_info$Var1;
-multiple_classes <- as.character(cluster_info[cluster_info$Freq>1,1])
-
-one_classes <- c("34")
-
-# distinguish_multi_OR
-
-log2FCdata<-data.frame()
-pdf("./05_ORN_cluster/02_second_cluster/02_second_subcluster/second_subcluster_distinguish_multi_OR.pdf",width=14,height=6)
-for (cluster in multiple_classes){
-print(cluster)
-obj<-subset(second_subcluster,idents=cluster);
-obj_features<-dotplot_data[dotplot_data$id==cluster,]$features.plot
-# add max_exp OR label for each cell
-ORN_count<-obj@assays$raw_RNA
-ORN_count<-ORN_count[which(rownames(ORN_count)%in%obj_features),]
-ORN_matrix<-as.matrix(ORN_count)
-ORN_matrix<-ORN_matrix[,colSums(ORN_matrix)>0]
-ORN_matrix<-ORN_matrix[rowSums(ORN_matrix)>0,]
-barcode_label<-data.frame(barcode=colnames(ORN_matrix),label=rep("NA",length(colnames(ORN_matrix))))
-  for (i in 1:length(colnames(ORN_matrix))){
-    if(length(names(which(ORN_matrix[,i]==max(ORN_matrix[,i]))))==1){
-    barcode_label[i,2]=names(which(ORN_matrix[,i]==max(ORN_matrix[,i])))
-}
-  }
-
-barcode_label<-barcode_label[barcode_label$label!="NA",]
-barcode_label<-barcode_label[order(barcode_label$label),]
-
-##cell cosine simility heatmap 
-embeddings <- Embeddings(object = obj, reduction = "pca")[,1:50]
-embeddings <- embeddings[barcode_label$barcode,]
-trans_dist <- 1-cosine(t(embeddings))
-barcode_label_pheatmap<-data.frame(OR=barcode_label$label)
-rownames(barcode_label_pheatmap)<-barcode_label$barcode
-col<-myUmapcolors[1:length(unique(barcode_label_pheatmap$OR))]
-names(col)<-unique(barcode_label_pheatmap$OR)
-ann_colors= list(OR = col)
-p1<-pheatmap(trans_dist,
-         cluster_cols = TRUE,
-         cluster_rows = TRUE,
-         color = colorRampPalette(c("#4B0C1A", "#C25B3F","#F1ECEC", "#3082BD","#1C214F"))(100),
-         annotation_col = barcode_label_pheatmap,
-         annotation_colors = ann_colors,
-         annotation_row = barcode_label_pheatmap,
-         annotation_legend = TRUE,
-         show_rownames=F,
-         show_colnames=F
-  )
-#calculate the cosine simility within group and between groups;
-rownames(barcode_label)<-barcode_label$barcode
-within_group<-c()
-between_group<-c()
-for (i in 1:nrow(trans_dist)){
-  for (j in 1:ncol(trans_dist)){
-    if(i!=j){
-      if(barcode_label[rownames(trans_dist)[i],2]==barcode_label[colnames(trans_dist)[j],2]){
-        within_group<-c(within_group,trans_dist[i,j]);
-      }
-      else{between_group<-c(between_group,trans_dist[i,j])}
-    }
-  }
-}
-# calculate the FC 
-log2FC<-log2(median(between_group))-log2(median(within_group));
-test<-wilcox.test(within_group,between_group);
-pvalue<-test$p.value;
-data_subset<-data.frame(cluster,log2FC,pvalue)
-log2FCdata<-rbind(log2FCdata,data_subset)
-# plot density line 
-# manage data
-type<-c(rep("within-OR",length(within_group)),rep("between-OR",length(between_group)))
-var<-c(within_group,between_group)
-data<-data.frame(type,var)
-data$type<-factor(data$type,levels=c("within-OR","between-OR"))
-p2<-ggplot(data, aes(x=var, fill=type)) + xlab("Transcriptome distance")+
-              geom_density(alpha=.25) + theme_classic() 
-# t-test
-p3 <- ggboxplot(data, x="type", y="var", color = "type")+stat_compare_means()+guides(fill = "none")
-#method = "t.test"
-# plot OR heatmap 
-DefaultAssay(obj)<-"raw_RNA";
-obj<-ScaleData(obj,features=all_receptor_gene);
-#p4<-dittoHeatmap(obj,obj_features,slot ="scale.data",cluster_cols=T,scaled.to.max = TRUE)
-top_right<-plot_grid(p2,p3,labels = c("B","C"),ncol = 1)
-#right<-plot_grid(top_right,p4$gtable,ncol = 1,labels = c(" ","D"))
-last<-plot_grid(p1$gtable, top_right, labels = c('A', ''),rel_widths = c(1, 1),label_size = 12, ncol = 2)
-title <- ggdraw() + 
-  draw_label(
-    paste("Cluster",cluster,":","log2FC=",log2FC),
-    fontface = 'bold',
-    x = 0,
-    hjust = 0
-  )
-add_title<-plot_grid(title, last,ncol = 1 , rel_heights = c(0.1, 1) )
-print(add_title)
-}
-dev.off()
-
-> log2FCdata
-   cluster       log2FC        pvalue
-1        0 -0.002756693  8.130950e-01
-2        2 -0.014691058  1.242722e-01
-3        3  0.036546437  9.384850e-04
-4        4  0.200763810 8.290952e-221
-5        8  0.074571865  1.802188e-14
-6       11  0.122188125  4.676465e-38
-7       15 -0.054723321  4.193709e-05
-8       16  0.282845296 2.494778e-278
-9       17  0.073773401  1.215635e-07
-10      18  0.025448196  4.641565e-04
-
-
-multiple_stop_cluster <- as.character(c(15,17))
-need2subcluster <- setdiff(all_cluster,c(one_classes,multiple_stop_cluster))
-third_subcluster <- subset(second_subcluster,idents=need2subcluster)
-
-# vst
-DefaultAssay(third_subcluster) <- "RNA"
-third_subcluster <- FindVariableFeatures(third_subcluster, selection.method = "vst",features=500)
-top200 <- head(VariableFeatures(third_subcluster),300)
-hvf.info <- HVFInfo(object = third_subcluster,status = TRUE)
-hvf.info<-hvf.info[order(hvf.info$variance.standardized,decreasing=T),]
-hvf.info$variable$vst.variable<-as.numeric(hvf.info$variable$vst.variable)
-hvf.info$variable$vst.variable[201:length(hvf.info$variable$vst.variable)]=0
-hvf.info$variable$vst.variable<-as.logical(hvf.info$variable$vst.variable)
-var.status <- c("no", "yes")[unlist(x = hvf.info[, ncol(x = hvf.info)]) +  1]
-hvf.info$var.status <- var.status
-pdf("./05_ORN_cluster/02_second_cluster/03_third_subcluster/Find_var_RNA_top200.pdf",width=20,height=6)
-ggplot(data = hvf.info,aes(x = mean, y =variance.standardized ) ) +
-geom_point(aes(color=var.status))+xlim(0,10)
-dev.off()
-# RNA analysis
-DefaultAssay(third_subcluster) <- "integratedRNA_onecluster"
-third_subcluster <- RunPCA(third_subcluster,features=top200) 
-#build a tSNE visualization
-third_subcluster <- FindNeighbors(object = third_subcluster, reduction = 'pca', dims = 1:50)
-third_subcluster <- RunTSNE(
-  object = third_subcluster,
-  assay = "integratedRNA_onecluster",
-  min.dist = 0.001,
-  verbose = TRUE,
-  check_duplicates = FALSE,
-  reduction.name = "tsne.rna",
-  reduction.key = "rnatSNE_",
-  dims = 1:50
-)
-third_subcluster <- FindClusters( object = third_subcluster, verbose = FALSE, resolution =3,algorithm = 3)
-table(third_subcluster$seurat_clusters)
-
-pdf("./05_ORN_cluster/02_second_cluster/03_third_subcluster/second_ORN_cluster_WNN_third_subcluster.pdf",width=6,height=5)
-DimPlot(third_subcluster, cols=myUmapcolors, label = TRUE, repel = TRUE,pt.size=0.01,reduction = "tsne.rna",group.by = "orig.ident")
-DimPlot(third_subcluster, cols=myUmapcolors, label = TRUE, repel = TRUE,pt.size=0.01,reduction = "tsne.rna",group.by = "seurat_clusters")
-dev.off()
-
-#ORfeatures<-dotplot_data[dotplot_data$id%in%as.character(multiple_cluster),]$features.plot #dotplot_data the second cluster results
-DefaultAssay(third_subcluster) <- "raw_RNA"
-Idents(third_subcluster)<-third_subcluster$seurat_clusters
-pdf("./05_ORN_cluster/02_second_cluster/03_third_subcluster/second_raw_OR_dotplot_rawRNA_third_subcluster.pdf",width=25, height=12)
-p<-DotPlot(third_subcluster, features = all_receptor_gene) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
-p
-dev.off()
-
-saveRDS(third_subcluster,"./05_ORN_cluster/02_second_cluster/03_third_subcluster/second_multiple_classes_third_subcluster.rds");
-
-# Step4: select the cluster to subcluster 
-# third_subcluster distinguish OR pipeline 
-
-p<-DotPlot(third_subcluster, features = all_receptor_gene) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
-dotplot_data<-p$data;
-dotplot_data$state<-"No";
-for(i in 1:nrow(dotplot_data)){
-   if(dotplot_data[i,]$pct.exp>25&&dotplot_data[i,]$avg.exp.scaled > 1.5){dotplot_data[i,]$state="Yes"};
-   if(dotplot_data[i,]$pct.exp>35&&dotplot_data[i,]$avg.exp.scaled > 1){dotplot_data[i,]$state="Yes"};
-   if(dotplot_data[i,]$pct.exp>20&&dotplot_data[i,]$avg.exp.scaled > 2.4){dotplot_data[i,]$state="Yes"};
- }
-dotplot_data<-dotplot_data[which(dotplot_data$state=="Yes"),]
-dotplot_data<-dotplot_data[-which(dotplot_data$features.plot%in% Orco),];
-
-cluster_info<-as.data.frame(table(dotplot_data$id))
-all_cluster<-cluster_info$Var1;
-multiple_classes <- as.character(cluster_info[cluster_info$Freq>1,1])
-
-one_classes <- c("19","22","23","30","31")
-
-# distinguish_multi_OR
-
-log2FCdata<-data.frame()
-pdf("./05_ORN_cluster/02_second_cluster/03_third_subcluster/third_subcluster_distinguish_multi_OR.pdf",width=14,height=6)
-for (cluster in multiple_classes){
-print(cluster)
-obj<-subset(third_subcluster,idents=cluster);
-obj_features<-dotplot_data[dotplot_data$id==cluster,]$features.plot
-# add max_exp OR label for each cell
-ORN_count<-obj@assays$raw_RNA
-ORN_count<-ORN_count[which(rownames(ORN_count)%in%obj_features),]
-ORN_matrix<-as.matrix(ORN_count)
-ORN_matrix<-ORN_matrix[,colSums(ORN_matrix)>0]
-ORN_matrix<-ORN_matrix[rowSums(ORN_matrix)>0,]
-barcode_label<-data.frame(barcode=colnames(ORN_matrix),label=rep("NA",length(colnames(ORN_matrix))))
-  for (i in 1:length(colnames(ORN_matrix))){
-    if(length(names(which(ORN_matrix[,i]==max(ORN_matrix[,i]))))==1){
-    barcode_label[i,2]=names(which(ORN_matrix[,i]==max(ORN_matrix[,i])))
-}
-  }
-
-barcode_label<-barcode_label[barcode_label$label!="NA",]
-barcode_label<-barcode_label[order(barcode_label$label),]
-
-##cell cosine simility heatmap 
-embeddings <- Embeddings(object = obj, reduction = "pca")[,1:50]
-embeddings <- embeddings[barcode_label$barcode,]
-trans_dist <- 1-cosine(t(embeddings))
-barcode_label_pheatmap<-data.frame(OR=barcode_label$label)
-rownames(barcode_label_pheatmap)<-barcode_label$barcode
-col<-myUmapcolors[1:length(unique(barcode_label_pheatmap$OR))]
-names(col)<-unique(barcode_label_pheatmap$OR)
-ann_colors= list(OR = col)
-p1<-pheatmap(trans_dist,
-         cluster_cols = TRUE,
-         cluster_rows = TRUE,
-         color = colorRampPalette(c("#4B0C1A", "#C25B3F","#F1ECEC", "#3082BD","#1C214F"))(100),
-         annotation_col = barcode_label_pheatmap,
-         annotation_colors = ann_colors,
-         annotation_row = barcode_label_pheatmap,
-         annotation_legend = TRUE,
-         show_rownames=F,
-         show_colnames=F
-  )
-#calculate the cosine simility within group and between groups;
-rownames(barcode_label)<-barcode_label$barcode
-within_group<-c()
-between_group<-c()
-for (i in 1:nrow(trans_dist)){
-  for (j in 1:ncol(trans_dist)){
-    if(i!=j){
-      if(barcode_label[rownames(trans_dist)[i],2]==barcode_label[colnames(trans_dist)[j],2]){
-        within_group<-c(within_group,trans_dist[i,j]);
-      }
-      else{between_group<-c(between_group,trans_dist[i,j])}
-    }
-  }
-}
-# calculate the FC 
-log2FC<-log2(median(between_group))-log2(median(within_group));
-test<-wilcox.test(within_group,between_group);
-pvalue<-test$p.value;
-data_subset<-data.frame(cluster,log2FC,pvalue)
-log2FCdata<-rbind(log2FCdata,data_subset)
-# plot density line 
-# manage data
-type<-c(rep("within-OR",length(within_group)),rep("between-OR",length(between_group)))
-var<-c(within_group,between_group)
-data<-data.frame(type,var)
-data$type<-factor(data$type,levels=c("within-OR","between-OR"))
-p2<-ggplot(data, aes(x=var, fill=type)) + xlab("Transcriptome distance")+
-              geom_density(alpha=.25) + theme_classic() 
-# t-test
-p3 <- ggboxplot(data, x="type", y="var", color = "type")+stat_compare_means()+guides(fill = "none")
-#method = "t.test"
-# plot OR heatmap 
-DefaultAssay(obj)<-"raw_RNA";
-obj<-ScaleData(obj,features=all_receptor_gene);
-#p4<-dittoHeatmap(obj,obj_features,slot ="scale.data",cluster_cols=T,scaled.to.max = TRUE)
-top_right<-plot_grid(p2,p3,labels = c("B","C"),ncol = 1)
-#right<-plot_grid(top_right,p4$gtable,ncol = 1,labels = c(" ","D"))
-last<-plot_grid(p1$gtable, top_right, labels = c('A', ''),rel_widths = c(1, 1),label_size = 12, ncol = 2)
-title <- ggdraw() + 
-  draw_label(
-    paste("Cluster",cluster,":","log2FC=",log2FC),
-    fontface = 'bold',
-    x = 0,
-    hjust = 0
-  )
-add_title<-plot_grid(title, last,ncol = 1 , rel_heights = c(0.1, 1) )
-print(add_title)
-}
-dev.off()
-
-> log2FCdata
