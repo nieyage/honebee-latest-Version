@@ -18,14 +18,15 @@ barcode=colnames(ORN)
 seurat_clusters=as.character(ORN$seurat_clusters)
 cell_info<-data.frame(barcode,seurat_clusters)
 cell_info$subcluster<-"None";
-one_classes <- c("29 ","28","31","33","36","39","41")
+one_classes <- c("29","28","31","33","36","39","41")
 multiple_stop_cluster <- as.character(c(25,34,38))
 need2subcluster <- setdiff(all_cluster,c(one_classes,multiple_stop_cluster))
 no_recluster<- c(one_classes,multiple_stop_cluster)
-for (i in 1:nrow(cell_info)){
-  if(names(cell_info[i,])%in%no_recluster){
-    cell_info[i,3]<-cell_info[i,2]
-  }
+
+
+
+for (i in which(cell_info$seurat_clusters %in% no_recluster)){
+    cell_info[i,]$subcluster <- cell_info[i,]$seurat_clusters
 }
 
 part1_subcluster<-readRDS("./05_ORN_cluster/02_second_cluster/01_part1_subcluster/second_multiple_classes_part1_subcluster.rds")
@@ -43,14 +44,14 @@ for (i in match(cell_info_part2$barcode,cell_info$barcode)){
 }
 
 part3_subcluster<-readRDS("./05_ORN_cluster/02_second_cluster/03_part3_subcluster/second_multiple_classes_part3_subcluster.rds")
-cell_info_part3<-data.frame(barcode=colnames(part3_subcluster),subcluster=as.character(part3_subcluster$seurat_clusters))
-cell_info_part3$last_cluster<- paste("p3:",part3_subcluster$seurat_clusters,sep="")
+cell_info_part3<-data.frame(barcode=colnames(part3_subcluster),subcluster=as.character(part3_subcluster$sub.cluster))
+cell_info_part3$last_cluster<- paste("p3:",part3_subcluster$sub.cluster,sep="")
 for (i in match(cell_info_part3$barcode,cell_info$barcode)){
   cell_info$subcluster[i] <- cell_info_part3[match(cell_info$barcode[i],cell_info_part3$barcode),]$last_cluster
 }
 part4_subcluster<-readRDS("./05_ORN_cluster/02_second_cluster/04_part4_subcluster/second_multiple_classes_part4_subcluster.rds")
-cell_info_part4<-data.frame(barcode=colnames(part4_subcluster),subcluster=as.character(part4_subcluster$seurat_clusters))
-cell_info_part4$last_cluster<- paste("p2:",part4_subcluster$seurat_clusters,sep="")
+cell_info_part4<-data.frame(barcode=colnames(part4_subcluster),subcluster=as.character(part4_subcluster$sub.cluster))
+cell_info_part4$last_cluster<- paste("p4:",part4_subcluster$sub.cluster,sep="")
 for (i in match(cell_info_part4$barcode,cell_info$barcode)){
   cell_info$subcluster[i] <- cell_info_part4[match(cell_info$barcode[i],cell_info_part4$barcode),]$last_cluster
 }
@@ -89,7 +90,6 @@ dev.off()
 m<-ggtree(data.tree) + geom_tiplab()+ geom_treescale()
 cluster_order<-na.omit(m$data[order(m$data$y),]$label)
 cluster_order<-as.character(cluster_order)
-
 DefaultAssay(ORN)<-"raw_RNA"
 Idents(ORN)<-factor(ORN$subcluster,levels=cluster_order)
 p<-DotPlot(ORN,features = all_receptor_gene) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
@@ -97,29 +97,29 @@ dotplot_data<-p$data;
 #filter dotplot ;
 dotplot_data$state<-"No";
 for(i in 1:nrow(dotplot_data)){
-  if(dotplot_data[i,]$pct.exp>25&&dotplot_data[i,]$avg.exp.scaled>1.5){dotplot_data[i,]$state="Yes"};
-  if(dotplot_data[i,]$pct.exp>35&&dotplot_data[i,]$avg.exp.scaled> 0){dotplot_data[i,]$state="Yes"};
-  if(dotplot_data[i,]$pct.exp>10&&dotplot_data[i,]$avg.exp.scaled>2.4){dotplot_data[i,]$state="Yes"};
+  if(dotplot_data[i,]$pct.exp>80&&dotplot_data[i,]$avg.exp.scaled> 0){dotplot_data[i,]$state="Yes"};
+  if(dotplot_data[i,]$pct.exp>35&&dotplot_data[i,]$avg.exp.scaled> 1){dotplot_data[i,]$state="Yes"};
+  if(dotplot_data[i,]$pct.exp>25&&dotplot_data[i,]$avg.exp.scaled>2.4){dotplot_data[i,]$state="Yes"};
 }
 dotplot_data<-dotplot_data[which(dotplot_data$state=="Yes"),]
+dotplot_data<-dotplot_data[-which(dotplot_data$features.plot%in% Orco),];
 
 dotplot_feature<-unique(c(Orco,rev(as.character(dotplot_data$features.plot))))
 DefaultAssay(ORN)<-"raw_RNA"
-pdf("./05_ORN_cluster/02_second_cluster/05_add_subcluster_info/UnSupervised_WNN_dotplot-allfeature_orderbytree.pdf",width=28, height=18)
+pdf("./05_ORN_cluster/02_second_cluster/05_add_subcluster_info/UnSupervised_WNN_dotplot-allfeature_orderbytree.pdf",width=28, height=20)
 p<-DotPlot(ORN,features = all_receptor_gene) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
 p
 p2<-DotPlot(ORN,features = all_receptor_gene) +  xlab('') + ylab('') +  theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) +
 scale_color_gradientn(colours = c('#008080', '#FF00FF'),  name = 'Average\nexpression', oob = scales::squish)
 p2
 dev.off()
-pdf("./05_ORN_cluster/02_second_cluster/05_add_subcluster_info/UnSupervised_WNN_dotplot-signif-feature_orderbytree.pdf",width=25, height=18)
+pdf("./05_ORN_cluster/02_second_cluster/05_add_subcluster_info/UnSupervised_WNN_dotplot-signif-feature_orderbytree.pdf",width=25, height=20)
 p<-DotPlot(ORN,features = dotplot_feature) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
 p
 p2<-DotPlot(ORN,features = dotplot_feature) +  xlab('') + ylab('') +  theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) +
 scale_color_gradientn(colours = c('#008080', '#FF00FF'),  name = 'Average\nexpression', oob = scales::squish)
 p2
 dev.off()
-
 myUmapcolors <- c(  '#53A85F', '#F1BB72', '#F3B1A0', '#D6E7A3', '#57C3F3', '#476D87',
          '#E95C59', '#E59CC4', '#AB3282', '#23452F', '#BD956A', '#8C549C', '#585658',
          '#9FA3A8', '#E0D4CA', '#5F3D69', '#58A4C3', '#AA9A59', '#E63863', '#E39A35', 
@@ -130,19 +130,15 @@ myUmapcolors <- c(  '#53A85F', '#F1BB72', '#F3B1A0', '#D6E7A3', '#57C3F3', '#476
          "#D9D9D9", "#BC80BD", "#CCEBC5", "#FFED6F", "#E41A1C", "#377EB8", "#4DAF4A", 
          "#FF7F00", "#FFFF33", "#A65628", "#F781BF" )
 ORN$subcluster<-factor(ORN$subcluster,levels=cluster_order)
-pdf("./05_ORN_cluster/02_second_cluster/05_add_subcluster_info/ORN_cluster_WNN_all_add_subcluster_info.pdf",width=10,height=6)
+pdf("./05_ORN_cluster/02_second_cluster/05_add_subcluster_info/ORN_cluster_WNN_all_add_subcluster_info.pdf",width=12,height=6)
 ###cluster
-DimPlot(ORN, cols=c(myUmapcolors,myUmapcolors), reduction = "tsne.rna",pt.size=0.01,  label = F, label.size = 5, repel = TRUE) + ggtitle("WNNUMAP")
+DimPlot(ORN, cols=c(myUmapcolors,myUmapcolors,myUmapcolors), reduction = "tsne.rna",pt.size=0.02,  label = F, label.size = 5, repel = TRUE) + ggtitle("WNNUMAP")
 dev.off();
-
 # remove the cluster have no signif dotplot feature and cell number is lower than 
-
 cluster_number<- as.data.frame(table(ORN$subcluster))
 cluster_number<- cluster_number[order(cluster_number$Freq,decreasing=T),]
 cluster_number<- cluster_number[cluster_number$Var1%in%dotplot_data$id,]
 cluster_number<- cluster_number[cluster_number$Freq>30,]
-
-
 #cluster tree 
 ORN_withpower <-subset(ORN,idents=c(as.character(cluster_number$Var1)))
 DefaultAssay(ORN_withpower) <- "integratedRNA_onecluster"
