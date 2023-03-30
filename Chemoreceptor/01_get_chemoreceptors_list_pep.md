@@ -77,6 +77,14 @@ write.table(IR_transcript,"IR_transcript.txt",row.name=F,col.names=F)
 
 
 ```
+#LOC413596       XM_016915853.2
+#LOC726019       XM_026443708.1
+LOC725052       GSAman00018
+#LOC102653738    XM_026444706.1
+#LOC102653695    XM_026444679.1
+LOC102653615    XM_026444646.1
+
+seqkit grep -f supply.txt GCF_003254395.2_Amel_HAv3.1_genomic_UPDATED_chemoreceptors_CORRECTED_geneid_pep.fa -o supply.aa
 
 ```
 sed -i 's/"//g' OR_transcript.txt
