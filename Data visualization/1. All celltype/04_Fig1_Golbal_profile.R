@@ -49,7 +49,7 @@ honeybee <- LinkPeaks(
   object = honeybee,
   peak.assay = "peaks",
   expression.assay = "RNA",
-  genes.use = c("Syt1","LOC411079","LOC410151","LOC406073")
+  genes.use = c("Syt1","LOC411079","LOC410151","5-ht7")
 )
 ######Visulize track and RNA exp######
 idents.plot <- Idents(honeybee)
@@ -123,17 +123,17 @@ p3<-CombineTracks(
 # Sheath cell 
 cov_plot <- CoveragePlot(
   object = honeybee,
-  region = "Group5-3433500-3436000",
+  region = "Group6-730000-740000",
   #annotation = FALSE,
   peaks = FALSE,links = F,annotation = F
 )
 gene_plot <- AnnotationPlot(
   object = honeybee,
-  region = "Group5-3433500-3436000"
+  region = "Group6-730000-740000"
 )
 expr_plot <- ExpressionPlot(
   object = honeybee,
-  features = "LOC409073",
+  features = "5-ht7",
   assay = "RNA"
 )
 p4<-CombineTracks(
@@ -146,7 +146,7 @@ set<-c("#66C2A5", "#FC8D62", "#8DA0CB", "#E78AC3", "#A6D854", "#FFD92F","#B3B3B3
 p1<-p1& scale_fill_manual(values=set)&labs(title="Syt1")
 p2<-p2& scale_fill_manual(values=set)&labs(title="LOC411079(GRH)") & theme(strip.text.y.left = element_blank(),strip.background = element_blank())
 p3<-p3& scale_fill_manual(values=set)&labs(title="LOC410151(repo)") & theme(strip.text.y.left = element_blank(),strip.background = element_blank())
-p4<-p4& scale_fill_manual(values=set)&labs(title="LOC409073(PROS)") & theme(strip.text.y.left = element_blank(),strip.background = element_blank())
+p4<-p4& scale_fill_manual(values=set)&labs(title="5-ht7") & theme(strip.text.y.left = element_blank(),strip.background = element_blank())
 pdf("./00_Figure/Fig1D-Marker_gene-select-peaktrack-WNN.pdf",height=8,width=16) 
 p1|p2|p3|p4
 dev.off()
@@ -265,9 +265,9 @@ Apis_mellifera<-c(7277,55,1536);
 Drosophila_melanogaster<-c(7940,4266,25048)
 Aedes_aegypti<-c(4742,433,8704);
 cross_species_cellnumber<-data.frame(species=c(rep("Apis mellifera",3),rep("D.melanogaster",3),rep("Ae.aegypti",3)),
-  celltype=rep(c("Orco+Neuron+","Orco-Neuron+","Orco-Neuron-"),3),
+  celltype=rep(c("Orco+Neuron","Orco-Neuron","Orco-Nonneuron"),3),
   cellnumber=c(Apis_mellifera,Drosophila_melanogaster,Aedes_aegypti))
-cross_species_cellnumber$celltype<-factor(cross_species_cellnumber$celltype,levels=c("Orco+Neuron+","Orco-Neuron+","Orco-Neuron-"));
+cross_species_cellnumber$celltype<-factor(cross_species_cellnumber$celltype,levels=c("Orco+Neuron","Orco-Neuron","Orco-Nonneuron"));
 cross_species_cellnumber$species<-factor(cross_species_cellnumber$species,levels=c("Apis mellifera","D.melanogaster","Ae.aegypti"))
 pdf("./00_Figure/Fig1H-cross_species_ORNvsNonORN_proportion_3types_publishdata.pdf",width=4,height=4)
 ggplot(data = cross_species_cellnumber, aes_string(x = "species", y = "cellnumber", 

@@ -68,12 +68,67 @@ DefaultAssay(ORN)<-"RNA"
 pdf('./00_Figure/Fig2D-Orco-FeaturePlot_1.pdf', width=9, height=8)
 FeaturePlot(ORN, reduction = 'tsne.rna',max.cutoff = 10,features = c("Or2") ,order=TRUE, ncol = 1)
 dev.off()
-pdf('./00_Figure/Fig2D-Orco-FeaturePlot_2.pdf', width=30, height=8)
+
+library(scCustomize)
+pdf('./00_Figure/Fig2D-Orco-FeaturePlot_2.pdf', width=14, height=4)
 # Visualize co-expression of two features simultaneously
-FeaturePlot(ORN, features = c("Or2", "LOC552552"),max.cutoff =3, blend = TRUE,order=TRUE,)
-FeaturePlot(ORN, features = c("Or2", "LOC726019"),max.cutoff =3, blend = TRUE,order=TRUE,)
-FeaturePlot(ORN, features = c("Or2", "LOC551704"),max.cutoff =3, blend = TRUE,order=TRUE,)
+p1<-FeaturePlot(ORN, features = c("LOC552552"),max.cutoff =3, order=TRUE,)
+p2<-FeaturePlot(ORN, features = c("LOC726019"),max.cutoff =3, order=TRUE,)
+p3<-FeaturePlot(ORN, features = c("LOC551704"),max.cutoff =3, order=TRUE,)
+#Plot_Density_Joint_Only(seurat_object = ORN, features = c("Or2", "LOC552552"))
+p1|p2|p2
 dev.off()
+
+receptorSCT.data = ORN@assays$RNA[dotplot_feature,]
+OrcoL<- c("Or2","LOC552552","LOC726019","LOC551704")
+for (Orco in OrcoL) {
+  print(Orco)
+  positiveL <- names( receptorSCT.data[Orco,][receptorSCT.data[Orco,] >= 1] )
+  positiveL2 <- names( receptorSCT.data[Orco,][receptorSCT.data[Orco,] >= 2] )
+  ORN@meta.data[paste0(Orco, '_norExp1')] <- 
+    as.numeric(
+      lapply(rownames(ORN@meta.data), function(x){
+        # print(x)
+        if (as.character(x) %in% positiveL) {
+          return(1)
+        } else {return(0)}
+      })
+    )
+  
+  if (Orco == 'Or2') {
+    ORN@meta.data[paste0(Orco, '_norExp2')] <- 
+      as.numeric(
+        lapply(rownames(ORN@meta.data), function(x){
+          # print(x)
+          if (as.character(x) %in% positiveL2) {
+            return(1)
+          } else {return(0)}
+        })
+      )
+  }
+}
+library(VennDiagram)
+dataset1 <-  row.names(ORN@meta.data[ORN@meta.data$Or2_norExp1 == 1,])
+dataset2 <-  row.names(ORN@meta.data[ORN@meta.data$LOC552552_norExp1 == 1,])
+dataset3 <-  row.names(ORN@meta.data[ORN@meta.data$LOC726019_norExp1 == 1,])
+dataset4 <-  row.names(ORN@meta.data[ORN@meta.data$LOC551704_norExp1 == 1,])
+name1 <- 'Or2 , norm.exp > 1'
+name2 <- 'LOC552552 , norm.exp > 1'
+name3 <- 'LOC726019 , norm.exp > 1'
+name4 <- 'LOC551704 , norm.exp > 1'
+library(UpSetR)
+listInput <- list(
+        Or2 = dataset1, 
+        LOC552552 = dataset2, 
+        LOC726019 = dataset3,
+        LOC551704 = dataset4)
+pdf("./00_Figure/Fig2D-Orco-upsetR.pdf", width=6, height=4)
+upset(fromList(listInput), nsets = 7, nintersects = 30, mb.ratio = c(0.5, 0.5),
+      order.by = c("freq", "degree"), decreasing = c(TRUE,FALSE))
+dev.off()
+
+
+
 
 # Fig2E
 DefaultAssay(ORN) <- "integratedRNA_onecluster"
@@ -134,3 +189,4 @@ scale_color_gradientn(colours = c('#008080', '#FF00FF'),  name = 'Average\nexpre
 p2
 dev.off()
 
+saveRDS(ORN,"./05_ORN_cluster/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_orderbytree.rds")

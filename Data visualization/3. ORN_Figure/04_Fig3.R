@@ -65,7 +65,7 @@ last_data<-data.dims[,-which(colnames(data.dims)=="Not_sure")]
 cor.data.dims <- as.data.frame(abs(cor(last_data)))
 
 # corelation heatmap tree
-dotplot_feature_fa<- all_receptor_gene_fasta[colnames(cor.data.dims),]
+dotplot_feature_fa<- all_receptor_gene_fasta[colnames(dotplot_feature_OR2),]
 aln <- muscle::muscle(dotplot_feature_fa)
 auto <- maskGaps(aln, min.fraction=0.5, min.block.width=4)
 sdist <- stringDist(as(auto,"AAStringSet"), method="hamming") 
@@ -82,17 +82,18 @@ gene_order<-as.character(gene_order)
 library(pheatmap)
 cor.data.dims <- cor.data.dims[rev(gene_order),rev(gene_order)]
 pdf("./00_Figure/Fig3A-OR_in_dotplot_cosine_correlation.pdf",width=17,height=16)
-pheatmap(cor.data.dims,
-         cluster_cols = F,
-         cluster_rows = F,
-         #color = colorRampPalette(c("#F1ECEC", "#3082BD","#1C214F"))(100),
-         #annotation_col = barcode_label_pheatmap,
-         #annotation_colors = ann_colors,
-         #annotation_row = barcode_label_pheatmap,
-         annotation_legend = TRUE,
-         show_rownames=T,
-         show_colnames=T
-    )
+
+#pheatmap(cor.data.dims,
+#         cluster_cols = F,
+#         cluster_rows = F,
+#         #color = colorRampPalette(c("#F1ECEC", "#3082BD","#1C214F"))(100),
+#         #annotation_col = barcode_label_pheatmap,
+#         #annotation_colors = ann_colors,
+#         #annotation_row = barcode_label_pheatmap,
+#         annotation_legend = TRUE,
+#         show_rownames=T,
+#         show_colnames=T
+#    )
 dev.off()
 
 # Fig3B:
@@ -268,5 +269,5 @@ dev.off()
 
 # Fig3F
 
- 
+
 
