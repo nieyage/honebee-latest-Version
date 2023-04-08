@@ -6,6 +6,7 @@ library(JASPAR2020)
 library(TFBSTools)
 library(patchwork)
 library(RColorBrewer)
+library(BSgenome.Amel.HAv3.1.update.chemoreceptor)
 set.seed(1234)
 
 honeybee<-readRDS("./02_All_celltype/WNN_honeybee_integrated_all_celltype.rds")
@@ -37,7 +38,6 @@ dev.off()
 # Major celltype track and violin plot 
 ##Track for Marker genes promoters
 
-library(BSgenome.Amel.HAv3.1.update.chemoreceptor)
 DefaultAssay(honeybee) <- "peaks"
 # first compute the GC content for each peak
 honeybee <- RegionStats(honeybee, genome = BSgenome.Amel.HAv3.1.update.chemoreceptor)
@@ -153,15 +153,23 @@ dev.off()
 
 # Fig1E:
 Neuron<-readRDS("./03_Neuron/WNN_Neuron_integrated.rds")
+markers <- FindAllMarkers(Neuron, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+Neuron_top<-markers[markers$cluster=="Orco-Neuron",7]
 # Or2 and LOC408554
 DefaultAssay(Neuron)<-"RNA"
-pdf('./00_Figure/Fig1E-Neuron_marker_FeaturePlot_WNN.pdf', width=4.5, height=4)
-FeaturePlot(Neuron,cols =c("lightgrey", "#183A1D"), reduction = 'wnn.umap',max.cutoff = 7,features = c("LOC413063") ,order=TRUE, ncol = 1)+ggtitle("LOC413063 (pepple)")
-FeaturePlot(Neuron,cols =c("lightgrey", "#F0A04B"), reduction = 'wnn.umap',max.cutoff = 25,features = c("Or2") ,order=TRUE, ncol = 1)+ggtitle("Or2 (Orco)")
+pdf('./00_Figure/Fig1E-Neuron_marker_FeaturePlot_WNN.pdf', width=13, height=4)
+p1<- FeaturePlot(Neuron, reduction = 'wnn.umap',max.cutoff = 7,features = c("LOC413063") ,order=TRUE, ncol = 1)+ggtitle("LOC413063 (pepple)")
+p2<- FeaturePlot(Neuron,cols =c("lightgrey", "#183A1D"), reduction = 'wnn.umap',max.cutoff = 7,features = c("LOC551837") ,order=FALSE, ncol = 1)+ggtitle("LOC551837 (bgm)")
+p3<- FeaturePlot(Neuron,cols =c("lightgrey", "#F0A04B"), reduction = 'wnn.umap',max.cutoff = 25,features = c("Or2") ,order=TRUE, ncol = 1)+ggtitle("Or2 (Orco)")
+p1|p2|p3
 dev.off()
 
+# Or2 and LOC408554
+DefaultAssay(Neuron)<-"RNA"
+pdf('./03_Neuron/Orco-Neuron_marker_FeaturePlot_WNN.pdf', width=10, height=10)
+ FeaturePlot(Neuron, reduction = 'wnn.umap',max.cutoff = 7,features = Neuron_top[1:9] ,order=FALSE, ncol = 3)
+dev.off()
 # Fig1F:
-
 DefaultAssay(Neuron) <- "peaks"
 # first compute the GC content for each peak
 Neuron <- RegionStats(Neuron, genome = BSgenome.Amel.HAv3.1.update.chemoreceptor)
@@ -170,7 +178,7 @@ Neuron <- LinkPeaks(
   object = Neuron,
   peak.assay = "peaks",
   expression.assay = "RNA",
-  genes.use = c("LOC413063","Or2")
+  genes.use = c("LOC413063","Or2",Neuron_top)
 )
 ######Visulize track and RNA exp######
 idents.plot <- Idents(Neuron)
@@ -192,6 +200,28 @@ expr_plot <- ExpressionPlot(
   assay = "RNA"
 )
 p1<-CombineTracks(
+  plotlist = list(cov_plot,gene_plot),
+  expression.plot = expr_plot,
+  heights = c(10, 3),
+  widths = c(10,5)
+)
+# LOC551837
+cov_plot <- CoveragePlot(
+  object = Neuron,
+  region = "Group1-22596000-22597500",
+  #annotation = FALSE,
+  peaks = FALSE,links = F,annotation = F
+)
+gene_plot <- AnnotationPlot(
+  object = Neuron,
+  region = "Group1-22596000-22597500"
+)
+expr_plot <- ExpressionPlot(
+  object = Neuron,
+  features = "LOC551837",
+  assay = "RNA"
+)
+p3<-CombineTracks(
   plotlist = list(cov_plot,gene_plot),
   expression.plot = expr_plot,
   heights = c(10, 3),
@@ -219,11 +249,37 @@ p2<-CombineTracks(
   heights = c(10, 3),
   widths = c(10,5)
 )
+
+# Orco
+cov_plot <- CoveragePlot(
+  object = Neuron,
+  region = "Group1-5722000-5725000",
+  #annotation = FALSE,
+  peaks = FALSE,links = F,annotation = F
+)
+gene_plot <- AnnotationPlot(
+  object = Neuron,
+  region = "Group1-5722000-5725000"
+)
+expr_plot <- ExpressionPlot(
+  object = Neuron,
+  features = "Or2",
+  assay = "RNA"
+)
+p2<-CombineTracks(
+  plotlist = list(cov_plot,gene_plot),
+  expression.plot = expr_plot,
+  heights = c(10, 3),
+  widths = c(10,5)
+)
+
 set<-c("#F0A04B", "#183A1D")
 p1<-p1& scale_fill_manual(values=set)&labs(title="LOC413063 (pepple)")
 p2<-p2& scale_fill_manual(values=set)&labs(title="Or2 (Orco)") & theme(strip.text.y.left = element_blank(),strip.background = element_blank())
-pdf("./00_Figure/Fig1F-Neuron-Orco-track.pdf",width=9,height=4)
-p1|p2
+p3<-p3& scale_fill_manual(values=set)&labs(title="LOC551837 (bgm)") & theme(strip.text.y.left = element_blank(),strip.background = element_blank())
+
+pdf("./00_Figure/Fig1F-Neuron-Orco-track.pdf",width=13,height=4)
+p1|p3|p2
 dev.off()
 
 
@@ -261,13 +317,12 @@ Apis_mellifera<-c(7277,55,1536);
 #mosquito_all<-readRDS("/data/R02/nieyg/project/honeybee/data/publish_data/mosquito/SeuratObject1_Antenna_mergedBatches_AllCells.rds")
 #mosquito_neuron<-readRDS("/data/R02/nieyg/project/honeybee/data/publish_data/mosquito/SeuratObject2_Antenna_mergedBatches_Neurons.rds")
 #Drosophila_melanogaster<-c(2808,154,3756) #our data 
-
 Drosophila_melanogaster<-c(7940,4266,25048)
 Aedes_aegypti<-c(4742,433,8704);
 cross_species_cellnumber<-data.frame(species=c(rep("Apis mellifera",3),rep("D.melanogaster",3),rep("Ae.aegypti",3)),
-  celltype=rep(c("Orco+Neuron","Orco-Neuron","Orco-Nonneuron"),3),
+  celltype=rep(c("Orco+Neuron","Orco-Neuron","Non-neuron"),3),
   cellnumber=c(Apis_mellifera,Drosophila_melanogaster,Aedes_aegypti))
-cross_species_cellnumber$celltype<-factor(cross_species_cellnumber$celltype,levels=c("Orco+Neuron","Orco-Neuron","Orco-Nonneuron"));
+cross_species_cellnumber$celltype<-factor(cross_species_cellnumber$celltype,levels=c("Orco+Neuron","Orco-Neuron","Non-neuron"));
 cross_species_cellnumber$species<-factor(cross_species_cellnumber$species,levels=c("Apis mellifera","D.melanogaster","Ae.aegypti"))
 pdf("./00_Figure/Fig1H-cross_species_ORNvsNonORN_proportion_3types_publishdata.pdf",width=4,height=4)
 ggplot(data = cross_species_cellnumber, aes_string(x = "species", y = "cellnumber", 
@@ -287,11 +342,9 @@ IR_gene<- unique(chemoreceptor[chemoreceptor$gene_type=="IR",]$gene_name)
 Apis_mellifera<-c(length(OR_gene),length(IR_gene),length(GR_gene));
 Drosophila_melanogaster<-c(60,66,60)
 Aedes_aegypti<-c(114,135,107)
-
 cross_species_genenumber<-data.frame(species=c(rep("Apis_mellifera",3),rep("Drosophila_melanogaster",3),rep("Aedes_aegypti",3)),
   genetype=rep(c("ORs","IRs","GRs"),3),
   genenumber=c(Apis_mellifera,Drosophila_melanogaster,Aedes_aegypti))
-
 cross_species_genenumber$genetype<-factor(cross_species_genenumber$genetype,levels=c("ORs","IRs","GRs"));
 cross_species_genenumber$species<- factor(cross_species_genenumber$species,levels=c("Apis_mellifera","Drosophila_melanogaster","Aedes_aegypti"))
 pdf("./00_Figure/Fig1I-cross_species_ORGRIRgene_proportion.pdf",width=4,height=4)
@@ -308,13 +361,10 @@ dev.off();
 
 #Fig1J:
 # the OB barplot
-
 cross_species_glomeruli<-data.frame(species=c("Apis mellifera","D. melanogaster","Ae. aegypti"),
   glomeruli=c(160,55,65));
 cross_species_glomeruli$species<- factor(cross_species_glomeruli$species,levels=c("Apis mellifera","D. melanogaster","Ae. aegypti"))
-
 pdf("./00_Figure/Fig1J-cross_species_glomeruli.pdf",width=4,height=4)
-
 p<-ggplot(data = cross_species_glomeruli, aes_string(x = "species", y = "glomeruli", 
         fill = "species")) +  xlab(" ") + ylab("# of glomeruli") + 
         scale_fill_manual(values = c("#C8B6E2" ,"#7A86B6" ,"#495C83")) + 

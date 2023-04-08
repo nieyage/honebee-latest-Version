@@ -20,11 +20,9 @@ cell_info<-data.frame(barcode,seurat_clusters)
 cell_info$subcluster<-"None";
 one_classes <- c("29","28","31","33","36","39","41")
 multiple_stop_cluster <- as.character(c(25,34,38))
+all_cluster <- levels(ORN)
 need2subcluster <- setdiff(all_cluster,c(one_classes,multiple_stop_cluster))
 no_recluster<- c(one_classes,multiple_stop_cluster)
-
-
-
 for (i in which(cell_info$seurat_clusters %in% no_recluster)){
     cell_info[i,]$subcluster <- cell_info[i,]$seurat_clusters
 }
@@ -139,6 +137,16 @@ cluster_number<- as.data.frame(table(ORN$subcluster))
 cluster_number<- cluster_number[order(cluster_number$Freq,decreasing=T),]
 cluster_number<- cluster_number[cluster_number$Var1%in%dotplot_data$id,]
 cluster_number<- cluster_number[cluster_number$Freq>30,]
+
+keep_cluster<- as.character(cluster_number$Var1)
+## cluster trans_dist tree color by useful 
+pdf("./00_Figure/Fig2C-All_ORN_cluster-ORN-tree-cosine.pdf",width=8,height=8)
+tree <- groupOTU(data.tree, .node=keep_cluster)
+ggtree(tree,aes(color=group),layout = "circular") + geom_tiplab()+ geom_treescale()
+dev.off()
+
+
+
 #cluster tree 
 ORN_withpower <-subset(ORN,idents=c(as.character(cluster_number$Var1)))
 DefaultAssay(ORN_withpower) <- "integratedRNA_onecluster"
@@ -162,6 +170,68 @@ m<-ggtree(data.tree) + geom_tiplab()+ geom_treescale()
 cluster_order<-na.omit(m$data[order(m$data$y),]$label)
 cluster_order<-as.character(cluster_order)
 
+
+
 DefaultAssay(ORN_withpower)<-"raw_RNA"
 Idents(ORN_withpower)<-factor(ORN_withpower$subcluster,levels=cluster_order)
 saveRDS(ORN_withpower,"./05_ORN_cluster/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower.rds")
+
+# part VF
+# For part1_subcluster
+DefaultAssay(part1_subcluster) <- "RNA"
+part1_subcluster <- FindVariableFeatures(part1_subcluster, selection.method = "vst",features=100)
+part1_subcluster_top100 <- head(VariableFeatures(part1_subcluster),100)
+
+# For part2_subcluster
+DefaultAssay(part2_subcluster) <- "RNA"
+part2_subcluster <- FindVariableFeatures(part2_subcluster, selection.method = "vst",features=100)
+part2_subcluster_top100 <- head(VariableFeatures(part2_subcluster),100)
+
+# For part3_subcluster
+DefaultAssay(part3_subcluster) <- "RNA"
+part3_subcluster <- FindVariableFeatures(part3_subcluster, selection.method = "vst",features=200)
+part3_subcluster_top200 <- head(VariableFeatures(part3_subcluster),200)
+# 4 parts to subcluster 
+# For part4_subcluster
+# vst
+DefaultAssay(part4_subcluster) <- "RNA"
+part4_subcluster <- FindVariableFeatures(part4_subcluster, selection.method = "vst")
+part4_subcluster_top100 <- head(VariableFeatures(part4_subcluster),100)
+
+part_VF<- c(part1_subcluster_top100,part2_subcluster_top100,part3_subcluster_top200,part4_subcluster_top100)
+#RNA analysis
+DefaultAssay(ORN_withpower) <- "integratedRNA_onecluster"
+ORN_withpower <- RunPCA(ORN_withpower,features= part_VF )
+pdf("./05_ORN_cluster/02_second_cluster/ORN_withpower_ElbowPlot_top100.pdf")
+ElbowPlot(ORN_withpower,ndims = 50, reduction = "pca")
+dev.off()
+#build a tSNE visualization
+ORN_withpower <- RunTSNE(
+  object = ORN_withpower,
+  assay = "integratedRNA_onecluster",
+  min.dist = 0.001,
+  verbose = TRUE,
+  check_duplicates = FALSE,
+  reduction.name = "tsne.rna",
+  reduction.key = "rnatSNE_",
+  dims = 1:30
+)
+ORN_withpower <- FindNeighbors(object = ORN_withpower, reduction = 'pca', dims = 1:30)
+ORN_withpower <- FindClusters( object = ORN_withpower, verbose = FALSE, resolution =2,algorithm = 3)
+table(ORN_withpower$seurat_clusters,ORN_withpower$subcluster)
+pdf("./05_ORN_cluster/02_second_cluster/last_ORN_withpower_subcluster.pdf",width=10,height=5)
+#DimPlot(ORN_withpower, label = TRUE, repel = TRUE,pt.size=0.1,reduction = "tsne.rna",group.by = "orig.ident")
+DimPlot(ORN_withpower, label = TRUE, repel = TRUE,pt.size=0.1,reduction = "tsne.rna",group.by = "subcluster")
+dev.off()
+
+DefaultAssay(ORN_withpower)<-"raw_RNA"
+Idents(ORN_withpower)<-factor(ORN_withpower$subcluster,levels=cluster_order)
+saveRDS(ORN_withpower,"./05_ORN_cluster/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_modify_the_tsne.rds")
+
+
+
+
+
+
+
+
