@@ -241,11 +241,11 @@ ORN <- LinkPeaks(
 ######Visulize track and RNA exp######
 idents.plot <- Idents(ORN)
 
-pdf("./00_Figure/FigS3D-Orco_gene-peaktrack-RNAexp-WNN.pdf",height=10,width=8)
+pdf("./00_Figure/FigS3D-Orco_gene-peaktrack-RNAexp-WNN.pdf",height=12,width=6)
 # Or2
 p1 <- CoveragePlot(
   object = ORN,
-  region = "Group1-5723000-5725000",
+  region = "Group1-5723000-5724000",
   #extend.upstream = 0000,
   annotation=TRUE,
   peaks = F,
@@ -257,7 +257,7 @@ p1 <- CoveragePlot(
 # LOC552552
 p2 <- CoveragePlot(
   object = ORN,
-  region = "Group8-7225000-7230000",
+  region = "Group8-7228000-7230000",
   #extend.upstream = 0000,
   annotation=TRUE,
   peaks = F,
@@ -269,7 +269,7 @@ p2 <- CoveragePlot(
 # LOC726019
 p3 <- CoveragePlot(
   object = ORN,
-  region = "Group11-16142800-16145000",
+  region = "Group11-16143000-16145000",
   #extend.upstream = 0000,
   annotation=TRUE,
   peaks = F,
@@ -280,7 +280,7 @@ p3 <- CoveragePlot(
 
 p4 <- CoveragePlot(
   object = ORN,
-  region = "Group14-4996000-4998000",
+  region = "Group14-4996500-4997500",
   #extend.upstream = 0000,
   annotation=TRUE,
   peaks = F,
