@@ -10,87 +10,29 @@ GR_gene<- unique(chemoreceptor[chemoreceptor$gene_type=="GR",]$gene_name)
 IR_gene<- unique(c("LOC412949","LOC100577496","LOC102653640","LOC727346","LOC100578352","LOC552552","LOC726019","LOC551704","LOC410623","LOC100576097","LOC409777"))
 Orco<- c("Or2","LOC552552","LOC726019","LOC551704")
 all_receptor_gene <- unique(c(Orco,OR_gene,IR_gene,GR_gene))
-ORN<- readRDS("./05_ORN_cluster/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_orderbytree.rds")
+ORN<- readRDS("./05_ORN_cluster/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_modify_the_tsne_order_by_tree_recall_peak.rds")
 DefaultAssay(ORN)<-"raw_RNA"
-
 # FigS3A
-
-######################################################################################
-# VENN DIAGRAM RAW COUNTS
-######################################################################################
-receptorSCT.data = ORN@assays$RNA[dotplot_feature,]
-OrcoL<- c("Or2","LOC552552","LOC726019","LOC551704")
-for (Orco in OrcoL) {
-  print(Orco)
-  positiveL <- names( receptorSCT.data[Orco,][receptorSCT.data[Orco,] >= 1] )
-  positiveL2 <- names( receptorSCT.data[Orco,][receptorSCT.data[Orco,] >= 2] )
-  ORN@meta.data[paste0(Orco, '_norExp1')] <- 
-    as.numeric(
-      lapply(rownames(ORN@meta.data), function(x){
-        # print(x)
-        if (as.character(x) %in% positiveL) {
-          return(1)
-        } else {return(0)}
-      })
-    )
-  
-  if (Orco == 'Or2') {
-    ORN@meta.data[paste0(Orco, '_norExp2')] <- 
-      as.numeric(
-        lapply(rownames(ORN@meta.data), function(x){
-          # print(x)
-          if (as.character(x) %in% positiveL2) {
-            return(1)
-          } else {return(0)}
-        })
-      )
-  }
-}
-library(VennDiagram)
-dataset1 <-  row.names(ORN@meta.data[ORN@meta.data$Or2_norExp1 == 1,])
-dataset2 <-  row.names(ORN@meta.data[ORN@meta.data$LOC552552_norExp1 == 1,])
-dataset3 <-  row.names(ORN@meta.data[ORN@meta.data$LOC726019_norExp1 == 1,])
-dataset4 <-  row.names(ORN@meta.data[ORN@meta.data$LOC551704_norExp1 == 1,])
-name1 <- 'Or2 , norm.exp > 1'
-name2 <- 'LOC552552 , norm.exp > 1'
-name3 <- 'LOC726019 , norm.exp > 1'
-name4 <- 'LOC551704 , norm.exp > 1'
-vennplot<- venn.diagram(
-  x = list(dataset1, dataset2, 
-           dataset3, dataset4),
-  category.names = c(name1, name2, name3, name4),
-  fill = c("#7876B1","#66E1E6","#ffcbcb","#0F3057"),
-  filename = NULL,
-  output=TRUE
-)
-pdf("./00_Figure/FigS3A-Orco_Venn.pdf")
-grid.draw(vennplot)
+DefaultAssay(ORN)<-"RNA"
+pdf('./00_Figure/FigS3A-Orco-FeaturePlot.pdf', width=17, height=4)
+p4<-FeaturePlot(ORN, reduction = 'tsne.rna',features = c("Or2") ,max.cutoff = 10,order=TRUE, ncol = 1)
+p1<-FeaturePlot(ORN, reduction = 'tsne.rna',features = c("LOC552552"),max.cutoff =3, order=TRUE,ncol = 1)
+p2<-FeaturePlot(ORN, reduction = 'tsne.rna',features = c("LOC726019"),max.cutoff =3, order=TRUE,ncol = 1)
+p3<-FeaturePlot(ORN, reduction = 'tsne.rna',features = c("LOC551704"),max.cutoff =3, order=TRUE,ncol = 1)
+p4|p1|p2|p3
 dev.off()
-
-# FigS3B Orco Violin plot 
-DefaultAssay(ORN) <- "RNA"
-Idents(ORN)<-ORN$subcluster
-pdf('./00_Figure/FigS3B-Orcocoreceptor_VlnPlot_RNA.pdf',width=25, height=10)
-print( VlnPlot(ORN, features = OrcoL, ncol = 1, pt.size = 0.1) )
-dev.off()
-
 # FigS3C  SCATTER PLOTS (Or2 Vs potential Orco)
-
 DefaultAssay(ORN) <- "RNA"
 scatterColors <- c('#A06CB4', '#DF6C78', '#911A2E', '#CD9139', '#B4B4B6', '#21918c', '#3b528b', '#440154')
-
 ### Plotting scatter plot: 1. single-cell level, 2. cluster level
-
 ORN$Or2_UMIs <- ORN@assays$SCT@counts['Or2',]
 ORN$LOC552552_UMIs <- ORN@assays$SCT@counts['LOC552552',]
 ORN$LOC726019_UMIs <- ORN@assays$SCT@counts['LOC726019',]
 ORN$LOC551704_UMIs <- ORN@assays$SCT@counts['LOC551704',]
-
 ORN$Or2_Exp <- ORN@assays$RNA@data['Or2',]
 ORN$LOC552552_Exp <- ORN@assays$RNA@data['LOC552552',]
 ORN$LOC726019_Exp <- ORN@assays$RNA@data['LOC726019',]
 ORN$LOC551704_Exp <- ORN@assays$RNA@data['LOC551704',]
-
 #.....................................................................................
 #  Or2 vs. LOC552552 UMI
 # ....................................................................................
@@ -252,7 +194,6 @@ p1 <- CoveragePlot(
   #extend.downstream = -30000,
   links=F
 )
-
 
 # LOC552552
 p2 <- CoveragePlot(

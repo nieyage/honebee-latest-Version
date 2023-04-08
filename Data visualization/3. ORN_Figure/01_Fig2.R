@@ -13,8 +13,6 @@ Orco<- c("Or2","LOC552552","LOC726019","LOC551704")
 all_receptor_gene <- unique(c(Orco,OR_gene,IR_gene,GR_gene))
 ORN<- readRDS("./05_ORN_cluster/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_modify_the_tsne.rds")
 DefaultAssay(ORN)<-"raw_RNA"
-
-
 # Fig2A 
 myUmapcolors <- c(  '#53A85F', '#F1BB72', '#F3B1A0', '#D6E7A3', '#57C3F3', '#476D87',
          '#E95C59', '#E59CC4', '#AB3282', '#23452F', '#BD956A', '#8C549C', '#585658',
@@ -39,7 +37,7 @@ cluster_cellnumber$color<-c(myUmapcolors,myUmapcolors)[1:length(levels(ORN))]
 cluster_cellnumber<-cluster_cellnumber[order(cluster_cellnumber$number,decreasing=F),]
 cluster_cellnumber$cluster<- factor(cluster_cellnumber$cluster,levels=cluster_cellnumber$cluster)
 
-pdf("./00_Figure/Fig2B-remove_nopower_ORN_cluster_cellnumber.pdf",width=6,height=8)
+pdf("./00_Figure/Fig2B-remove_nopower_ORN_cluster_cellnumber.pdf",width=6,height=9)
 p<-ggplot(data = cluster_cellnumber, aes_string(x = "cluster", y = "number", 
         fill = "cluster")) +  xlab(" ") + ylab("# of cells") + 
         scale_fill_manual(values = cluster_cellnumber$color) + 
@@ -52,84 +50,20 @@ p+geom_text(aes(label = number), size = 3, hjust = 0.5, vjust = 3)
 dev.off();
 
 # Fig2C Top4-abundant-OR-FeaturePlot
-DefaultAssay(ORN)<-"raw_RNA"
-pdf('./00_Figure/Fig2C-Top4-abundant-OR-FeaturePlot-1.pdf', width=16, height=5)
-# Visualize co-expression of two features simultaneously
-FeaturePlot(ORN, features = c("LOC102653782", "LOC102656904"),max.cutoff =3, blend = TRUE,order=TRUE,)+ggtitle("p4:0")
-FeaturePlot(ORN, features = c("LOC410603", "LOC107963999"),max.cutoff =3, blend = TRUE,order=TRUE,)+ggtitle("25")
-FeaturePlot(ORN, features = c("LOC102653637", "LOC102653703"),max.cutoff =3, blend = TRUE,order=TRUE,)+ggtitle("p3:6")
-dev.off()
-pdf('./00_Figure/Fig2C-Top4-abundant-OR-FeaturePlot-2.pdf', width=5.5, height=5)
-FeaturePlot(ORN, reduction = 'tsne.rna',max.cutoff = 10,features = c("Or12") ,order=TRUE, ncol = 1)+ggtitle("Or12")
-dev.off()
+# DefaultAssay(ORN)<-"raw_RNA"
+# pdf('./00_Figure/Fig2C-Top4-abundant-OR-FeaturePlot-1.pdf', width=16, height=5)
+# # Visualize co-expression of two features simultaneously
+# FeaturePlot(ORN, features = c("LOC102653782", "LOC102656904"),max.cutoff =3, blend = TRUE,order=TRUE,)+ggtitle("p4:0")
+# FeaturePlot(ORN, features = c("LOC410603", "LOC107963999"),max.cutoff =3, blend = TRUE,order=TRUE,)+ggtitle("25")
+# FeaturePlot(ORN, features = c("LOC102653637", "LOC102653703"),max.cutoff =3, blend = TRUE,order=TRUE,)+ggtitle("p3:6")
+# dev.off()
+# pdf('./00_Figure/Fig2C-Top4-abundant-OR-FeaturePlot-2.pdf', width=5.5, height=5)
+# FeaturePlot(ORN, reduction = 'tsne.rna',max.cutoff = 10,features = c("Or12") ,order=TRUE, ncol = 1)+ggtitle("Or12")
+# dev.off()
+
+#  New Fig2C in 07_ORN_part_subcluster_info_merge.R
 
 # Fig2D
-DefaultAssay(ORN)<-"RNA"
-pdf('./00_Figure/Fig2D-Orco-FeaturePlot_1.pdf', width=9, height=8)
-FeaturePlot(ORN, reduction = 'tsne.rna',max.cutoff = 10,features = c("Or2") ,order=TRUE, ncol = 1)
-dev.off()
-
-library(scCustomize)
-pdf('./00_Figure/Fig2D-Orco-FeaturePlot_2.pdf', width=14, height=4)
-# Visualize co-expression of two features simultaneously
-p1<-FeaturePlot(ORN, features = c("LOC552552"),max.cutoff =3, order=TRUE,)
-p2<-FeaturePlot(ORN, features = c("LOC726019"),max.cutoff =3, order=TRUE,)
-p3<-FeaturePlot(ORN, features = c("LOC551704"),max.cutoff =3, order=TRUE,)
-#Plot_Density_Joint_Only(seurat_object = ORN, features = c("Or2", "LOC552552"))
-p1|p2|p2
-dev.off()
-
-receptorSCT.data = ORN@assays$RNA[dotplot_feature,]
-OrcoL<- c("Or2","LOC552552","LOC726019","LOC551704")
-for (Orco in OrcoL) {
-  print(Orco)
-  positiveL <- names( receptorSCT.data[Orco,][receptorSCT.data[Orco,] >= 1] )
-  positiveL2 <- names( receptorSCT.data[Orco,][receptorSCT.data[Orco,] >= 2] )
-  ORN@meta.data[paste0(Orco, '_norExp1')] <- 
-    as.numeric(
-      lapply(rownames(ORN@meta.data), function(x){
-        # print(x)
-        if (as.character(x) %in% positiveL) {
-          return(1)
-        } else {return(0)}
-      })
-    )
-  
-  if (Orco == 'Or2') {
-    ORN@meta.data[paste0(Orco, '_norExp2')] <- 
-      as.numeric(
-        lapply(rownames(ORN@meta.data), function(x){
-          # print(x)
-          if (as.character(x) %in% positiveL2) {
-            return(1)
-          } else {return(0)}
-        })
-      )
-  }
-}
-library(VennDiagram)
-dataset1 <-  row.names(ORN@meta.data[ORN@meta.data$Or2_norExp1 == 1,])
-dataset2 <-  row.names(ORN@meta.data[ORN@meta.data$LOC552552_norExp1 == 1,])
-dataset3 <-  row.names(ORN@meta.data[ORN@meta.data$LOC726019_norExp1 == 1,])
-dataset4 <-  row.names(ORN@meta.data[ORN@meta.data$LOC551704_norExp1 == 1,])
-name1 <- 'Or2 , norm.exp > 1'
-name2 <- 'LOC552552 , norm.exp > 1'
-name3 <- 'LOC726019 , norm.exp > 1'
-name4 <- 'LOC551704 , norm.exp > 1'
-library(UpSetR)
-listInput <- list(
-        Or2 = dataset1, 
-        LOC552552 = dataset2, 
-        LOC726019 = dataset3,
-        LOC551704 = dataset4)
-pdf("./00_Figure/Fig2D-Orco-upsetR.pdf", width=6, height=4)
-upset(fromList(listInput), nsets = 7, nintersects = 30, mb.ratio = c(0.5, 0.5),
-      order.by = c("freq", "degree"), decreasing = c(TRUE,FALSE))
-dev.off()
-
-# the simulation data 
-
-# Fig2E
 DefaultAssay(ORN) <- "integratedRNA_onecluster"
 Idents(ORN)<-ORN$subcluster
 object<-ORN;
@@ -156,13 +90,14 @@ tree <- groupOTU(data.tree, .node=multiOR_cluster)
 ggtree(tree,aes(color=group)) + geom_tiplab()+ geom_treescale()
 dev.off()
 #cluster order by tree
-m<-ggtree(tree) + geom_tiplab()+ geom_treescale()
+m<-ggtree(data.tree) + geom_tiplab()+ geom_treescale()
 cluster_order<-na.omit(m$data[order(m$data$y),]$label)
 cluster_order<-as.character(cluster_order)
 
 DefaultAssay(ORN)<-"raw_RNA"
-ORN_withpower$subcluster<-factor(ORN_withpower$subcluster,levels=cluster_order)
-Idents(ORN)<-factor(ORN_withpower$subcluster,levels=cluster_order)
+#ORN_withpower$subcluster<-factor(ORN_withpower$subcluster,levels=cluster_order)
+Idents(ORN)<-factor(ORN$subcluster,levels=cluster_order)
+saveRDS(ORN,"./05_ORN_cluster/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_modify_the_tsne_order_by_tree.rds")
 
 DefaultAssay(ORN)<-"raw_RNA"
 p<-DotPlot(ORN,features = all_receptor_gene) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
@@ -170,22 +105,110 @@ dotplot_data<-p$data;
 #filter dotplot ;
 dotplot_data$state<-"No";
 for(i in 1:nrow(dotplot_data)){
-  if(dotplot_data[i,]$pct.exp>80&&dotplot_data[i,]$avg.exp.scaled> 0){dotplot_data[i,]$state="Yes"};
-  if(dotplot_data[i,]$pct.exp>35&&dotplot_data[i,]$avg.exp.scaled> 1){dotplot_data[i,]$state="Yes"};
-  if(dotplot_data[i,]$pct.exp>25&&dotplot_data[i,]$avg.exp.scaled>2.4){dotplot_data[i,]$state="Yes"};
+  if(dotplot_data[i,]$pct.exp>40&&dotplot_data[i,]$avg.exp.scaled> -0.2){dotplot_data[i,]$state="Yes"};
+  if(dotplot_data[i,]$pct.exp>30&&dotplot_data[i,]$avg.exp.scaled> 1){dotplot_data[i,]$state="Yes"};
+  if(dotplot_data[i,]$pct.exp>20&&dotplot_data[i,]$avg.exp.scaled>2.4){dotplot_data[i,]$state="Yes"};
 }
 dotplot_data<-dotplot_data[which(dotplot_data$state=="Yes"),]
 dotplot_data<-dotplot_data[-which(dotplot_data$features.plot%in% Orco),];
 dotplot_feature<-unique(c(Orco,rev(as.character(dotplot_data$features.plot))))
 write.csv(dotplot_data,"./05_ORN_cluster/02_second_cluster/06_rm_without_power/dotplot_data_remove_nopower.csv")
 DefaultAssay(ORN)<-"raw_RNA"
-pdf("./00_Figure/Fig2E-b-remove_nopower-dotplot-orderbytree.pdf",width=22, height=14)
+pdf("./00_Figure/Fig2E-b-remove_nopower-dotplot-orderbytree.pdf",width=25, height=14)
 p<-DotPlot(ORN,features = dotplot_feature) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
 p
-# change color bar for p2
 p2<-DotPlot(ORN,features = dotplot_feature) +  xlab('') + ylab('') +  theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) +
 scale_color_gradientn(colours = c('#008080', '#FF00FF'),  name = 'Average\nexpression', oob = scales::squish)
 p2
 dev.off()
 
-saveRDS(ORN,"./05_ORN_cluster/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_orderbytree.rds")
+# > dotplot_feature[which(dotplot_feature%in% IR_gene)]
+# [1] "LOC552552"    "LOC551704"    "LOC726019"    "LOC102653640" "LOC409777"   
+# [6] "LOC412949"   
+# > dotplot_feature[which(dotplot_feature%in% GR_gene)]
+# [1] "LOC413596"
+
+
+#library(scCustomize)
+#pdf("./00_Figure/Fig2E-b-remove_nopower-dotplot-cluster.pdf",width=25, height=14)
+#Clustered_DotPlot(seurat_object = ORN, features = dotplot_feature)
+#dev.off()
+
+# Fig2E Orco Violin plot 
+Orco<- c("Or2","LOC552552","LOC551704","LOC726019")
+DefaultAssay(ORN) <- "RNA"
+Idents(ORN)<-ORN$subcluster
+colors_list <- c(myUmapcolors,myUmapcolors)
+pdf('./00_Figure/Fig2E-Orcocoreceptor_VlnPlot_RNA.pdf',width=25, height=6)
+#VlnPlot(ORN, features = Orco, ncol = 1, pt.size = 0.1)
+Stacked_VlnPlot(seurat_object = ORN, features = Orco, x_lab_rotate = TRUE,plot_spacing = 0.3, plot_legend = T,colors_use = colors_list)
+dev.off()
+
+
+# Fig2F Upset plot for 4 coreceptor barcode 
+
+# 1: Observation
+OrcoL<- c("Or2","LOC552552","LOC551704","LOC726019")
+ORN_count<-ORN@assays$RNA
+ORN_count<-ORN_count[which(rownames(ORN_count)%in%OrcoL),]
+ORN_matrix<-as.matrix(ORN_count)
+ORN_matrix<-ORN_matrix[,colSums(ORN_matrix)>0]
+ORN_matrix<-ORN_matrix[rowSums(ORN_matrix)>0,]
+
+library(UpSetR)
+listInput <- list(
+        Or2 = names(which(ORN_matrix[4,]>0)), 
+        LOC552552 = names(which(ORN_matrix[2,]>0)), 
+        LOC551704 = names(which(ORN_matrix[1,]>0)), 
+        LOC726019 = names(which(ORN_matrix[3,]>0)))
+pdf("./00_Figure/Fig2F-Orco-upsetR_Observation.pdf", width=6, height=4)
+upset(fromList(listInput), nintersects = 30, mb.ratio = c(0.5, 0.5), order.by = c("freq", "degree"), decreasing = c(FALSE,FALSE))
+upset(fromList(listInput), nintersects = 30, mb.ratio = c(0.5, 0.5), sets = OrcoL,keep.order = TRUE, order.by = c("freq", "degree"), decreasing = c(TRUE,FALSE))
+upset(fromList(listInput), nintersects = 30, mb.ratio = c(0.5, 0.5), sets = OrcoL,keep.order = TRUE, order.by = c("freq", "degree"), decreasing = c(TRUE,TRUE))
+dev.off()
+
+# 2: Expectation by random dropout
+# the simulation data 
+total_cell <- length(colnames(ORN_matrix))
+Or2_dropout <- 1-length(listInput$Or2)/length(colnames(ORN_matrix))
+LOC552552_dropout <- 1-length(listInput$LOC552552)/length(colnames(ORN_matrix))
+LOC551704_dropout <- 1-length(listInput$LOC551704)/length(colnames(ORN_matrix))
+LOC726019_dropout <- 1-length(listInput$LOC726019)/length(colnames(ORN_matrix))
+input <- c(
+  "Or2"=total_cell*(1-Or2_dropout)*LOC552552_dropout*LOC551704_dropout*LOC726019_dropout,
+  "LOC552552"=total_cell*(1-LOC552552_dropout)*Or2_dropout*LOC551704_dropout*LOC726019_dropout,
+  "LOC551704"=total_cell*(1-LOC551704_dropout)*Or2_dropout*LOC552552_dropout*LOC726019_dropout,
+  "LOC726019"=total_cell*(1-LOC726019_dropout)*Or2_dropout*LOC552552_dropout*LOC551704_dropout,
+  "Or2&LOC552552"=total_cell*(1-Or2_dropout)*(1-LOC552552_dropout)*LOC551704_dropout*LOC726019_dropout, 
+  "Or2&LOC551704"=total_cell*(1-Or2_dropout)*(1-LOC551704_dropout)*LOC552552_dropout*LOC726019_dropout, 
+  "Or2&LOC726019"=total_cell*(1-Or2_dropout)*(1-LOC726019_dropout)*LOC551704_dropout*LOC552552_dropout, 
+  "LOC552552&LOC551704"=total_cell*(1-LOC552552_dropout)*(1-LOC551704_dropout)*Or2_dropout*LOC726019_dropout, 
+  "LOC552552&LOC726019"=total_cell*(1-LOC552552_dropout)*(1-LOC726019_dropout)*Or2_dropout*LOC551704_dropout, 
+  "LOC551704&LOC726019"=total_cell*(1-LOC551704_dropout)*(1-LOC726019_dropout)*LOC552552_dropout*Or2_dropout, 
+  "Or2&LOC552552&LOC551704"=total_cell*(1-Or2_dropout)*(1-LOC552552_dropout)*(1-LOC551704_dropout)*LOC726019_dropout,
+  "Or2&LOC552552&LOC726019"=total_cell*(1-Or2_dropout)*(1-LOC552552_dropout)*(1-LOC726019_dropout)*LOC551704_dropout,
+  "Or2&LOC726019&LOC551704"=total_cell*(1-Or2_dropout)*(1-LOC726019_dropout)*(1-LOC551704_dropout)*LOC552552_dropout, 
+  "LOC552552&LOC551704&LOC726019"=total_cell*(1-LOC552552_dropout)*(1-LOC551704_dropout)*(1-LOC726019_dropout)*Or2_dropout,
+  "Or2&LOC552552&LOC551704&LOC726019"=total_cell*(1-Or2_dropout)*(1-LOC552552_dropout)*(1-LOC551704_dropout)*(1-LOC726019_dropout)
+)
+data <- UpSetR::fromExpression(input)
+pdf("./00_Figure/Fig2F-Orco-upsetR_Expectation.pdf", width=6, height=4)
+upset(data, nintersects = 30, mb.ratio = c(0.5, 0.5), order.by = c("freq", "degree"), decreasing = c(FALSE,FALSE))
+upset(data, nintersects = 30, mb.ratio = c(0.5, 0.5), sets = OrcoL,keep.order = TRUE, order.by = c("freq", "degree"), decreasing = c(TRUE,FALSE))
+upset(data, nintersects = 30, mb.ratio = c(0.5, 0.5), sets = OrcoL,keep.order = TRUE, order.by = c("freq", "degree"), decreasing = c(TRUE,TRUE))
+dev.off()
+
+# Fig2G two single OR and two coexp OR pairs
+DefaultAssay(ORN)<-"raw_RNA"
+pdf('./00_Figure/Fig2G-single-OR-FeaturePlot.pdf', width=9, height=4)
+p1<- FeaturePlot(ORN, reduction = 'tsne.rna',max.cutoff = 10,features = c("LOC100577955") ,order=TRUE, ncol = 1)+ggtitle("31:LOC100577955(Or13a)")
+p2<- FeaturePlot(ORN, reduction = 'tsne.rna',max.cutoff = 10,features = c("Or115") ,order=TRUE, ncol = 1)+ggtitle("p2_10:Or115")
+p1|p2
+dev.off()
+pdf('./00_Figure/Fig2G-multiple-OR-FeaturePlot.pdf', width=16, height=4)
+# Visualize co-expression of two features simultaneously
+FeaturePlot(ORN, features = c("LOC102653782", "LOC102656904"),max.cutoff =3, blend = TRUE,order=TRUE,)+ggtitle("p4_0:LOC102653782_LOC102656904")
+FeaturePlot(ORN, features = c("LOC102653637", "LOC102653703"),max.cutoff =3, blend = TRUE,order=TRUE,)+ggtitle("p3_6:LOC102653637(Or4-like)_LOC102653703(Or4-like)")
+dev.off()
+
+

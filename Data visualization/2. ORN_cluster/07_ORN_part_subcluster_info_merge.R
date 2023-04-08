@@ -145,8 +145,6 @@ tree <- groupOTU(data.tree, .node=keep_cluster)
 ggtree(tree,aes(color=group),layout = "circular") + geom_tiplab()+ geom_treescale()
 dev.off()
 
-
-
 #cluster tree 
 ORN_withpower <-subset(ORN,idents=c(as.character(cluster_number$Var1)))
 DefaultAssay(ORN_withpower) <- "integratedRNA_onecluster"
@@ -169,8 +167,6 @@ library(ggtree);
 m<-ggtree(data.tree) + geom_tiplab()+ geom_treescale()
 cluster_order<-na.omit(m$data[order(m$data$y),]$label)
 cluster_order<-as.character(cluster_order)
-
-
 
 DefaultAssay(ORN_withpower)<-"raw_RNA"
 Idents(ORN_withpower)<-factor(ORN_withpower$subcluster,levels=cluster_order)
@@ -223,6 +219,28 @@ pdf("./05_ORN_cluster/02_second_cluster/last_ORN_withpower_subcluster.pdf",width
 #DimPlot(ORN_withpower, label = TRUE, repel = TRUE,pt.size=0.1,reduction = "tsne.rna",group.by = "orig.ident")
 DimPlot(ORN_withpower, label = TRUE, repel = TRUE,pt.size=0.1,reduction = "tsne.rna",group.by = "subcluster")
 dev.off()
+
+#cluster tree 
+DefaultAssay(ORN_withpower) <- "integratedRNA_onecluster"
+object<- ORN_withpower
+embeddings <- Embeddings(object = object, reduction = "pca")[,1:50]
+data.dims <- lapply(X = levels(x = object), FUN = function(x) {
+    cells <- WhichCells(object = object, idents = x)
+    if (length(x = cells) == 1) {
+        cells <- c(cells, cells)
+    }
+    temp <- colMeans(x = embeddings[cells, ])
+})
+data.dims <- do.call(what = "cbind", args = data.dims)
+colnames(x = data.dims) <- levels(x = object)
+library(lsa)
+cosine_dist <- as.dist(1-cosine(data.dims))
+data.tree <- ape::as.phylo(x = hclust(d = cosine_dist))
+library(ggtree);
+#cluster order by tree
+m<-ggtree(data.tree) + geom_tiplab()+ geom_treescale()
+cluster_order<-na.omit(m$data[order(m$data$y),]$label)
+cluster_order<-as.character(cluster_order)
 
 DefaultAssay(ORN_withpower)<-"raw_RNA"
 Idents(ORN_withpower)<-factor(ORN_withpower$subcluster,levels=cluster_order)

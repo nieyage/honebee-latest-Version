@@ -14,11 +14,12 @@ GR_gene<- unique(chemoreceptor[chemoreceptor$gene_type=="GR",]$gene_name)
 IR_gene<- unique(c("LOC412949","LOC100577496","LOC102653640","LOC727346","LOC100578352","LOC552552","LOC726019","LOC551704","LOC410623","LOC100576097","LOC409777"))
 Orco<- c("Or2","LOC552552","LOC726019","LOC551704")
 all_receptor_gene <- unique(c(Orco,OR_gene,IR_gene,GR_gene))
-ORN<- readRDS("./05_ORN_cluster/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_orderbytree.rds")
+ORN<- readRDS("/data/R02/nieyg/project/honeybee/honebee-latest-Version/05_ORN_cluster/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_modify_the_tsne_order_by_tree_recall_peak.rds")
 DefaultAssay(ORN)<-"raw_RNA"
+dotplot_data<-read.csv("./05_ORN_cluster/02_second_cluster/06_rm_without_power/dotplot_data_remove_nopower.csv")
+dotplot_feature<-unique(rev(as.character(dotplot_data$features.plot)));
 
 #Fig3A OR correlation  heatmap and sequence tree 
-
 # sequence tree 
 library(Biostrings)
 library(muscle)
@@ -29,42 +30,39 @@ OR_fasta<-readAAStringSet("/md01/nieyg/ref/10X/Amel_HAv3.1/OR_transcript_pep.aa"
 GR_fasta<-readAAStringSet("/md01/nieyg/ref/10X/Amel_HAv3.1/GR_transcript_pep.aa", format="fasta",nrec=-1L, skip=0L, seek.first.rec=FALSE, use.names=TRUE)
 IR_fasta<-readAAStringSet("/md01/nieyg/ref/10X/Amel_HAv3.1/IR_transcript_pep.aa", format="fasta",nrec=-1L, skip=0L, seek.first.rec=FALSE, use.names=TRUE)
 supply_fasta<-readAAStringSet("/md01/nieyg/ref/10X/Amel_HAv3.1/supply.aa", format="fasta",nrec=-1L, skip=0L, seek.first.rec=FALSE, use.names=TRUE)
-dotplot_data<-read.csv("./05_ORN_cluster/02_second_cluster/06_rm_without_power/dotplot_data_remove_nopower.csv")
-dotplot_feature<-unique(rev(as.character(dotplot_data$features.plot)));
 #OR2 is placed in the last column;
 dotplot_feature_OR2<-c(Orco,dotplot_feature)
 all_receptor_gene_fasta<- c(OR_fasta,GR_fasta,IR_fasta,supply_fasta)
+# #add a OR symbol label 
+# # add max_exp OR label for each cell
+# ORN_count<-ORN@assays$RNA
+# ORN_count<-ORN_count[which(rownames(ORN_count)%in%dotplot_feature),]
+# ORN_matrix<-as.matrix(ORN_count)
+# #ORN_matrix<-ORN_matrix[,colSums(ORN_matrix)>0]
+# #ORN_matrix<-ORN_matrix[rowSums(ORN_matrix)>0,]
+# barcode_label<-data.frame(barcode=colnames(ORN_matrix),label=rep("Not_sure",length(colnames(ORN_matrix))))
+#   for (i in 1:length(colnames(ORN_matrix))){
+#     if(length(names(which(ORN_matrix[,i]==max(ORN_matrix[,i]))))==1){
+#     barcode_label[i,2]=names(which(ORN_matrix[,i]==max(ORN_matrix[,i])))
+# }
+#   }
+# ORN$OR_label<-barcode_label$label
+# object<-ORN
+# embeddings <- Embeddings(object = object, reduction = "pca")[,1:50]
+# Idents(object)<-ORN$OR_label
+# data.dims <- lapply(X = levels(x = object), FUN = function(x) {
+#     cells <- WhichCells(object = object, idents = x)
+#     if (length(x = cells) == 1) {
+#         cells <- c(cells, cells)
+#     }
+#     temp <- colMeans(x = embeddings[cells, ])
+# })
+# data.dims <- do.call(what = "cbind", args = data.dims)
+# colnames(x = data.dims) <- levels(x = object)
+# last_data<-data.dims[,-which(colnames(data.dims)=="Not_sure")]
+# cor.data.dims <- as.data.frame(abs(cor(last_data)))
 
-#add a OR symbol label 
-# add max_exp OR label for each cell
-ORN_count<-ORN@assays$RNA
-ORN_count<-ORN_count[which(rownames(ORN_count)%in%dotplot_feature),]
-ORN_matrix<-as.matrix(ORN_count)
-#ORN_matrix<-ORN_matrix[,colSums(ORN_matrix)>0]
-#ORN_matrix<-ORN_matrix[rowSums(ORN_matrix)>0,]
-barcode_label<-data.frame(barcode=colnames(ORN_matrix),label=rep("Not_sure",length(colnames(ORN_matrix))))
-  for (i in 1:length(colnames(ORN_matrix))){
-    if(length(names(which(ORN_matrix[,i]==max(ORN_matrix[,i]))))==1){
-    barcode_label[i,2]=names(which(ORN_matrix[,i]==max(ORN_matrix[,i])))
-}
-  }
-ORN$OR_label<-barcode_label$label
-object<-ORN
-embeddings <- Embeddings(object = object, reduction = "pca")[,1:50]
-Idents(object)<-ORN$OR_label
-data.dims <- lapply(X = levels(x = object), FUN = function(x) {
-    cells <- WhichCells(object = object, idents = x)
-    if (length(x = cells) == 1) {
-        cells <- c(cells, cells)
-    }
-    temp <- colMeans(x = embeddings[cells, ])
-})
-data.dims <- do.call(what = "cbind", args = data.dims)
-colnames(x = data.dims) <- levels(x = object)
-last_data<-data.dims[,-which(colnames(data.dims)=="Not_sure")]
-cor.data.dims <- as.data.frame(abs(cor(last_data)))
-
-# corelation heatmap tree
+# OR sequence corelation heatmap tree
 dotplot_feature_fa<- all_receptor_gene_fasta[colnames(dotplot_feature_OR2),]
 aln <- muscle::muscle(dotplot_feature_fa)
 auto <- maskGaps(aln, min.fraction=0.5, min.block.width=4)
@@ -80,21 +78,20 @@ gene_order<-na.omit(m$data[order(m$data$y),]$label)
 gene_order<-as.character(gene_order)
 
 library(pheatmap)
-cor.data.dims <- cor.data.dims[rev(gene_order),rev(gene_order)]
-pdf("./00_Figure/Fig3A-OR_in_dotplot_cosine_correlation.pdf",width=17,height=16)
-
-#pheatmap(cor.data.dims,
-#         cluster_cols = F,
-#         cluster_rows = F,
-#         #color = colorRampPalette(c("#F1ECEC", "#3082BD","#1C214F"))(100),
-#         #annotation_col = barcode_label_pheatmap,
-#         #annotation_colors = ann_colors,
-#         #annotation_row = barcode_label_pheatmap,
-#         annotation_legend = TRUE,
-#         show_rownames=T,
-#         show_colnames=T
-#    )
-dev.off()
+# cor.data.dims <- cor.data.dims[rev(gene_order),rev(gene_order)]
+# pdf("./00_Figure/Fig3A-OR_in_dotplot_cosine_correlation.pdf",width=17,height=16)
+# pheatmap(cor.data.dims,
+#          cluster_cols = F,
+#          cluster_rows = F,
+#          #color = colorRampPalette(c("#F1ECEC", "#3082BD","#1C214F"))(100),
+#          #annotation_col = barcode_label_pheatmap,
+#          #annotation_colors = ann_colors,
+#          #annotation_row = barcode_label_pheatmap,
+#          annotation_legend = TRUE,
+#          show_rownames=T,
+#          show_colnames=T
+#     )
+# dev.off()
 
 # Fig3B:
 cluster_number<-as.data.frame(table(table(dotplot_data$id)))
@@ -226,9 +223,12 @@ for (i in 1:nrow(OR_pair)){
 #        No  Yes
 #  No  4046    0
 #  Yes 1607  125
+#        No  Yes
+#  No  4678    1
+#  Yes 1880  344
 
 probability<-data.frame(OR_pair_type=c("same cluster","different cluster"),
-    probability=c(125/125,1607/5653));
+    probability=c(344/(344+1),1880/(1880+4678)));
 
 pdf("./00_Figure/Fig3E-The_probability_OR_pair_appearing_on_same_chromosome.pdf",width=4,height=4)
 p<-ggplot(data = probability, aes_string(x = "OR_pair_type", y = "probability")) +  
@@ -268,6 +268,189 @@ scale_color_manual(values =c("#F55050","#86A3B8"))
 dev.off()
 
 # Fig3F
+# coexp in multiple OR cluster
+#Fig 3FGH
+# show a typical OR pair (co-expression);
+# select a beautiful track to show :
+library(ggplot2)
+library(gggenes)
+# each multi OR cluster 
+library(pheatmap)
+library(dittoSeq)
+library(cowplot)
+library(lsa)
+library(ggpubr)
+library(RColorBrewer)
+log2FCdata<-data.frame();
+Freq<- as.data.frame(table(dotplot_data$id));
+multiple_classes_order_id <- as.character(Freq[Freq$Freq>1,1])
+DefaultAssay(ORN)<- "integratedRNA_onecluster"
+pdf("./05_ORN_cluster/03_coexp_cluster/distinguish_multi_OR_with_powerful.pdf",width=14,height=6)
+for (cluster in multiple_classes_order_id){
+print(cluster)
+obj<-subset(ORN,idents=cluster);
+obj_features<-dotplot_data[dotplot_data$id==cluster,]$features.plot
+# add max_exp OR label for each cell
+  ORN_count<-ORN@assays$raw_RNA
+  ORN_count<-ORN_count[which(rownames(ORN_count)%in%obj_features),]
+  ORN_matrix<-as.matrix(ORN_count)
+  ORN_matrix<-ORN_matrix[,colSums(ORN_matrix)>0]
+  ORN_matrix<-ORN_matrix[rowSums(ORN_matrix)>0,]
+  barcode_label<-data.frame(barcode=colnames(ORN_matrix),label=rep("NA",length(colnames(ORN_matrix))))
+    for (i in 1:length(colnames(ORN_matrix))){
+      if(length(names(which(ORN_matrix[,i]==max(ORN_matrix[,i]))))==1){
+      barcode_label[i,2]=names(which(ORN_matrix[,i]==max(ORN_matrix[,i])))}
+    }
+    barcode_label<-barcode_label[barcode_label$label!="NA",]
+    barcode_label<-barcode_label[order(barcode_label$label),];
+# p1 cell cosine simility heatmap 
+    embeddings <- Embeddings(object = ORN, reduction = "pca")[,1:50]
+    embeddings <- embeddings[barcode_label$barcode,]
+    trans_dist <- 1-cosine(t(embeddings))
+    barcode_label_pheatmap<-data.frame(OR=barcode_label$label)
+    rownames(barcode_label_pheatmap)<-barcode_label$barcode
+    col<-brewer.pal(12,"Set3")[1:length(unique(barcode_label_pheatmap$OR))]
+    names(col)<-unique(barcode_label_pheatmap$OR)
+    ann_colors= list(OR = col)
+    p1<-pheatmap(trans_dist,
+           cluster_cols = TRUE,
+           cluster_rows = TRUE,
+             color = colorRampPalette(c("#4B0C1A", "#C25B3F","#F1ECEC", "#3082BD","#1C214F"))(100),
+             annotation_col = barcode_label_pheatmap,
+             annotation_colors = ann_colors,
+             annotation_row = barcode_label_pheatmap,
+             annotation_legend = TRUE,
+             show_rownames=F,
+             show_colnames=F)
+# calculate the cosine simility within group and between groups;
+    rownames(barcode_label)<-barcode_label$barcode
+    within_group<-c()
+    between_group<-c()
+    for (i in 1:nrow(trans_dist)){
+    for (j in 1:ncol(trans_dist)){
+        if(i!=j){
+            if(barcode_label[rownames(trans_dist)[i],2]==barcode_label[colnames(trans_dist)[j],2]){
+                within_group<-c(within_group,trans_dist[i,j]);
+            }
+            else{between_group<-c(between_group,trans_dist[i,j])}
+        }
+    }
+    }
+# calculate the FC 
+    if(!is.null(median(between_group))){
+    log2FC<-log2(median(between_group))-log2(median(within_group));
+    test<-wilcox.test(within_group,between_group);
+    pvalue<-test$p.value;
+    data_subset<-data.frame(cluster,log2FC,pvalue)
+    log2FCdata<-rbind(log2FCdata,data_subset)
+    }
+# plot density line 
+# manage data
+    type<-c(rep("within-OR",length(within_group)),rep("between-OR",length(between_group)))
+    var<-c(within_group,between_group)
+    data<-data.frame(type,var)
+    data$type<-factor(data$type,levels=c("within-OR","between-OR"))
+    p2<-ggplot(data, aes(x=var, fill=type)) + xlab("Transcriptome distance")+
+                  geom_density(alpha=.25) + theme_classic() 
+    # t-test
+    p3 <- ggboxplot(data, x="type", y="var", color = "type")+stat_compare_means()+guides(fill = "none")
+#raw counts heatmap 
+# Heat map of expression  value for Or25-27 for cluster 5_1,5_2,14-1 and others( random select a few as control) 
+    obj_barcode<-colnames(obj)
+    all_barcode<-colnames(ORN)
+    random_barcode<-sample(setdiff(all_barcode,obj_barcode),length(obj_barcode))
+    obj<-subset(ORN,cells=c(obj_barcode,random_barcode))
+    for (i in 1:length(obj$subcluster)){
+      if(obj$subcluster[i]!=cluster){
+            {obj$subcluster[i]="other"}
+        }
+    }
+    DefaultAssay(obj)<-"raw_RNA"
+    obj_data<-as.data.frame(t(obj@assays$raw_RNA[obj_features,]))
+    obj_data<-obj_data[order(obj_data[,1],obj_data[,2],decreasing=T),]
+    barcode_info<-data.frame(obj$subcluster)
+    rownames(barcode_info)<-colnames(obj)
+    p4<-pheatmap(t(obj_data),
+             cluster_cols = F,
+             cluster_rows = F,
+             color = colorRampPalette(c("white", "red"))(100),
+             annotation_col = barcode_info,
+             #annotation_colors = ann_colors,
+             #annotation_row = barcode_info,
+             annotation_legend = TRUE,
+             show_rownames=T,
+             show_colnames=F
+      )
+    # plot OR heatmap 
+    #obj<-ScaleData(obj);
+    #p4<-dittoHeatmap(obj,obj_features, annot.by = "subcluster",slot ="count",scaled.to.max = F)
+    # merge 4 plots 
+    top_right<-plot_grid(p2,p3,labels = c(" "," "),rel_widths = c(2, 1))
+    right<-plot_grid(top_right,p4$gtable,ncol = 1,labels = c(" "," "))
+    last<-plot_grid(p1$gtable, right, labels = c(' ', ''), label_size = 12, ncol = 2)
+    title <- ggdraw() + 
+      draw_label(
+        paste("Cluster",cluster,":","log2FC=",log2FC),
+        fontface = 'bold',
+        x = 0,
+        hjust = 0
+      )
+    add_title<-plot_grid(title, last,ncol = 1 , rel_heights = c(0.1, 1) )
+    print(add_title)
+    }
+dev.off()
 
+# Fig3H coexp track plot
+## Track from scATAC-seq for all multiple cluster 
+library(BSgenome.Amel.HAv3.1.update.chemoreceptor)
+DefaultAssay(ORN)<-"peaks_ORN_subcluster"
+pdf("./05_ORN_cluster/03_coexp_cluster/multi_OR_without_nopower_trackplot.pdf",width=10,height=10)
+for (cluster in multiple_classes_order_id){
+print(cluster)
+obj<-subset(ORN,idents=cluster);
+obj_features<-dotplot_data[dotplot_data$id==cluster,]$features.plot
+obj_barcode<-colnames(obj)
+all_barcode<-colnames(ORN)
+random_barcode<-sample(setdiff(all_barcode,obj_barcode),length(obj_barcode))
+obj<-subset(ORN,cells=c(obj_barcode,random_barcode))
+for (i in 1:length(obj$subcluster)){
+  if(obj$subcluster[i]!=cluster){obj$subcluster[i]="other"}
+    }
+Idents(obj)<-obj$subcluster
+# first compute the GC content for each peak
+obj <- RegionStats(obj, genome = BSgenome.Amel.antenan)
+Annotation(obj)$tx_id <-gsub("_g","-g",Annotation(obj)$gene_name)
+Annotation(obj)$tx_id <-Annotation(obj)$transcript_id
+# link peaks to genes
+obj <- LinkPeaks(
+  object = obj,
+  peak.assay = "peaks_ORN_subcluster",
+  expression.assay = "raw_RNA",
+  genes.use = obj_features
+)
+######Visulize track and RNA exp######
+idents.plot <- Idents(obj)
+# plot region 
+start<- min(start(Annotation(obj)[which(Annotation(obj)$gene_name%in%obj_features),]))
+end  <- max(end(Annotation(obj)[which(Annotation(obj)$gene_name%in%obj_features),]))
+seq  <- as.character(Annotation(obj)[which(Annotation(obj)$gene_name%in%obj_features),]@seqnames@values)
+ranges.show <- paste(seq,start,end,sep="-")
+p1<-CoveragePlot(
+  object = obj,
+  region = ranges.show,
+  window = 120,
+  extend.upstream = 100,
+  annotation = TRUE,
+  extend.downstream = 100,
+  tile = TRUE,
+  tile.size = 100,
+  tile.cells = 30,
+  links=F
+)
+print(p1)
+}
+dev.off()
+
+saveRDS(ORN,"./05_ORN_cluster/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_modify_the_tsne_recall_peak.rds")
 
 
