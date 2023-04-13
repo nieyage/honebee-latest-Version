@@ -129,7 +129,7 @@ dev.off()
 # [1] "LOC413596"
 
 
-#library(scCustomize)
+library(scCustomize)
 #pdf("./00_Figure/Fig2E-b-remove_nopower-dotplot-cluster.pdf",width=25, height=14)
 #Clustered_DotPlot(seurat_object = ORN, features = dotplot_feature)
 #dev.off()
@@ -144,9 +144,7 @@ pdf('./00_Figure/Fig2E-Orcocoreceptor_VlnPlot_RNA.pdf',width=25, height=6)
 Stacked_VlnPlot(seurat_object = ORN, features = Orco, x_lab_rotate = TRUE,plot_spacing = 0.3, plot_legend = T,colors_use = colors_list)
 dev.off()
 
-
 # Fig2F Upset plot for 4 coreceptor barcode 
-
 # 1: Observation
 OrcoL<- c("Or2","LOC552552","LOC551704","LOC726019")
 ORN_count<-ORN@assays$RNA

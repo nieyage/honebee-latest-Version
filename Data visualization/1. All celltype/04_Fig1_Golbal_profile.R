@@ -37,14 +37,12 @@ dev.off()
 # Fig1D:
 # Major celltype track and violin plot 
 ##Track for Marker genes promoters
-
 DefaultAssay(honeybee) <- "peaks"
 # first compute the GC content for each peak
 honeybee <- RegionStats(honeybee, genome = BSgenome.Amel.HAv3.1.update.chemoreceptor)
 Annotation(honeybee)$tx_id <-Annotation(honeybee)$gene_name
 #features<-c("Or2","LOC411079","LOC410151","LOC406073","LOC409780","Obp5","Obp11","Obp4")
 # link peaks to genes
-
 honeybee <- LinkPeaks(
   object = honeybee,
   peak.assay = "peaks",

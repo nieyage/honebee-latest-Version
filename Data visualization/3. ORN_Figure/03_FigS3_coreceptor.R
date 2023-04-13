@@ -167,7 +167,7 @@ ggsave(filename, limitsize = FALSE, units = "px", width = 2000, height = 2000,p3
 
 # FigS3D: Orco track plot 
 library(BSgenome.Amel.HAv3.1.update.chemoreceptor)
-DefaultAssay(ORN) <- "peaks"
+DefaultAssay(ORN) <- "peaks_ORN_subcluster"
 # first compute the GC content for each peak
 ORN <- RegionStats(ORN, genome = BSgenome.Amel.HAv3.1.update.chemoreceptor)
 Annotation(ORN)$tx_id <-Annotation(ORN)$gene_name
@@ -176,9 +176,9 @@ Annotation(ORN)$tx_id <-Annotation(ORN)$gene_name
 
 ORN <- LinkPeaks(
   object = ORN,
-  peak.assay = "peaks",
+  peak.assay = "peaks_ORN_subcluster",
   expression.assay = "RNA",
-  genes.use = OrcoL
+  genes.use = Orco
 )
 ######Visulize track and RNA exp######
 idents.plot <- Idents(ORN)

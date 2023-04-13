@@ -38,3 +38,30 @@ R CMD INSTALL BSgenome.Amel.HAv3.1.update.chemoreceptor_1.0.0.tar.gz
 ```
 
 library(BSgenome.Amel.HAv3.1.update.chemoreceptor)
+
+
+# make the Apis_mellifera.OrgDb packages
+```
+#####GO term######
+library(AnnotationHub)
+library(biomaRt)
+library(dplyr)
+library(goseq)
+library(DOSE)
+library(stringr)
+library(clusterProfiler)
+library(GenomicRanges)
+hub <- AnnotationHub::AnnotationHub() 
+query(hub, "Apis mellifera") 
+hub
+Apis_mellifera.OrgDb <- hub[["AH102515"]]
+columns(Apis_mellifera.OrgDb)
+Apis_mellifera.OrgDb
+head(keys(Apis_mellifera.OrgDb,keytype = "SYMBOL"),5) 
+keytypes(Apis_mellifera.OrgDb)
+keys(Apis_mellifera.OrgDb)[1:10] 
+bitr(keys(Apis_mellifera.OrgDb)[1:10], 'ENTREZID', "SYMBOL", Apis_mellifera.OrgDb) 
+bitr(keys(Apis_mellifera.OrgDb)[1:2], 'ENTREZID', c("SYMBOL","REFSEQ", "GO", "ONTOLOGY"), Apis_mellifera.OrgDb) 
+saveDb(Apis_mellifera.OrgDb, "/md01/nieyg/ref/10X/Amel_HAv3.1/Amel_HAv3_1/Apis_mellifera_AH102515.OrgDb")
+```
+
