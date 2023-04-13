@@ -224,38 +224,7 @@ for (cluster in unique(combination_data$combination)){
 }
 dev.off()
 
-
-# UpsetR plot of Observation and Expectation
-library(UpSetR)
-library(reshape2)  
-pdf("./05_ORN_cluster/03_coexp_cluster/combination_data_multi_OR_with_powerful_upsetRplot_Observation.pdf",width=10,height=10)
-for (cluster in unique(combination_data$combination)){
-  print(cluster)
-  combination_group<- combination_data[which(combination_data$combination==cluster),];
-  cluster_info<- unique(combination_group$id)
-  obj<-subset(ORN,idents=cluster_info);
-  obj_features<-obj_features<- unique(combination_group$features.plot)
-  obj_barcode<-colnames(obj)
-  if(length(obj_features)>1){
-  # 1: Observation
-  ORN_count<-obj@assays$RNA
-  ORN_count<-ORN_count[which(rownames(ORN_count)%in%obj_features),]
-  ORN_matrix<-as.matrix(ORN_count)
-  ORN_matrix<-ORN_matrix[,colSums(ORN_matrix)>0]
-  ORN_matrix<-ORN_matrix[rowSums(ORN_matrix)>0,]
-  data<- as.data.frame(ORN_matrix)
-  data$features<- rownames(data)
-  data_long<-melt(data, id.vars = c("features"),
-                 measure.vars = c(colnames(data)[-length(colnames(data))]),
-                 variable.name = c('barcode'),
-                 value.name = 'value')
-  data_long<- data_long[data_long$value>0,]
-  listInput <- split(data_long$barcode,data_long$features)
-  p_observation<- upset(fromList(listInput), nintersects = 30, mb.ratio = c(0.5, 0.5), order.by = c("freq", "degree"), decreasing = c(FALSE,FALSE))
-
-print(p_observation)
-}}
-dev.off()
+d
 
   # 2: Expectation by random dropout
 pdf("./05_ORN_cluster/03_coexp_cluster/combination_data_multi_OR_with_powerful_upsetRplot_Expectation.pdf",width=10,height=10)
@@ -265,6 +234,7 @@ for (cluster in unique(combination_data$combination)){
   cluster_info<- unique(combination_group$id)
   obj<-subset(ORN,idents=cluster_info);
   obj_features<-unique(combination_group$features.plot)
+  if(length(obj_features)>1){
   obj_barcode<-colnames(obj)
   ORN_count<-obj@assays$RNA
   ORN_count<-ORN_count[which(rownames(ORN_count)%in%obj_features),]
@@ -280,31 +250,7 @@ for (cluster in unique(combination_data$combination)){
   data_long<- data_long[data_long$value>0,]
   listInput <- split(data_long$barcode,data_long$features)
   total_cell <- length(colnames(ORN_matrix))
-  if(length(obj_features)==4){
-    gene1<- obj_features[1]
-    gene2<- obj_features[2]
-    gene3<- obj_features[3]
-    gene4<- obj_features[4]
-    gene1_dropout <- 1-length(listInput[[1]])/length(colnames(ORN_matrix))
-    gene2_dropout <- 1-length(listInput[[2]])/length(colnames(ORN_matrix))
-    gene3_dropout <- 1-length(listInput[[3]])/length(colnames(ORN_matrix))
-    gene4_dropout <- 1-length(listInput[[4]])/length(colnames(ORN_matrix))
-    input <- c(
-      "gene1" =total_cell*(1-gene1_dropout)*gene2_dropout*gene3_dropout*gene4_dropout,
-      "gene2" =total_cell*(1-gene2_dropout)*gene1_dropout*gene3_dropout*gene4_dropout,
-      "gene3" =total_cell*(1-gene3_dropout)*gene1_dropout*gene2_dropout*gene4_dropout,
-      "gene4" =total_cell*(1-gene4_dropout)*gene1_dropout*gene2_dropout*gene3_dropout,
-      "gene1&gene2" =total_cell*(1-gene1_dropout)*(1-gene2_dropout)*gene3_dropout*gene4_dropout, 
-      "gene1&gene3" =total_cell*(1-gene1_dropout)*(1-gene3_dropout)*gene2_dropout*gene4_dropout, 
-      "gene1&gene4" =total_cell*(1-gene1_dropout)*(1-gene4_dropout)*gene2_dropout*gene3_dropout, 
-      "gene2&gene3" =total_cell*(1-gene2_dropout)*(1-gene3_dropout)*gene1_dropout*gene4_dropout, 
-      "gene2&gene4" =total_cell*(1-gene2_dropout)*(1-gene4_dropout)*gene1_dropout*gene3_dropout, 
-      "gene3&gene4" =total_cell*(1-gene3_dropout)*(1-gene4_dropout)*gene1_dropout*gene2_dropout, 
-      "gene1&gene2&gene3"=total_cell*(1-gene1_dropout)*(1-gene2_dropout)*(1-gene3_dropout)*gene4_dropout,
-      "gene1&gene2&gene4"=total_cell*(1-gene1_dropout)*(1-gene2_dropout)*(1-gene4_dropout)*gene3_dropout,
-      "gene1&gene3&gene4"=total_cell*(1-gene1_dropout)*(1-gene3_dropout)*(1-gene4_dropout)*gene2_dropout, 
-      "gene2&gene3&gene4"=total_cell*(1-gene2_dropout)*(1-gene3_dropout)*(1-gene4_dropout)*gene1_dropout,
-      "gene1&gene2&gene3&gene4"=total_cell*(1-gene1_dropout)*(1-gene2_dropout)*(1-gene3_dropout)*(1-gene4_dropout))}
+
   if(length(obj_features)==5){
     gene1_dropout <- 1-length(listInput[[1]])/length(colnames(ORN_matrix))
     gene2_dropout <- 1-length(listInput[[2]])/length(colnames(ORN_matrix))
@@ -341,6 +287,32 @@ for (cluster in unique(combination_data$combination)){
       "gene1&gene5&gene3&gene4"=total_cell*(1-gene1_dropout)*(1-gene5_dropout)*(1-gene3_dropout)*(1-gene4_dropout)*gene2_dropout,
       "gene5&gene2&gene3&gene4"=total_cell*(1-gene5_dropout)*(1-gene2_dropout)*(1-gene3_dropout)*(1-gene4_dropout)*gene1_dropout,
       "gene1&gene2&gene3&gene4&gene5"=total_cell*(1-gene1_dropout)*(1-gene2_dropout)*(1-gene3_dropout)*(1-gene4_dropout)*(1-gene5_dropout))}
+  
+  if(length(obj_features)==4){
+    gene1<- obj_features[1]
+    gene2<- obj_features[2]
+    gene3<- obj_features[3]
+    gene4<- obj_features[4]
+    gene1_dropout <- 1-length(listInput[[1]])/length(colnames(ORN_matrix))
+    gene2_dropout <- 1-length(listInput[[2]])/length(colnames(ORN_matrix))
+    gene3_dropout <- 1-length(listInput[[3]])/length(colnames(ORN_matrix))
+    gene4_dropout <- 1-length(listInput[[4]])/length(colnames(ORN_matrix))
+    input <- c(
+      "gene1" =total_cell*(1-gene1_dropout)*gene2_dropout*gene3_dropout*gene4_dropout,
+      "gene2" =total_cell*(1-gene2_dropout)*gene1_dropout*gene3_dropout*gene4_dropout,
+      "gene3" =total_cell*(1-gene3_dropout)*gene1_dropout*gene2_dropout*gene4_dropout,
+      "gene4" =total_cell*(1-gene4_dropout)*gene1_dropout*gene2_dropout*gene3_dropout,
+      "gene1&gene2" =total_cell*(1-gene1_dropout)*(1-gene2_dropout)*gene3_dropout*gene4_dropout, 
+      "gene1&gene3" =total_cell*(1-gene1_dropout)*(1-gene3_dropout)*gene2_dropout*gene4_dropout, 
+      "gene1&gene4" =total_cell*(1-gene1_dropout)*(1-gene4_dropout)*gene2_dropout*gene3_dropout, 
+      "gene2&gene3" =total_cell*(1-gene2_dropout)*(1-gene3_dropout)*gene1_dropout*gene4_dropout, 
+      "gene2&gene4" =total_cell*(1-gene2_dropout)*(1-gene4_dropout)*gene1_dropout*gene3_dropout, 
+      "gene3&gene4" =total_cell*(1-gene3_dropout)*(1-gene4_dropout)*gene1_dropout*gene2_dropout, 
+      "gene1&gene2&gene3"=total_cell*(1-gene1_dropout)*(1-gene2_dropout)*(1-gene3_dropout)*gene4_dropout,
+      "gene1&gene2&gene4"=total_cell*(1-gene1_dropout)*(1-gene2_dropout)*(1-gene4_dropout)*gene3_dropout,
+      "gene1&gene3&gene4"=total_cell*(1-gene1_dropout)*(1-gene3_dropout)*(1-gene4_dropout)*gene2_dropout, 
+      "gene2&gene3&gene4"=total_cell*(1-gene2_dropout)*(1-gene3_dropout)*(1-gene4_dropout)*gene1_dropout,
+      "gene1&gene2&gene3&gene4"=total_cell*(1-gene1_dropout)*(1-gene2_dropout)*(1-gene3_dropout)*(1-gene4_dropout))}
   if(length(obj_features)==3){
         gene1<- obj_features[1]
         gene2<- obj_features[2]
@@ -355,8 +327,8 @@ for (cluster in unique(combination_data$combination)){
           "gene1&gene3" =total_cell*(1-gene1_dropout)*(1-gene3_dropout)*gene2_dropout, 
           "gene2&gene3" =total_cell*(1-gene2_dropout)*(1-gene3_dropout)*gene1_dropout, 
           "gene1&gene2&gene3"=total_cell*(1-gene1_dropout)*(1-gene2_dropout)*(1-gene3_dropout))}
-  if(legend(obj_features)==2){
-        gene1<- obj_features[1]
+  if(length(obj_features)==2){
+    gene1<- obj_features[1]
     gene2<- obj_features[2]
     gene1_dropout <- 1-length(listInput[[1]])/length(colnames(ORN_matrix))
     gene2_dropout <- 1-length(listInput[[2]])/length(colnames(ORN_matrix))
@@ -368,7 +340,7 @@ for (cluster in unique(combination_data$combination)){
   colnames(data)<- names(listInput)
   p_expectation<- upset(data, nintersects = 30, mb.ratio = c(0.5, 0.5), order.by = c("freq", "degree"), decreasing = c(FALSE,FALSE))
   print(p_expectation)
-}
+}}
 dev.off()
 
 
