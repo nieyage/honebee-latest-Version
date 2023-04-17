@@ -224,8 +224,6 @@ for (cluster in unique(combination_data$combination)){
 }
 dev.off()
 
-d
-
   # 2: Expectation by random dropout
 pdf("./05_ORN_cluster/03_coexp_cluster/combination_data_multi_OR_with_powerful_upsetRplot_Expectation.pdf",width=10,height=10)
 for (cluster in unique(combination_data$combination)){
