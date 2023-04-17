@@ -210,3 +210,12 @@ FeaturePlot(ORN, features = c("LOC102653637", "LOC102653703"),max.cutoff =3, ble
 dev.off()
 
 
+p <- c(Or2_dropout,LOC552552_dropout,
+LOC551704_dropout,
+LOC726019_dropout)
+cp <- function(p) 
+{
+  ev <- do.call(expand.grid,replicate(length(p),0:1,simplify=FALSE))
+  pe <- apply(ev,1,function(x) prod(p*(x==1)+(1-p)*(x==0)))
+  tapply(pe,rowSums(ev),sum)
+}
