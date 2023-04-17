@@ -71,7 +71,6 @@ ggplot(data = hvf.info,aes(x = mean, y =variance.standardized ) ) +
 geom_point(aes(color=var.status))+xlim(0,10)
 dev.off()
 #RNA analysis
-
 DefaultAssay(part4_subcluster) <- "integratedRNA_onecluster"
 part4_subcluster <- RunPCA(part4_subcluster,features= top100 )
 pdf("./05_ORN_cluster/02_second_cluster/04_part4_subcluster/ElbowPlot_top100.pdf")

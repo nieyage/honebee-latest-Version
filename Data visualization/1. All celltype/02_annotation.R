@@ -14,10 +14,9 @@ features <- c( "LOC411079",####Epithelial cell
   "LOC413466","LOC410151",#glial cells
   "LOC411597","LOC413021",####GB46795=Ppn,Hemocyte
   "LOC412455",#GB54378=MHC,Muscle cells
-  "SsRbeta",#Auxiliary cells--thecogen (Th)
-  "LOC406073",#sheath cells
-  "LOC413870",#socket cells
-  "LOC727035",#shaft cells
+  "SsRbeta","LOC406073","LOC726353","LOC724520",#sheath cells,#Auxiliary cells--thecogen (Th)
+  "LOC413870",#socket cells/Tormogen
+  "LOC727035",#shaft cells /Trichogen
   "Obp4" ,"Obp5" ,"Obp11","Obp12",###OBPs,Auxiliary cells--trichogen (Tr)
   "LOC410657",#听觉神经
   "Syt1","LOC408554","brp","LOC552555","LOC725310",#GB42866=Brp,YKT6/GB52698=Syt,Neuron
@@ -31,8 +30,7 @@ label<-c("GRH",#Epithelial cell
   "OAZ","repo",#glial cells
   "hemocytin","Ppn",####Hemocyte
   "MHC",#Muscle cells
-  "SSRBETA",#Auxiliary cells--thecogen (Th)
-  "PROS",#sheath cells
+  "SSRBETA","PROS","nompA","nompA-1",#sheath cells,#Auxiliary cells--thecogen (Th)
   "SU(H)",#socket cells
   "POXN",#shaft cells
   "OBP4" ,"OBP5" ,"OBP11","OBP12",###OBPs,Auxiliary cells--trichogen (Tr)

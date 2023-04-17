@@ -12,17 +12,16 @@ honeybee<-readRDS("./02_All_celltype/WNN_honeybee_integrated_all_celltype.rds")
 # FigS1A:
  DefaultAssay(honeybee)<-"RNA"
   pdf('./00_Figure/FigS1A-allcelltype_marker_FeaturePlot_WNN.pdf', width=14, height=8)
-  p1<-FeaturePlot(honeybee, reduction = 'wnn.umap',max.cutoff = 10,features = c("Syt1") ,order=TRUE, ncol = 1)
-  p3<-FeaturePlot(honeybee, reduction = 'wnn.umap',max.cutoff = 10,features = c("LOC411079") ,order=TRUE, ncol = 1)&labs(title="LOC411079 (GRH)")
-  p4<-FeaturePlot(honeybee, reduction = 'wnn.umap',max.cutoff = 10,features = c("LOC410151") ,order=TRUE, ncol = 1)&labs(title="LOC410151 (repo)")
-  p5<-FeaturePlot(honeybee, reduction = 'wnn.umap',max.cutoff = 10,features = c("LOC406073") ,order=TRUE, ncol = 1)&labs(title="LOC406073 (PROS)")
+  p1<-FeaturePlot(honeybee, reduction = 'wnn.umap',max.cutoff = 10,features = c("Syt1") ,order=TRUE, ncol = 1)&labs(title="Neuron: Syt1")
+  p3<-FeaturePlot(honeybee, reduction = 'wnn.umap',max.cutoff = 10,features = c("LOC411079") ,order=TRUE, ncol = 1)&labs(title="Epithelial cell:LOC411079 (GRH)")
+  p4<-FeaturePlot(honeybee, reduction = 'wnn.umap',max.cutoff = 10,features = c("LOC410151") ,order=TRUE, ncol = 1)&labs(title="Glial cell:LOC410151 (repo)")
+  p5<-FeaturePlot(honeybee, reduction = 'wnn.umap',max.cutoff = 10,features = c("LOC406073") ,order=TRUE, ncol = 1)&labs(title="Sheath cell:LOC406073 (PROS)")
   p7<-FeaturePlot(honeybee, reduction = 'wnn.umap',max.cutoff = 30,features = c("Obp4") ,order=TRUE, ncol = 1)
   p8<-FeaturePlot(honeybee, reduction = 'wnn.umap',max.cutoff = 50,features = c("Obp5") ,order=TRUE, ncol = 1)
   f1<-p1|p3|p4
   f2<-p5|p7|p8;
   f1/f2
   dev.off()
-
 
 # FigS1B:
 library(BSgenome.Amel.HAv3.1.update.chemoreceptor)
