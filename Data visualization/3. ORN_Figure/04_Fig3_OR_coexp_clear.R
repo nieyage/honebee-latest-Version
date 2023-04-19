@@ -329,6 +329,8 @@ for(i in 1:nrow(dotplot_data)){
 dotplot_data<-dotplot_data[which(dotplot_data$state=="Yes"),]
 Freq<- as.data.frame(table(dotplot_data$id));
 clear_multiple_classes_order_id <- as.character(Freq[Freq$Freq>1,1])
+d<- dotplot_data[dotplot_data$id%in% clear_multiple_classes_order_id,]
+write.csv(d,"/data/R02/nieyg/project/honeybee/honebee-latest-Version/05_ORN_cluster/03_coexp_cluster/Deterministic_coexpression_data.csv")
 
 # Fig3F
 # coexp in multiple OR cluster
