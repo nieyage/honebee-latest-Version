@@ -165,12 +165,25 @@ overlap_motif<- intersect(motif_differential.activity,motif_peak_enrich)
 # Now we can footprint any motif that we have positional information for. By default, this includes every instance of the motif in the genome. We can instead use the in.peaks = TRUE parameter to include only those motifs that fall inside a peak in the assay. The Footprint() function gathers all the required data and stores it in the assay. 
 # We can then plot the footprinted motifs using the PlotFootprint() function.
 # gather the footprinting information for sets of motifs
+# some peak length beyond the boundary 
+gr <- granges(honeybee[['peaks']])
+gr <- gr[seqnames(gr) == "Group8"]
+# peak end
+min(start(gr))
+# genome end 
+honeybee_genome<- BSgenome.Amel.HAv3.1.update.chemoreceptor
+end(honeybee_genome$`Group8`)
+
 DefaultAssay(honeybee) <- 'peaks'
 honeybee <- Footprint(
   object = honeybee,
-  motif.name =overlap_motif,
+  motif.name =overlap_motif,     
+  upstream = 1,
+  downstream = 100,
+  in.peaks=T,
   genome = BSgenome.Amel.HAv3.1.update.chemoreceptor
 )
+ 
 
 # plot the footprint data for each group of cells
 pdf("./02_All_celltype/overlap_motif_Footprint.pdf",width=12,height=12)
