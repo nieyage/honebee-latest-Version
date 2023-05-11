@@ -10,7 +10,7 @@ GR_gene<- unique(chemoreceptor[chemoreceptor$gene_type=="GR",]$gene_name)
 IR_gene<- unique(c("LOC412949","LOC100577496","LOC102653640","LOC727346","LOC100578352","LOC552552","LOC726019","LOC551704","LOC410623","LOC100576097","LOC409777"))
 Orco<- c("Or2","LOC552552","LOC726019","LOC551704")
 all_receptor_gene <- unique(c(Orco,OR_gene,IR_gene,GR_gene))
-ORN<- readRDS("./05_ORN_cluster/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_modify_the_tsne_order_by_tree_recall_peak.rds")
+ORN<- readRDS("./05_ORN_cluster2/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_modify_the_tsne_recall_peak.rds")
 DefaultAssay(ORN)<-"raw_RNA"
 # FigS3A
 DefaultAssay(ORN)<-"RNA"
@@ -79,8 +79,9 @@ ggsave(filename, limitsize = FALSE, units = "px", width = 6000, height =6000,p3)
 library(tidyr)
 library(ggrepel)
 # 2. in cluster level
+DefaultAssay(ORN)<-"SCT"
+p<-DotPlot(ORN,features = all_receptor_gene) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
 dotplot_data<-p$data;
-
 plot_avgExp.clusters.df <- 
   dotplot_data %>%
   filter(features.plot %in% c('Or2', 'LOC552552')) %>%

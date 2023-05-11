@@ -12,12 +12,18 @@ IR_gene<- unique(c("LOC412949","LOC100577496","LOC102653640","LOC727346","LOC100
 Orco<- c("Or2","LOC552552","LOC726019","LOC551704")
 all_receptor_gene <- unique(c(Orco,OR_gene,IR_gene,GR_gene))
 
-onecluster <- readRDS("./05_ORN_cluster/02_second_cluster/ORN_integrated_antenna_withOr2_second_top500.rds")
+onecluster <- readRDS("./05_ORN_cluster2/02_second_cluster/ORN_integrated_antenna_withOr2_second_top500.rds")
 DefaultAssay(onecluster) <- "integratedRNA_onecluster"
 Idents(onecluster) <- "seurat_clusters";
 all_cluster<-levels(onecluster$seurat_clusters)
+one_classes <- c("27","28","31","32","33","35","37","38","40","41","42","43")
+multiple_stop_cluster <- as.character(c(34,39))
+need2subcluster <- setdiff(all_cluster,c(one_classes,multiple_stop_cluster))
+
+
 # make the trans dist tree 
-object <- onecluster
+object <- subset(onecluster,idents=need2subcluster)
+
 embeddings <- Embeddings(object = object, reduction = "pca")[,1:50]
 data.dims <- lapply(X = levels(x = object), FUN = function(x) {
     cells <- WhichCells(object = object, idents = x)
@@ -33,38 +39,32 @@ cosine_dist <- as.dist(1-cosine(data.dims))
 data.tree <- ape::as.phylo(x = hclust(d = cosine_dist))
 library(ggtree);
 
-pdf("./05_ORN_cluster/02_second_cluster/second_cluster-ORN-tree-cosine.pdf",width=6,height=6)
+pdf("./05_ORN_cluster2/02_second_cluster/second_cluster-ORN-tree-cosine_need2subcluster.pdf",width=6,height=6)
 ggtree(data.tree,layout = "circular") + geom_tiplab()+ geom_treescale()
 dev.off()
-pdf("./05_ORN_cluster/02_second_cluster/second_cluster-ORN-tree-cosine-nocircular.pdf",width=8,height=12)
-ggtree(data.tree) + geom_tiplab()+ geom_treescale()
-dev.off()
+
 m<- ggtree(data.tree) + geom_tiplab()+ geom_treescale()
 
 cluster_order<-na.omit(m$data[order(m$data$y),]$label)
 cluster_order<-as.character(cluster_order)
 
- [1] "11" "24" "23" "26" "37" "1"  "4"  "38" "39" "20" "7"  "30" "12" "34" "6" 
-[16] "10" "28" "29" "21" "36" "31" "25" "2"  "22" "16" "18" "0"  "3"  "8"  "42"
-[31] "13" "19" "27" "41" "15" "14" "5"  "33" "32" "35" "43" "40" "9"  "17"
-
-one_classes <- c("29 ","28","31","33","36","39","41")
-multiple_stop_cluster <- as.character(c(25,34,38))
-need2subcluster <- setdiff(all_cluster,c(one_classes,multiple_stop_cluster))
+> cluster_order
+ [1] "1"  "15" "19" "20" "3"  "4"  "25" "30" "36" "24" "29" "23" "12" "17" "0" 
+[16] "10" "5"  "2"  "14" "26" "13" "21" "11" "18" "16" "22" "7"  "8"  "6"  "9" 
 
 
 # 4 parts to subcluster 
-part1 <- cluster_order[1:7]
-part2 <- cluster_order[8:20]
-part3 <- cluster_order[21:32]
-part4 <- cluster_order[33:44]
+part1 <- cluster_order[1:8]
+part2 <- cluster_order[9:16]
+part3 <- cluster_order[17:23]
+part4 <- cluster_order[24:32]
 need2subcluster 
 part1 <- part1[which(part1%in%need2subcluster)]
 part2 <- part2[which(part2%in%need2subcluster)]
 part3 <- part3[which(part3%in%need2subcluster)]
 part4 <- part4[which(part4%in%need2subcluster)]
 
-part2_subcluster <- subset(onecluster,idents=part1)
+part1_subcluster <- subset(onecluster,idents=part1)
 part2_subcluster <- subset(onecluster,idents=part2)
 part3_subcluster <- subset(onecluster,idents=part3)
 part4_subcluster <- subset(onecluster,idents=part4)
@@ -86,7 +86,7 @@ hvf.info$variable$vst.variable[101:length(hvf.info$variable$vst.variable)]=0
 hvf.info$variable$vst.variable<-as.logical(hvf.info$variable$vst.variable)
 var.status <- c("no", "yes")[unlist(x = hvf.info[, ncol(x = hvf.info)]) +  1]
 hvf.info$var.status <- var.status
-pdf("./05_ORN_cluster/02_second_cluster/02_part2_subcluster/Find_var_RNA_top100.pdf",width=20,height=6)
+pdf("./05_ORN_cluster2/02_second_cluster/02_part2_subcluster/Find_var_RNA_top100.pdf",width=20,height=6)
 ggplot(data = hvf.info,aes(x = mean, y =variance.standardized ) ) +
 geom_point(aes(color=var.status))+xlim(0,10)
 dev.off()
@@ -94,7 +94,7 @@ dev.off()
 
 DefaultAssay(part2_subcluster) <- "integratedRNA_onecluster"
 part2_subcluster <- RunPCA(part2_subcluster,features= top100 )
-pdf("./05_ORN_cluster/02_second_cluster/02_part2_subcluster/ElbowPlot_top100.pdf")
+pdf("./05_ORN_cluster2/02_second_cluster/02_part2_subcluster/ElbowPlot_top100.pdf")
 ElbowPlot(part2_subcluster,ndims = 50, reduction = "pca")
 dev.off()
 #build a tSNE visualization
@@ -106,23 +106,23 @@ part2_subcluster <- RunTSNE(
   check_duplicates = FALSE,
   reduction.name = "tsne.rna",
   reduction.key = "rnatSNE_",
-  dims = 1:50
+  dims = 1:25
 )
-part2_subcluster <- FindNeighbors(object = part2_subcluster, reduction = 'pca', dims = 1:50)
+part2_subcluster <- FindNeighbors(object = part2_subcluster, reduction = 'pca', dims = 1:25)
 part2_subcluster <- FindClusters( object = part2_subcluster, verbose = FALSE, resolution =4,algorithm = 3)
 table(part2_subcluster$seurat_clusters)
 
-pdf("./05_ORN_cluster/02_second_cluster/02_part2_subcluster/part2_subcluster.pdf",width=6,height=5)
+pdf("./05_ORN_cluster2/02_second_cluster/02_part2_subcluster/part2_subcluster.pdf",width=6,height=5)
 DimPlot(part2_subcluster, label = TRUE, repel = TRUE,pt.size=0.1,reduction = "tsne.rna",group.by = "orig.ident")
 DimPlot(part2_subcluster, label = TRUE, repel = TRUE,pt.size=0.1,reduction = "tsne.rna",group.by = "seurat_clusters")
 dev.off()
-DefaultAssay(part2_subcluster) <- "raw_RNA"
+DefaultAssay(part2_subcluster) <- "SCT"
 Idents(part2_subcluster)<-part2_subcluster$seurat_clusters
-pdf("./05_ORN_cluster/02_second_cluster/02_part2_subcluster/part2_subcluster_OR_dotplot_rawRNA.pdf",width=30, height=8)
+pdf("./05_ORN_cluster2/02_second_cluster/02_part2_subcluster/part2_subcluster_OR_dotplot_rawRNA.pdf",width=30, height=8)
 p<-DotPlot(part2_subcluster, features = all_receptor_gene) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
 p
 dev.off()
-saveRDS(part2_subcluster,"./05_ORN_cluster/02_second_cluster/02_part2_subcluster/second_multiple_classes_part2_subcluster.rds");
+saveRDS(part2_subcluster,"./05_ORN_cluster2/02_second_cluster/02_part2_subcluster/second_multiple_classes_part2_subcluster.rds");
 
 # Step4: select the cluster to subcluster 
 # part2_subcluster distinguish OR pipeline 
@@ -131,7 +131,7 @@ dotplot_data<-p$data;
 dotplot_data$state<-"No";
 for(i in 1:nrow(dotplot_data)){
    #if(dotplot_data[i,]$pct.exp>25&&dotplot_data[i,]$avg.exp.scaled > 1.5){dotplot_data[i,]$state="Yes"};
-   if(dotplot_data[i,]$pct.exp>30&&dotplot_data[i,]$avg.exp.scaled > 2){dotplot_data[i,]$state="Yes"};
+   if(dotplot_data[i,]$pct.exp>35&&dotplot_data[i,]$avg.exp >= 1){dotplot_data[i,]$state="Yes"};
    #if(dotplot_data[i,]$pct.exp>20&&dotplot_data[i,]$avg.exp.scaled > 2.4){dotplot_data[i,]$state="Yes"};
  }
 dotplot_data<-dotplot_data[which(dotplot_data$state=="Yes"),]
@@ -144,13 +144,13 @@ one_classes <- as.character(cluster_info[cluster_info$Freq==1,1])
 # distinguish_multi_OR
 DefaultAssay(part2_subcluster)<- "integratedRNA_onecluster"
 log2FCdata<-data.frame()
-pdf("./05_ORN_cluster/02_second_cluster/02_part2_subcluster/part2_subcluster_distinguish_multi_OR.pdf",width=14,height=6)
+pdf("./05_ORN_cluster2/02_second_cluster/02_part2_subcluster/part2_subcluster_distinguish_multi_OR.pdf",width=14,height=6)
 for (cluster in multiple_classes){
 print(cluster)
 obj<-subset(part2_subcluster,idents=cluster);
 obj_features<-dotplot_data[dotplot_data$id==cluster,]$features.plot
 # add max_exp OR label for each cell
-ORN_count<-obj@assays$raw_RNA
+ORN_count<-obj@assays$SCT
 ORN_count<-ORN_count[which(rownames(ORN_count)%in%obj_features),]
 ORN_matrix<-as.matrix(ORN_count)
 ORN_matrix<-ORN_matrix[,colSums(ORN_matrix)>0]
@@ -234,9 +234,13 @@ print(add_title)
 dev.off()
 
 > log2FCdata
-  cluster     log2FC      pvalue
-1      24 -0.1436622 0.006498749
-2      26  0.2067135 0.006382645
+  cluster    log2FC        pvalue
+1       2 0.6226494 9.740019e-296
+2       6 0.2739453  4.600351e-67
+3      16 0.2903230  2.020606e-31
+4      18 0.2633237  1.974988e-09
+5      21 0.9121668  1.771674e-25
+6      24 0.6856330  3.133524e-17
 
 
 ####OR log2FC
@@ -289,7 +293,7 @@ for (gene1 in features){
 # plot the log2FC distribution 
 # plot density line 
 # manage data
-pdf("./05_ORN_cluster/02_second_cluster/02_part2_subcluster/part2_subcluster_select_log2FC_cutoff_gene.pdf",width=10,height=5)
+pdf("./05_ORN_cluster2/02_second_cluster/02_part2_subcluster/part2_subcluster_select_log2FC_cutoff_gene.pdf",width=10,height=5)
 ggplot(data, aes(x=log2FC)) + xlab("log2FC")+
               geom_density(alpha=.25) + theme_classic() 
 d <- density(data$log2FC)
@@ -325,18 +329,30 @@ for(i in 1:nrow(tmp_data)){
   }
 }
 }
-write.csv(last_data,"./05_ORN_cluster/02_second_cluster/02_part2_subcluster/part2_subcluster_multiOR_pair_log2FC.csv")
+write.csv(last_data,"./05_ORN_cluster2/02_second_cluster/02_part2_subcluster/part2_subcluster_multiOR_pair_log2FC.csv")
 
 > last_data
            gene1        gene2    log2FC       pvalue cluster
 155    LOC408517    LOC726459 1.4555319 2.689341e-15      24
 170 LOC102654074 LOC107965760 0.6295953 4.339661e-37      26
 
-saveRDS(part2_subcluster,"./05_ORN_cluster/02_second_cluster/02_part2_subcluster/second_multiple_classes_part2_subcluster.rds");
 
 # FigS2 B 
 Idents(part2_subcluster)<-part2_subcluster$seurat_clusters
-pdf("./05_ORN_cluster/02_second_cluster/02_part2_subcluster/part2_subcluster_last.pdf",width=6,height=5)
+part2_subcluster<-FindSubCluster(part2_subcluster,5,"integratedRNA_onecluster_nn",subcluster.name = "sub.cluster",resolution = 0.4,algorithm = 1)
+Idents(part2_subcluster)<- part2_subcluster$sub.cluster
+part2_subcluster<-FindSubCluster(part2_subcluster,6,"integratedRNA_onecluster_nn",subcluster.name = "sub.cluster",resolution = 0.5,algorithm = 1)
+DefaultAssay(part2_subcluster) <- "SCT"
+Idents(part2_subcluster)<-part2_subcluster$sub.cluster
+pdf("./05_ORN_cluster2/02_second_cluster/02_part2_subcluster/OR_dotplot_rawRNA_part2_subcluster_recluster.pdf",width=30, height=8)
+p<-DotPlot(part2_subcluster, features = all_receptor_gene) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
+p
+dev.off()
+table(part2_subcluster$sub.cluster)
+
+saveRDS(part2_subcluster,"./05_ORN_cluster2/02_second_cluster/02_part2_subcluster/second_multiple_classes_part2_subcluster.rds");
+
+pdf("./05_ORN_cluster2/02_second_cluster/02_part2_subcluster/part2_subcluster_last.pdf",width=6,height=5)
 DimPlot(part2_subcluster,cols=myUmapcolors, label = TRUE, repel = TRUE,pt.size=0.8,reduction = "tsne.rna",group.by = "orig.ident")
 DimPlot(part2_subcluster,cols=myUmapcolors, label = TRUE, repel = TRUE,pt.size=0.8,reduction = "tsne.rna")
 dev.off()
@@ -347,7 +363,7 @@ cluster_cellnumber$cluster<- factor(cluster_cellnumber$cluster,levels=levels(par
 cluster_cellnumber$color<-myUmapcolors[1:length(levels(part2_subcluster))]
 cluster_cellnumber<-cluster_cellnumber[order(cluster_cellnumber$number,decreasing=F),]
 cluster_cellnumber$cluster<- factor(cluster_cellnumber$cluster,levels=cluster_cellnumber$cluster)
-pdf("./05_ORN_cluster/02_second_cluster/02_part2_subcluster/part2_subcluster_cellnumber.pdf",width=4,height=8)
+pdf("./05_ORN_cluster2/02_second_cluster/02_part2_subcluster/part2_subcluster_cellnumber.pdf",width=4,height=8)
 p<-ggplot(data = cluster_cellnumber, aes_string(x = "cluster", y = "number", 
         fill = "cluster")) +  xlab(" ") + ylab("# of cells") + 
         scale_fill_manual(values = cluster_cellnumber$color) + 
@@ -359,19 +375,19 @@ p
 p+geom_text(aes(label = number), size = 3, hjust = 0.5, vjust = 3) 
 dev.off();
 
-DefaultAssay(part2_subcluster) <- "raw_RNA"
+DefaultAssay(part2_subcluster) <- "SCT"
 p<-DotPlot(part2_subcluster, features = all_receptor_gene) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
 dotplot_data<-p$data;
 dotplot_data$state<-"No";
 for(i in 1:nrow(dotplot_data)){
    #if(dotplot_data[i,]$pct.exp>25&&dotplot_data[i,]$avg.exp.scaled > 1.5){dotplot_data[i,]$state="Yes"};
-   if(dotplot_data[i,]$pct.exp>30&&dotplot_data[i,]$avg.exp.scaled > 2){dotplot_data[i,]$state="Yes"};
+   if(dotplot_data[i,]$pct.exp>35&&dotplot_data[i,]$avg.exp >= 1){dotplot_data[i,]$state="Yes"};
    #if(dotplot_data[i,]$pct.exp>20&&dotplot_data[i,]$avg.exp.scaled > 2.4){dotplot_data[i,]$state="Yes"};
  }
 dotplot_data<-dotplot_data[which(dotplot_data$state=="Yes"),]
 
-DefaultAssay(part2_subcluster) <- "raw_RNA"
-pdf("./05_ORN_cluster/02_second_cluster/02_part2_subcluster/dotplot_part2_subcluster_last.pdf",width=10, height=8)
+DefaultAssay(part2_subcluster) <- "SCT"
+pdf("./05_ORN_cluster2/02_second_cluster/02_part2_subcluster/dotplot_part2_subcluster_last.pdf",width=10, height=8)
 p<-DotPlot(part2_subcluster, features = unique(c(Orco,rev(as.character(dotplot_data$features.plot))))) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
 p
 dev.off()

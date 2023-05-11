@@ -11,7 +11,7 @@ GR_gene<- unique(chemoreceptor[chemoreceptor$gene_type=="GR",]$gene_name)
 IR_gene<- unique(c("LOC412949","LOC100577496","LOC102653640","LOC727346","LOC100578352","LOC552552","LOC726019","LOC551704","LOC410623","LOC100576097","LOC409777"))
 Orco<- c("Or2","LOC552552","LOC726019","LOC551704")
 all_receptor_gene <- unique(c(Orco,OR_gene,IR_gene,GR_gene))
-ORN<- readRDS("./05_ORN_cluster/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_modify_the_tsne.rds")
+ORN<- readRDS("./05_ORN_cluster2/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_modify_the_tsne.rds")
 DefaultAssay(ORN)<-"raw_RNA"
 
 
@@ -177,7 +177,7 @@ for(i in 1:nrow(dotplot_data)){
 dotplot_data<-dotplot_data[which(dotplot_data$state=="Yes"),]
 dotplot_data<-dotplot_data[-which(dotplot_data$features.plot%in% Orco),];
 dotplot_feature<-unique(c(Orco,rev(as.character(dotplot_data$features.plot))))
-write.csv(dotplot_data,"./05_ORN_cluster/02_second_cluster/06_rm_without_power/dotplot_data_remove_nopower.csv")
+write.csv(dotplot_data,"./05_ORN_cluster2/02_second_cluster/06_rm_without_power/dotplot_data_remove_nopower.csv")
 DefaultAssay(ORN)<-"raw_RNA"
 pdf("./00_Figure/Fig2E-b-remove_nopower-dotplot-orderbytree.pdf",width=22, height=14)
 p<-DotPlot(ORN,features = dotplot_feature) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
@@ -188,4 +188,4 @@ scale_color_gradientn(colours = c('#008080', '#FF00FF'),  name = 'Average\nexpre
 p2
 dev.off()
 
-saveRDS(ORN,"./05_ORN_cluster/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_orderbytree.rds")
+saveRDS(ORN,"./05_ORN_cluster2/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_orderbytree.rds")

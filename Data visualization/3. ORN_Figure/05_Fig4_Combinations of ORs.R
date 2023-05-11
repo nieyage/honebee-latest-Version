@@ -12,15 +12,15 @@ GR_gene<- unique(chemoreceptor[chemoreceptor$gene_type=="GR",]$gene_name)
 IR_gene<- unique(c("LOC412949","LOC100577496","LOC102653640","LOC727346","LOC100578352","LOC552552","LOC726019","LOC551704","LOC410623","LOC100576097","LOC409777"))
 Orco<- c("Or2","LOC552552","LOC726019","LOC551704")
 all_receptor_gene <- unique(c(Orco,OR_gene,IR_gene,GR_gene))
-ORN<- readRDS("./05_ORN_cluster/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_modify_the_tsne_order_by_tree_recall_peak.rds")
+ORN<- readRDS("./05_ORN_cluster2/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_modify_the_tsne_order_by_tree_recall_peak.rds")
 DefaultAssay(ORN)<-"raw_RNA"
-dotplot_data<-read.csv("./05_ORN_cluster/02_second_cluster/06_rm_without_power/dotplot_data_remove_nopower.csv")
+dotplot_data<-read.csv("./05_ORN_cluster2/02_second_cluster/06_rm_without_power/dotplot_data_remove_nopower.csv")
 dotplot_feature<-unique(rev(as.character(dotplot_data$features.plot)));
 OR_Freq<- as.data.frame(table(dotplot_data$features.plot))
 feature<-OR_Freq[OR_Freq$Freq>1,]$Var1
 combination_data<- dotplot_data[dotplot_data$features.plot%in% feature,]
-#write.csv(combination_data,"./05_ORN_cluster/02_second_cluster/06_rm_without_power/combination_data.csv")
-combination_data<- read.csv("./05_ORN_cluster/02_second_cluster/06_rm_without_power/combination_data.csv")
+#write.csv(combination_data,"./05_ORN_cluster2/02_second_cluster/06_rm_without_power/combination_data.csv")
+combination_data<- read.csv("./05_ORN_cluster2/02_second_cluster/06_rm_without_power/combination_data.csv")
 
 
 # show a typical combination;
@@ -35,16 +35,15 @@ library(ggpubr)
 library(RColorBrewer)
 log2FCdata<-data.frame();
 DefaultAssay(ORN)<- "integratedRNA_onecluster"
-pdf("./05_ORN_cluster/03_coexp_cluster/combination_data_multi_OR_with_powerful.pdf",width=14,height=6)
-for (cluster in unique(combination_data$combination)){
-  print(cluster)
-  combination_group<- combination_data[which(combination_data$combination==cluster),];
-  cluster_info<- unique(combination_group$id)
-  obj<-subset(ORN,idents=cluster_info);
-  obj_features<- unique(combination_group$features.plot)
-  if(length(obj_features)> 1){
+pdf("./05_ORN_cluster2/03_coexp_cluster/combination_data_multi_OR_with_powerful.pdf",width=14,height=6)
+#for (cluster in unique(combination_data$combination)){
+ # print(cluster)
+  combination_group<- c("p1:0_1","p1:0_0","p1:4_1","p1:4_0")
+  cluster_info<- combination_group
+  obj<-subset(ORN,idents=combination_group);
+  obj_features<- unique(dotplot_data[dotplot_data$id%in%combination_group,]$features.plot)
 # add max_exp OR label for each cell
-  ORN_count<-obj@assays$raw_RNA
+  ORN_count<-obj@assays$SCT
   barcode_label<-data.frame(barcode=colnames(obj),label=obj$subcluster)
   ORN_count<-ORN_count[which(rownames(ORN_count)%in%obj_features),]
   ORN_matrix<-as.matrix(ORN_count)
@@ -106,41 +105,22 @@ for (cluster in unique(combination_data$combination)){
     p3 <- ggboxplot(data, x="type", y="var", color = "type")+stat_compare_means()+guides(fill = "none")
 #raw counts heatmap 
 # Heat map of expression  value for Or25-27 for cluster 5_1,5_2,14-1 and others( random select a few as control) 
-    obj_barcode<-colnames(obj)
-    all_barcode<-colnames(ORN)
-    random_barcode<-sample(setdiff(all_barcode,obj_barcode),length(obj_barcode))
-    obj<-subset(ORN,cells=c(obj_barcode,random_barcode))
-    subcluster<- obj$subcluster
-      for (i in 1:length(subcluster)){
-        if(subcluster[i] %in% cluster_info){subcluster[i]=subcluster[i]}
-        else{subcluster[i]="other"}
-      }
-    obj$subcluster<- subcluster
     Idents(obj)<-obj$subcluster
-    DefaultAssay(obj)<-"raw_RNA"
-    obj_data<-as.data.frame(t(as.matrix(obj@assays$raw_RNA[obj_features,])))
-    barcode_info<-data.frame(subcluster=obj$subcluster,barcode=colnames(obj))
-    rownames(barcode_info)<-colnames(obj)
-    barcode_info<- barcode_info[order(barcode_info$subcluster),]
-    obj_data<-obj_data[rownames(barcode_info),]
-    #barcode_info<- as.data.frame(barcode_info[,-2])
-    col<-c(col,"grey")
-    names(col)<-unique(subcluster)
-    ann_colors2= list(label = col)
-    #barcode_info<-barcode_info[,-2]
-    barcode_info_h<-data.frame(subcluster=obj$subcluster)
-    rownames(barcode_info_h)<-colnames(obj)
+    DefaultAssay(obj)<-"SCT"
+    obj_data<-as.data.frame(t(as.matrix(obj@assays$SCT[obj_features,])))
+    obj_data<-obj_data[rownames(barcode_label),]
     p4<-pheatmap(t(obj_data),
              cluster_cols = F,
              cluster_rows = F,
              color = colorRampPalette(c("white", "red"))(100),
-             annotation_col = barcode_info_h,
-             annotation_colors = ann_colors2,
-             #annotation_row = barcode_info,
+             annotation_col = barcode_label_pheatmap,
+             annotation_colors = ann_colors,
+             annotation_row = barcode_label_pheatmap,
              annotation_legend = TRUE,
              show_rownames=T,
              show_colnames=F
       )
+
     top_right<-plot_grid(p2,p3,labels = c(" "," "),rel_widths = c(2, 1))
     right<-plot_grid(top_right,p4$gtable,ncol = 1,labels = c(" "," "))
     last<-plot_grid(p1$gtable, right, labels = c(' ', ''), label_size = 12, ncol = 2)
@@ -153,7 +133,7 @@ for (cluster in unique(combination_data$combination)){
       )
     add_title<-plot_grid(title, last,ncol = 1 , rel_heights = c(0.1, 1) )
     print(add_title)
-    }}
+ #   }
 dev.off()
 
 
@@ -161,8 +141,8 @@ dev.off()
 # Extract result pages
 library(pdftools)
 # inputs
-infile <- "./05_ORN_cluster/03_coexp_cluster/combination_data_multi_OR_with_powerful.pdf"  # input pdf
-outfile <-  "./05_ORN_cluster/03_coexp_cluster/combination_data_multi_OR_with_powerful_extract.pdf"
+infile <- "./05_ORN_cluster2/03_coexp_cluster/combination_data_multi_OR_with_powerful.pdf"  # input pdf
+outfile <-  "./05_ORN_cluster2/03_coexp_cluster/combination_data_multi_OR_with_powerful_extract.pdf"
 num <- pdf_length(infile)/3
 pdf_subset(infile, pages = (1:num)*3, output = outfile)
 
@@ -170,7 +150,7 @@ pdf_subset(infile, pages = (1:num)*3, output = outfile)
 ## Track from scATAC-seq for all multiple cluster 
 library(BSgenome.Amel.HAv3.1.update.chemoreceptor)
 DefaultAssay(ORN)<-"peaks_ORN_subcluster"
-pdf("./05_ORN_cluster/03_coexp_cluster/combination_data_multi_OR_with_powerful_trackplot.pdf",width=10,height=10)
+pdf("./05_ORN_cluster2/03_coexp_cluster/combination_data_multi_OR_with_powerful_trackplot.pdf",width=10,height=10)
 for (cluster in unique(combination_data$combination)){
   print(cluster)
   combination_group<- combination_data[which(combination_data$combination==cluster),];
@@ -189,15 +169,8 @@ for (cluster in unique(combination_data$combination)){
   Idents(obj)<-subcluster
   # first compute the GC content for each peak
   obj <- RegionStats(obj, genome = BSgenome.Amel.HAv3.1.update.chemoreceptor)
-  Annotation(obj)$tx_id <-gsub("_g","-g",Annotation(obj)$gene_name)
   Annotation(obj)$tx_id <-Annotation(obj)$transcript_id
-  # link peaks to genes
-  obj <- LinkPeaks(
-    object = obj,
-    peak.assay = "peaks_ORN_subcluster",
-    expression.assay = "raw_RNA",
-    genes.use = obj_features
-  )
+
   ######Visulize track and RNA exp######
   idents.plot <- Idents(obj)
   # plot region 
@@ -216,7 +189,7 @@ for (cluster in unique(combination_data$combination)){
     extend.downstream = 100,
     tile = TRUE,
     tile.size = 100,
-    tile.cells = 30,
+    tile.cells = 30,s
     links=F
   )
   #p1<- p1&scale_fill_manual(values = col )
@@ -225,7 +198,7 @@ for (cluster in unique(combination_data$combination)){
 dev.off()
 
   # 2: Expectation by random dropout
-pdf("./05_ORN_cluster/03_coexp_cluster/combination_data_multi_OR_with_powerful_upsetRplot_Expectation.pdf",width=10,height=10)
+pdf("./05_ORN_cluster2/03_coexp_cluster/combination_data_multi_OR_with_powerful_upsetRplot_Expectation.pdf",width=10,height=10)
 for (cluster in unique(combination_data$combination)){
   print(cluster)
   combination_group<- combination_data[which(combination_data$combination==cluster),];

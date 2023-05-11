@@ -14,8 +14,12 @@ GR_gene<- unique(chemoreceptor[chemoreceptor$gene_type=="GR",]$gene_name)
 IR_gene<- unique(c("LOC412949","LOC100577496","LOC102653640","LOC727346","LOC100578352","LOC552552","LOC726019","LOC551704","LOC410623","LOC100576097","LOC409777"))
 Orco<- c("Or2","LOC552552","LOC726019","LOC551704")
 all_receptor_gene <- unique(c(Orco,OR_gene,IR_gene,GR_gene))
-ORN<- readRDS("./05_ORN_cluster/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_orderbytree.rds")
-DefaultAssay(ORN)<-"raw_RNA"
+ORN<- readRDS("./05_ORN_cluster2/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_modify_the_tsne_recall_peak.rds")
+
+dotplot_data<-read.csv("./05_ORN_cluster2/02_second_cluster/06_rm_without_power/dotplot_data_remove_nopower.csv")
+dotplot_feature<-unique(rev(as.character(dotplot_data$features.plot)));
+
+
 
 #Fig3A OR correlation  heatmap and sequence tree 
 # sequence tree 
@@ -28,8 +32,6 @@ OR_fasta<-readAAStringSet("/md01/nieyg/ref/10X/Amel_HAv3.1/OR_transcript_pep.aa"
 GR_fasta<-readAAStringSet("/md01/nieyg/ref/10X/Amel_HAv3.1/GR_transcript_pep.aa", format="fasta",nrec=-1L, skip=0L, seek.first.rec=FALSE, use.names=TRUE)
 IR_fasta<-readAAStringSet("/md01/nieyg/ref/10X/Amel_HAv3.1/IR_transcript_pep.aa", format="fasta",nrec=-1L, skip=0L, seek.first.rec=FALSE, use.names=TRUE)
 supply_fasta<-readAAStringSet("/md01/nieyg/ref/10X/Amel_HAv3.1/supply.aa", format="fasta",nrec=-1L, skip=0L, seek.first.rec=FALSE, use.names=TRUE)
-dotplot_data<-read.csv("./05_ORN_cluster/02_second_cluster/06_rm_without_power/dotplot_data_remove_nopower.csv")
-dotplot_feature<-unique(rev(as.character(dotplot_data$features.plot)));
 #OR2 is placed in the last column;
 dotplot_feature_OR2<-c(Orco,dotplot_feature)
 all_receptor_gene_fasta<- c(OR_fasta,GR_fasta,IR_fasta,supply_fasta)
@@ -54,9 +56,12 @@ m<-ggtree(data.tree,ladderize = FALSE, branch.length = "none",aes(color=group))
 gene_order<-na.omit(m$data[order(m$data$y),]$label)
 gene_order<-as.character(gene_order)
 library(pheatmap) 
-dist_matrix <- as.matrix(sdist)
-dist_percent<-(max(dist_matrix)-dist_matrix)/max(dist_matrix)*100
-dist_data <- dist_percent[rev(gene_order),rev(gene_order)]
+#dist_matrix <- as.matrix(sdist)
+#dist_percent<-(max(dist_matrix)-dist_matrix)/max(dist_matrix)*100
+DefaultAssay(ORN)<-"SCT"
+matrix<- ORN@assays$SCT[dotplot_feature_OR2,]
+cor_data<-cor(as.data.frame(t(matrix)))
+dist_data <- log2(abs(cor_data[rev(gene_order),rev(gene_order)]))
 pdf("./00_Figure/Fig3A-OR_in_dotplot_sequence_correlation.pdf",width=17,height=16)
 pheatmap(dist_data,
          cluster_cols = F,
@@ -183,7 +188,7 @@ data<-data.frame(type,var)
 data$type<-factor(data$type,levels=c("same_cluster","not_same_cluster"))
 library(ggpubr)
 library(cowplot)
-pdf("./00_Figure/Fig3D-OR_sequence_similarity_distribution.pdf",width=8,height=5)
+pdf("./00_Figure/Fig3D-OR_sequence_similarity_distribution.pdf",width=8,height=3)
 p1<-ggplot(data, aes(x=var, fill=type)) + xlab("% OR sequence similarity")+
           geom_density(alpha=.25) + theme_classic()+theme(legend.position="top")+
 scale_color_manual(values =c("#F55050","#86A3B8"))
@@ -250,9 +255,12 @@ for (i in 1:nrow(OR_pair)){
 #        No  Yes
 #  No  4046    0
 #  Yes 1607  125
+#       No  Yes
+  No  1749    0
+  Yes  416   46
 
 probability<-data.frame(OR_pair_type=c("same cluster","different cluster"),
-    probability=c(125/125,1607/5653));
+    probability=c(46/46,416/2165));
 
 pdf("./00_Figure/Fig3E-The_probability_OR_pair_appearing_on_same_chromosome.pdf",width=4,height=4)
 p<-ggplot(data = probability, aes_string(x = "OR_pair_type", y = "probability")) +  

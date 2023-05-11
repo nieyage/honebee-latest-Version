@@ -14,9 +14,9 @@ GR_gene<- unique(chemoreceptor[chemoreceptor$gene_type=="GR",]$gene_name)
 IR_gene<- unique(c("LOC412949","LOC100577496","LOC102653640","LOC727346","LOC100578352","LOC552552","LOC726019","LOC551704","LOC410623","LOC100576097","LOC409777"))
 Orco<- c("Or2","LOC552552","LOC726019","LOC551704")
 all_receptor_gene <- unique(c(Orco,OR_gene,IR_gene,GR_gene))
-ORN<- readRDS("./05_ORN_cluster/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_modify_the_tsne_order_by_tree_recall_peak.rds")
+ORN<- readRDS("./05_ORN_cluster2/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_modify_the_tsne_recall_peak.rds")
 DefaultAssay(ORN)<-"raw_RNA"
-dotplot_data<-read.csv("./05_ORN_cluster/02_second_cluster/06_rm_without_power/dotplot_data_remove_nopower.csv")
+dotplot_data<-read.csv("./05_ORN_cluster2/02_second_cluster/06_rm_without_power/dotplot_data_remove_nopower.csv")
 dotplot_feature<-unique(rev(as.character(dotplot_data$features.plot)));
 
 #Fig3A OR correlation  heatmap and sequence tree 
@@ -214,6 +214,54 @@ stat_compare_means()+theme(legend.position="none")+ylab("% OR sequence similarit
 scale_color_manual(values =c("#F55050","#86A3B8"))
 plot_grid(p1,p2,labels = c(" "," "),rel_widths = c(1.5, 1))
 dev.off()
+
+# the RMSD (structure similarity)
+RMSD <- read.table("/md01/nieyg/project/honeybee/honebee-latest-Version/06_iOR_database/rename_pdb/RMSD_result.txt")
+RMSD<- RMSD$V1
+pdb <- read.table("/md01/nieyg/project/honeybee/honebee-latest-Version/06_iOR_database/rename_pdb/pdb_list.txt")
+ID <- gsub(".pdb","",pdb$V1)
+data<- matrix(ncol=length(ID),nrow=length(ID))
+rownames(data)<- ID
+colnames(data)<- ID
+i=1
+for (row in 1:length(ID)){
+    for(col in 1:length(ID)){
+        data[row,col]=RMSD[i];
+        i=i+1
+    }
+}
+# plot heatmap 
+library(pheatmap)
+data[data==0]<- 0.5
+data<- log2(data)
+same_cluster <- c()
+not_same_cluster <- c()
+remaining_gene<-rownames(data)
+
+for(gene1 in remaining_gene){
+  remaining_gene<-remaining_gene[-which(remaining_gene%in%gene1)]
+  for (gene2 in remaining_gene){
+    cluster_id<-dotplot_data[which(dotplot_data$features.plot%in%c(gene1,gene2)),]$id
+    dist<-data[gene1,gene2]
+    if(length(which(duplicated(cluster_id)))){
+        same_cluster<-c(same_cluster,dist)
+    }else{not_same_cluster<-c(not_same_cluster,dist)}
+  }
+}
+
+type<-c(rep("same_cluster",length(same_cluster)),rep("not_same_cluster",length(not_same_cluster)))
+var<-c(same_cluster,not_same_cluster)
+data2<-data.frame(type,var)
+data2$type<-factor(data2$type,levels=c("same_cluster","not_same_cluster"))
+library(ggpubr)
+
+library(cowplot)
+pdf("./00_Figure/Fig3F-OR_structure_similarity_distribution.pdf",width=3,height=3)
+ggboxplot(data2, x="type", y="var", color = "type",width=0.6, notch = T)+
+stat_compare_means()+theme(legend.position="none")+ylab("% OR structure similarity")+
+scale_color_manual(values =c("#F55050","#86A3B8"))
+dev.off()
+
 #the distance of OR pair in the same cluster and random OR pair 
 DefaultAssay(ORN)<-"ATAC"
 gene_transcript<-Annotation(ORN)[which(Annotation(ORN)$type=="transcript"),];
@@ -319,18 +367,9 @@ dev.off()
 
 # the clear co-exp and the Combinations
 #filter dotplot ;
-dotplot_data<-read.csv("./05_ORN_cluster/02_second_cluster/06_rm_without_power/dotplot_data_remove_nopower.csv")
-dotplot_data$state<-"No";
-for(i in 1:nrow(dotplot_data)){
-  #if(dotplot_data[i,]$pct.exp>40&&dotplot_data[i,]$avg.exp.scaled> -0.2){dotplot_data[i,]$state="Yes"};
-  if(dotplot_data[i,]$pct.exp>50&&dotplot_data[i,]$avg.exp.scaled> 1){dotplot_data[i,]$state="Yes"};
-  if(dotplot_data[i,]$pct.exp>25&&dotplot_data[i,]$avg.exp.scaled>2.4){dotplot_data[i,]$state="Yes"};
-}
-dotplot_data<-dotplot_data[which(dotplot_data$state=="Yes"),]
+dotplot_data<-read.csv("./05_ORN_cluster2/02_second_cluster/06_rm_without_power/dotplot_data_remove_nopower.csv")
 Freq<- as.data.frame(table(dotplot_data$id));
 clear_multiple_classes_order_id <- as.character(Freq[Freq$Freq>1,1])
-d<- dotplot_data[dotplot_data$id%in% clear_multiple_classes_order_id,]
-write.csv(d,"/data/R02/nieyg/project/honeybee/honebee-latest-Version/05_ORN_cluster/03_coexp_cluster/Deterministic_coexpression_data.csv")
 
 # Fig3F
 # coexp in multiple OR cluster
@@ -347,13 +386,13 @@ library(ggpubr)
 library(RColorBrewer)
 log2FCdata<-data.frame();
 DefaultAssay(ORN)<- "integratedRNA_onecluster"
-pdf("./05_ORN_cluster/03_coexp_cluster/distinguish_multi_OR_with_powerful.pdf",width=14,height=6)
+pdf("./05_ORN_cluster2/03_coexp_cluster/distinguish_multi_OR_with_powerful.pdf",width=14,height=6)
 for (cluster in clear_multiple_classes_order_id){
 print(cluster)
 obj<-subset(ORN,idents=cluster);
 obj_features<-dotplot_data[dotplot_data$id==cluster,]$features.plot
 # add max_exp OR label for each cell
-  ORN_count<-obj@assays$raw_RNA
+  ORN_count<-obj@assays$SCT
   ORN_count<-ORN_count[which(rownames(ORN_count)%in%obj_features),]
   ORN_matrix<-as.matrix(ORN_count)
   ORN_matrix<-ORN_matrix[,colSums(ORN_matrix)>0]
@@ -419,22 +458,22 @@ obj_features<-dotplot_data[dotplot_data$id==cluster,]$features.plot
 #raw counts heatmap 
 # Heat map of expression  value for Or25-27 for cluster 5_1,5_2,14-1 and others( random select a few as control) 
     obj_barcode<-colnames(obj)
-    all_barcode<-colnames(ORN)
-    random_barcode<-sample(setdiff(all_barcode,obj_barcode),length(obj_barcode))
-    obj<-subset(ORN,cells=c(obj_barcode,random_barcode))
-    for (i in 1:length(obj$subcluster)){
-      if(obj$subcluster[i]!=cluster){
-            {obj$subcluster[i]="other"}
-        }
-    }
-    DefaultAssay(obj)<-"raw_RNA"
-    obj_data<-as.data.frame(t(obj@assays$raw_RNA[obj_features,]))
+    #all_barcode<-colnames(ORN)
+    #random_barcode<-sample(setdiff(all_barcode,obj_barcode),length(obj_barcode))
+    #obj<-subset(ORN,cells=c(obj_barcode,random_barcode))
+    #for (i in 1:length(obj$subcluster)){
+    #  if(obj$subcluster[i]!=cluster){
+    #        {obj$subcluster[i]="other"}
+    #    }
+    #}
+    #DefaultAssay(obj)<-"SCT"
+    obj_data<-as.data.frame(t(obj@assays$SCT[obj_features,]))
     obj_data<-obj_data[order(obj_data[,1],obj_data[,2],decreasing=T),]
     barcode_info<-data.frame(obj$subcluster)
     rownames(barcode_info)<-colnames(obj)
     p4<-pheatmap(t(obj_data),
-             cluster_cols = F,
-             cluster_rows = F,
+             cluster_cols = T,
+             cluster_rows = T,
              color = colorRampPalette(c("white", "red"))(100),
              annotation_col = barcode_info,
              #annotation_colors = ann_colors,
@@ -462,12 +501,17 @@ obj_features<-dotplot_data[dotplot_data$id==cluster,]$features.plot
     }
 dev.off()
 
+# OR exp correlation in different cells 
+
+
+
+
 # Extract result pages
 
 library(pdftools)
 # inputs
-infile <- "./05_ORN_cluster/03_coexp_cluster/distinguish_multi_OR_with_powerful.pdf"  # input pdf
-outfile <-  "./05_ORN_cluster/03_coexp_cluster/distinguish_multi_OR_with_powerful_extract.pdf"
+infile <- "./05_ORN_cluster2/03_coexp_cluster/distinguish_multi_OR_with_powerful.pdf"  # input pdf
+outfile <-  "./05_ORN_cluster2/03_coexp_cluster/distinguish_multi_OR_with_powerful_extract.pdf"
 num <- pdf_length(infile)/3
 pdf_subset(infile, pages = (1:num)*3, output = outfile)
 
@@ -476,7 +520,7 @@ pdf_subset(infile, pages = (1:num)*3, output = outfile)
 ## Track from scATAC-seq for all multiple cluster 
 library(BSgenome.Amel.HAv3.1.update.chemoreceptor)
 DefaultAssay(ORN)<-"peaks_ORN_subcluster"
-pdf("./05_ORN_cluster/03_coexp_cluster/multi_OR_without_nopower_trackplot.pdf",width=10,height=10)
+pdf("./05_ORN_cluster2/03_coexp_cluster/multi_OR_without_nopower_trackplot.pdf",width=10,height=10)
 for (cluster in clear_multiple_classes_order_id){
 print(cluster)
 obj<-subset(ORN,idents=cluster);
@@ -485,13 +529,14 @@ obj_barcode<-colnames(obj)
 all_barcode<-colnames(ORN)
 random_barcode<-sample(setdiff(all_barcode,obj_barcode),length(obj_barcode))
 obj<-subset(ORN,cells=c(obj_barcode,random_barcode))
+obj$subcluster<-as.character(obj$subcluster)
 for (i in 1:length(obj$subcluster)){
   if(obj$subcluster[i]!=cluster){obj$subcluster[i]="other"}
     }
 Idents(obj)<-obj$subcluster
 # first compute the GC content for each peak
 obj <- RegionStats(obj, genome = BSgenome.Amel.HAv3.1.update.chemoreceptor)
-Annotation(obj)$tx_id <-gsub("_g","-g",Annotation(obj)$gene_name)
+#Annotation(obj)$tx_id <-gsub("_g","-g",Annotation(obj)$gene_name)
 Annotation(obj)$tx_id <-Annotation(obj)$transcript_id
 # link peaks to genes
 obj <- LinkPeaks(
@@ -521,4 +566,51 @@ p1<-CoveragePlot(
 )
 print(p1)
 }
+dev.off()
+
+
+
+cd /md01/nieyg/project/honeybee/honebee-latest-Version/06_iOR_database/Orco_pdb
+
+ls *.pdb > pdb_list.txt
+for file1 in $(<pdb_list.txt)
+do
+ for file2 in $(<pdb_list.txt)
+ do 
+  python ../RMSD.py $file1 $file2 >> RMSD_result.txt
+ done
+done
+
+conda activate r4-base
+R
+RMSD <- read.table("RMSD_result.txt")
+RMSD<- RMSD$V1
+pdb <- read.table("pdb_list.txt")
+ID <- gsub(".pdb","",pdb$V1)
+data<- matrix(ncol=length(ID),nrow=length(ID))
+rownames(data)<- ID
+colnames(data)<- ID
+i=1
+for (row in 1:length(ID)){
+    for(col in 1:length(ID)){
+        data[row,col]=RMSD[i];
+        i=i+1
+    }
+}
+# plot heatmap 
+library(pheatmap)
+data[data==0]<- 0.5
+data<- log2(data)
+pdf("./Orco_feature_RMSD.pdf",width=11,height=10)
+pheatmap(data,
+      cluster_cols = F,
+      cluster_rows = F,
+      color = colorRampPalette(c("#1C214F","#3082BD","#F1ECEC"))(100),
+      #annotation_col = barcode_label_pheatmap,
+      #annotation_colors = ann_colors,
+      #annotation_row = barcode_label_pheatmap,
+      annotation_legend = TRUE,
+      show_rownames=T,
+      show_colnames=T
+ )
 dev.off()
