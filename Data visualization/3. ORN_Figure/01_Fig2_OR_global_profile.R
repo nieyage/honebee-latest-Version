@@ -197,5 +197,41 @@ dev.off()
 pdf('./00_Figure/Fig2G-multiple-OR-FeaturePlot.pdf', width=16, height=4)
 # Visualize co-expression of two features simultaneously
 FeaturePlot(ORN, features = c("LOC107965761", "LOC102655285"),max.cutoff =3, blend = TRUE,order=TRUE,)+ggtitle("p3_3:Or85b_LOC102655285")
-FeaturePlot(ORN, features = c("LOC102653695", "LOC102653615"),max.cutoff =3, blend = TRUE,order=TRUE,)+ggtitle("p2_21:LOC102653695_LOC102653615")
+#FeaturePlot(ORN, features = c("LOC102653695", "LOC102653615"),max.cutoff =3, blend = TRUE,order=TRUE,)+ggtitle("p2_21:LOC102653695_LOC102653615")
 dev.off()
+DefaultAssay(ORN)<-"raw_RNA"
+pdf('./00_Figure/Fig2G-multiple-OR-FeaturePlot2.pdf', width=5, height=8)
+p1<- FeaturePlot(ORN, reduction = 'tsne.rna',max.cutoff = 10,features = c("LOC107965761") ,order=TRUE, ncol = 1)+ggtitle("Or85b")
+p2<- FeaturePlot(ORN, reduction = 'tsne.rna',max.cutoff = 10,features = c("LOC102655285") ,order=TRUE, ncol = 1)+ggtitle("LOC102655285")
+p1/p2
+dev.off()
+DefaultAssay(ORN) <- "SCT"
+scatterColors <- c('#A06CB4', '#DF6C78', '#911A2E', '#CD9139', '#B4B4B6', '#21918c', '#3b528b', '#440154')
+### Plotting scatter plot: 1. single-cell level, 2. cluster level
+ORN$LOC107965761_UMIs <- ORN@assays$SCT@counts['LOC107965761',]
+ORN$LOC102655285_UMIs <- ORN@assays$SCT@counts['LOC102655285',]
+#.....................................................................................
+#  LOC107965761 vs. LOC102655285 UMI
+# ....................................................................................
+#  single-cell level
+library(cowplot)
+pmain <- ORN@meta.data %>%
+  ggplot( aes(LOC107965761_UMIs, LOC102655285_UMIs) ) + 
+  geom_point(size=0.3) + 
+  scale_x_log10() + scale_y_log10()
+# coord_cartesian(xlim = c(0, 100))
+xdens <- axis_canvas(pmain, axis = "x")+
+  geom_density(data = ORN@meta.data, aes(x = LOC107965761_UMIs), fill=scatterColors[1]) +scale_x_log10()
+ydens <- axis_canvas(pmain, axis = "y", coord_flip = TRUE)+
+  geom_density(data = ORN@meta.data, aes(x = LOC102655285_UMIs), fill=scatterColors[2]) + scale_x_log10()+
+  coord_flip()
+p1 <- insert_xaxis_grob(pmain, xdens, grid::unit(.3, "null"), position = "top")
+p2 <- insert_yaxis_grob(p1, ydens, grid::unit(.3, "null"), position = "right")
+p3 <- ggdraw(p2)
+p3
+
+filename <- paste0("./00_Figure/Fig2G-3-LOC107965761vsLOC102655285_UMI.pdf")
+ggsave(filename, limitsize = FALSE, units = "px", width = 1000, height =1000,p3)
+
+
+
