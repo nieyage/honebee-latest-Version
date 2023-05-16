@@ -35,17 +35,22 @@ obj<-subset(ORN,idents=combination_group);
 obj_features<- unique(dotplot_data[dotplot_data$id%in%combination_group,]$features.plot)
 #####done integrate ATAC and RNA ################
 # RNA analysis
-DefaultAssay(obj)<-"raw_RNA"
+DefaultAssay(obj)<-"RNA"
 obj<-FindVariableFeatures(obj, selection.method = "vst")
-top500 <- head(VariableFeatures(obj),100)
-#DefaultAssay(obj) <- "integratedRNA_ORN"
+top20 <- head(VariableFeatures(obj),20)
 
+DefaultAssay(obj)<-"raw_RNA"
 obj<-ScaleData(obj,rownames(obj))
-obj <- RunPCA(obj,features=all_receptor_gene) %>% RunUMAP(dims = 1:30, reduction.name = 'umap.rna', reduction.key = 'rnaUMAP_')
+DefaultAssay(obj)<-"integratedRNA_onecluster"
+obj <- RunPCA(obj,features=obj_features) %>% RunUMAP(dims = 1:3, reduction.name = 'umap.rna', reduction.key = 'rnaUMAP_')
 
 # ATAC analysis
 # We exclude the first dimension as this is typically correlated with sequencing depth
-DefaultAssay(obj) <- "integratedRNA_onecluster"
+DefaultAssay(obj) <- "peaks_ORN_subcluster"
+obj <- RunTFIDF(obj)
+obj <- FindTopFeatures(obj, min.cutoff = "q25")
+obj <- RunSVD(obj,n=25)
+
 obj <- RunUMAP(obj, reduction = 'integratedLSI_onecluster', dims = 2:30, reduction.name = "umap.atac", reduction.key = "atacUMAP_")
 
 # build a joint neighbor graph using both assays
@@ -55,12 +60,12 @@ obj <- RunUMAP(obj, reduction = 'integratedLSI_onecluster', dims = 2:30, reducti
 obj <- FindMultiModalNeighbors(
   object = obj,
   reduction.list = list("pca", "integratedLSI_onecluster"), 
-  dims.list = list(1:30, 2:30),
+  dims.list = list(1:3, 2:4),
   modality.weight.name = "RNA.weight",
   verbose = TRUE
 )
 obj <- RunUMAP(obj, nn.name = "weighted.nn", reduction.name = "wnn.umap", reduction.key = "wnnUMAP_")
-obj <- FindClusters(obj, graph.name = "wsnn", resolution =1.2, algorithm = 3, verbose = FALSE)
+obj <- FindClusters(obj, graph.name = "wsnn", resolution =1, algorithm = 3, verbose = FALSE)
 table(obj$seurat_clusters)
 table(obj$seurat_clusters,obj$subcluster)
 ###reorder the level of sample#####
@@ -138,7 +143,7 @@ log2FCdata<-rbind(log2FCdata,data_subset)
 }
 # plot density line 
 # manage data
-    type<-c(rep("within-OR",length(within_group)),rep("between-OR",length(between_group)))
+type<-c(rep("within-OR",length(within_group)),rep("between-OR",length(between_group)))
 var<-c(within_group,between_group)
 data<-data.frame(type,var)
 data$type<-factor(data$type,levels=c("within-OR","between-OR"))
@@ -163,7 +168,6 @@ p3 <- ggboxplot(data, x="type", y="var", color = "type")+stat_compare_means()+gu
              show_rownames=T,
              show_colnames=F
       )
-
     top_right<-plot_grid(p2,p3,labels = c(" "," "),rel_widths = c(2, 1))
     right<-plot_grid(top_right,p4$gtable,ncol = 1,labels = c(" "," "))
     last<-plot_grid(p1$gtable, right, labels = c(' ', ''), label_size = 12, ncol = 2)
@@ -176,15 +180,14 @@ p3 <- ggboxplot(data, x="type", y="var", color = "type")+stat_compare_means()+gu
       )
     add_title<-plot_grid(title, last,ncol = 1 , rel_heights = c(0.1, 1) )
     print(add_title)
-
 dev.off()
+
 # Fig4H coexp track plot
 ## Track from scATAC-seq for all multiple cluster 
 library(BSgenome.Amel.HAv3.1.update.chemoreceptor)
 DefaultAssay(obj)<-"peaks_ORN_subcluster"
 cluster_info<- combination_group
 pdf("./05_ORN_cluster2/05_combination_group_recluster/combination_group_recluster_trackplot.pdf",width=15,height=5)
-
   Idents(obj)<-obj$seurat_clusters
   # first compute the GC content for each peak
   obj <- RegionStats(obj, genome = BSgenome.Amel.HAv3.1.update.chemoreceptor)
@@ -209,6 +212,5 @@ pdf("./05_ORN_cluster2/05_combination_group_recluster/combination_group_recluste
     tile.cells = 30,
     links=F
   )
- # p1<- p1&scale_fill_manual(values = col )
   print(p1)
 dev.off()
