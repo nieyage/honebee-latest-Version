@@ -10,28 +10,42 @@ library(BSgenome.Amel.HAv3.1.update.chemoreceptor)
 set.seed(1234)
 
 honeybee<-readRDS("./02_All_celltype/WNN_honeybee_integrated_all_celltype.rds")
-
+myUmapcolors <- c(  '#53A85F', '#F1BB72', '#F3B1A0', '#D6E7A3', '#57C3F3', '#476D87',
+         '#E95C59', '#E59CC4', '#AB3282', '#23452F', '#BD956A', '#8C549C', '#585658',
+         '#9FA3A8', '#E0D4CA', '#5F3D69', '#58A4C3', '#AA9A59', '#E63863', '#E39A35', 
+         '#C1E6F3', '#6778AE', '#B53E2B', '#712820', '#DCC1DD', '#CCE0F5', '#625D9E', 
+         '#68A180', '#3A6963', '#968175', '#161853', '#FF9999', '#344CB7', '#FFCC1D', 
+         '#116530', '#678983', '#A19882', '#FFBCBC', '#24A19C', '#FF9A76', "#8DD3C7",
+         "#FFFFB3", "#BEBADA", "#FB8072", "#80B1D3", "#FDB462", "#B3DE69", "#FCCDE5", 
+         "#D9D9D9", "#BC80BD", "#CCEBC5", "#FFED6F", "#E41A1C", "#377EB8", "#4DAF4A", 
+         "#FF7F00", "#FFFF33", "#A65628", "#F781BF")
 # Fig1B: 
-# NE:#5CC8F2,Nurse:#009E73,F:#E69F00
-pdf("./00_Figure/Fig1B-honeybee_cluster_WNN_top.pdf",width=15,height=5)
+pdf("./00_Figure/Fig1/Fig1B-honeybee_cluster_WNN_top.pdf",width=15,height=5)
 ###cluster
-p1 <- DimPlot(honeybee,reduction = "umap.rna", group.by = "seurat_clusters", label = TRUE, label.size = 3.5, repel = TRUE) + ggtitle("RNA")
-p2 <- DimPlot(honeybee,reduction = "umap.atac",group.by = "seurat_clusters", label = TRUE, label.size = 3.5, repel = TRUE) + ggtitle("ATAC")
-p3 <- DimPlot(honeybee,reduction = "wnn.umap", group.by = "seurat_clusters", label = TRUE, label.size = 3.5, repel = TRUE) + ggtitle("WNNUMAP")
+p1 <- DimPlot(honeybee,cols=myUmapcolors,reduction = "umap.rna", group.by = "seurat_clusters", label = TRUE, label.size = 3.5, repel = TRUE) + ggtitle("RNA")
+p2 <- DimPlot(honeybee,cols=myUmapcolors,reduction = "umap.atac",group.by = "seurat_clusters", label = TRUE, label.size = 3.5, repel = TRUE) + ggtitle("ATAC")
+p3 <- DimPlot(honeybee,cols=myUmapcolors,reduction = "wnn.umap", group.by = "seurat_clusters", label = TRUE, label.size = 3.5, repel = TRUE) + ggtitle("WNNUMAP")
 p1 + p2 + p3 & NoLegend() & theme(plot.title = element_text(hjust = 0.5))
 dev.off();
-pdf("./00_Figure/Fig1B-honeybee_cluster_WNN_bottom.pdf",width=15,height=5)
+
+pdf("./00_Figure/Fig1/Fig1B-honeybee_cluster_WNN_bottom.pdf",width=15,height=5)
 ###sample
-p1 <- DimPlot(honeybee, cols=c("#5CC8F2","#009E73","#E69F00"), reduction = "umap.rna", group.by = "orig.ident", shuffle=TRUE,label = F, label.size = 5, repel = TRUE) + ggtitle("RNA")
-p2 <- DimPlot(honeybee, cols=c("#5CC8F2","#009E73","#E69F00"), reduction = "umap.atac",group.by = "orig.ident", shuffle=TRUE,label = F, label.size = 5, repel = TRUE) + ggtitle("ATAC")
-p3 <- DimPlot(honeybee, cols=c("#5CC8F2","#009E73","#E69F00"), reduction = "wnn.umap", group.by = "orig.ident", shuffle=TRUE,label = F, label.size = 5, repel = TRUE) + ggtitle("WNNUMAP")
-p1 + p2 + p3 & theme(plot.title = element_text(hjust = 0.5))
+p1 <- DimPlot(honeybee, cols=c(myUmapcolors[17],myUmapcolors[1],myUmapcolors[2]), reduction = "umap.rna", group.by = "orig.ident", shuffle=TRUE,label = F, label.size = 5, repel = TRUE) + ggtitle("RNA")
+p2 <- DimPlot(honeybee, cols=c(myUmapcolors[17],myUmapcolors[1],myUmapcolors[2]), reduction = "umap.atac",group.by = "orig.ident", shuffle=TRUE,label = F, label.size = 5, repel = TRUE) + ggtitle("ATAC")
+p3 <- DimPlot(honeybee, cols=c(myUmapcolors[17],myUmapcolors[1],myUmapcolors[2]), reduction = "wnn.umap", group.by = "orig.ident", shuffle=TRUE,label = F, label.size = 5, repel = TRUE) + ggtitle("WNNUMAP")
+p1 + p2 + p3 & theme(plot.title = element_text(hjust = 0.5))pdf("./00_Figure/Fig2/Fig2A-Unsupervised_ORN_cluster_WNN.pdf",width=9,height=6)
+DimPlot(onecluster, cols=c(myUmapcolors,myUmapcolors), reduction = "tsne.rna",  label = F, label.size = 5, repel = TRUE)
+dev.off();
+
 dev.off()
+
+
+
 # Fig1C: 
 Idents(honeybee)<-honeybee$Annotation;
-pdf("./00_Figure/Fig1C-honeybee_annotation_allcelltype_WNN-Annotation_first.pdf",width=7,height=5)
-DimPlot(honeybee, label = T, repel = TRUE, cols=c("#66C2A5", "#FC8D62", "#8DA0CB", "#E78AC3", "#A6D854", "#FFD92F","#B3B3B3"), reduction = "wnn.umap",group.by = "Annotation")+ ggtitle("")
-DimPlot(honeybee, label = F, repel = TRUE, cols=c("#66C2A5", "#FC8D62", "#8DA0CB", "#E78AC3", "#A6D854", "#FFD92F","#B3B3B3"), reduction = "wnn.umap",group.by = "Annotation")+ ggtitle("")
+pdf("./00_Figure/Fig1/Fig1C-honeybee_annotation_allcelltype_WNN-Annotation_first.pdf",width=7,height=5)
+DimPlot(honeybee, label = T, repel = TRUE, cols=c("#8ECC92","#49A5CC",myUmapcolors[6:10]), reduction = "wnn.umap",group.by = "Annotation")+ ggtitle("")
+DimPlot(honeybee, label = F, repel = TRUE, cols=c("#8ECC92","#49A5CC",myUmapcolors[6:10]), reduction = "wnn.umap",group.by = "Annotation")+ ggtitle("")
 dev.off()
 
 # Fig1D:
@@ -140,12 +154,12 @@ p4<-CombineTracks(
   heights = c(10, 3),
   widths = c(10,5)
 )
-set<-c("#66C2A5", "#FC8D62", "#8DA0CB", "#E78AC3", "#A6D854", "#FFD92F","#B3B3B3")
+set<- c("#8ECC92","#49A5CC",myUmapcolors[6:10])
 p1<-p1& scale_fill_manual(values=set)&labs(title="Syt1")
 p2<-p2& scale_fill_manual(values=set)&labs(title="LOC411079(GRH)") & theme(strip.text.y.left = element_blank(),strip.background = element_blank())
 p3<-p3& scale_fill_manual(values=set)&labs(title="LOC410151(repo)") & theme(strip.text.y.left = element_blank(),strip.background = element_blank())
 p4<-p4& scale_fill_manual(values=set)&labs(title="5-ht7") & theme(strip.text.y.left = element_blank(),strip.background = element_blank())
-pdf("./00_Figure/Fig1D-Marker_gene-select-peaktrack-WNN.pdf",height=8,width=16) 
+pdf("./00_Figure/Fig1/Fig1D-Marker_gene-select-peaktrack-WNN.pdf",height=8,width=16) 
 p1|p2|p3|p4
 dev.off()
 
@@ -155,32 +169,24 @@ markers <- FindAllMarkers(Neuron, only.pos = TRUE, min.pct = 0.25, logfc.thresho
 Neuron_top<-markers[markers$cluster=="Orco-Neuron",7]
 # Or2 and LOC408554
 DefaultAssay(Neuron)<-"RNA"
-pdf('./00_Figure/Fig1E-Neuron_marker_FeaturePlot_WNN.pdf', width=13, height=4)
-p1<- FeaturePlot(Neuron, reduction = 'wnn.umap',max.cutoff = 7,features = c("LOC413063") ,order=TRUE, ncol = 1)+ggtitle("LOC413063 (pepple)")
-p2<- FeaturePlot(Neuron,cols =c("lightgrey", "#183A1D"), reduction = 'wnn.umap',max.cutoff = 7,features = c("LOC551837") ,order=FALSE, ncol = 1)+ggtitle("LOC551837 (bgm)")
-p3<- FeaturePlot(Neuron,cols =c("lightgrey", "#F0A04B"), reduction = 'wnn.umap',max.cutoff = 25,features = c("Or2") ,order=TRUE, ncol = 1)+ggtitle("Or2 (Orco)")
+color_for_neuron<-c("#6580A8","#63A8A6","#A8A7A7")
+# ORN: 
+# Non-ORN: 
+pdf('./00_Figure/Fig1/Fig1E-Neuron_marker_FeaturePlot_WNN.pdf', width=13, height=4)
+p1<- FeaturePlot(Neuron,reduction = 'wnn.umap',max.cutoff = 10,features = c("LOC413063") ,order=TRUE, ncol = 1)+ggtitle("LOC413063 (pepple)")
+p2<- FeaturePlot(Neuron,cols =c("lightgrey", color_for_neuron[1]), reduction = 'wnn.umap',max.cutoff = 7,features = c("LOC551837") ,order=FALSE, ncol = 1)+ggtitle("LOC551837 (bgm)")
+p3<- FeaturePlot(Neuron,cols =c("lightgrey", color_for_neuron[2]), reduction = 'wnn.umap',max.cutoff = 25,features = c("Or2") ,order=TRUE, ncol = 1)+ggtitle("Or2 (Orco)")
 p1|p2|p3
 dev.off()
 
-# Or2 and LOC408554
-DefaultAssay(Neuron)<-"RNA"
-pdf('./03_Neuron/Orco-Neuron_marker_FeaturePlot_WNN.pdf', width=10, height=10)
- FeaturePlot(Neuron, reduction = 'wnn.umap',max.cutoff = 7,features = Neuron_top[1:9] ,order=FALSE, ncol = 3)
-dev.off()
 # Fig1F:
 DefaultAssay(Neuron) <- "peaks"
 # first compute the GC content for each peak
 Neuron <- RegionStats(Neuron, genome = BSgenome.Amel.HAv3.1.update.chemoreceptor)
 Annotation(Neuron)$tx_id <- Annotation(Neuron)$gene_name
-Neuron <- LinkPeaks(
-  object = Neuron,
-  peak.assay = "peaks",
-  expression.assay = "RNA",
-  genes.use = c("LOC413063","Or2",Neuron_top)
-)
+
 ######Visulize track and RNA exp######
 idents.plot <- Idents(Neuron)
-
 # Neuron
 cov_plot <- CoveragePlot(
   object = Neuron,
@@ -206,13 +212,13 @@ p1<-CombineTracks(
 # LOC551837
 cov_plot <- CoveragePlot(
   object = Neuron,
-  region = "Group1-22596000-22597500",
+  region = "Group1-22596500-22598000",
   #annotation = FALSE,
   peaks = FALSE,links = F,annotation = F
 )
 gene_plot <- AnnotationPlot(
   object = Neuron,
-  region = "Group1-22596000-22597500"
+  region = "Group1-22596500-22598000"
 )
 expr_plot <- ExpressionPlot(
   object = Neuron,
@@ -271,12 +277,12 @@ p2<-CombineTracks(
   widths = c(10,5)
 )
 
-set<-c("#F0A04B", "#183A1D")
+set<- color_for_neuron[1:2]
 p1<-p1& scale_fill_manual(values=set)&labs(title="LOC413063 (pepple)")
 p2<-p2& scale_fill_manual(values=set)&labs(title="Or2 (Orco)") & theme(strip.text.y.left = element_blank(),strip.background = element_blank())
 p3<-p3& scale_fill_manual(values=set)&labs(title="LOC551837 (bgm)") & theme(strip.text.y.left = element_blank(),strip.background = element_blank())
 
-pdf("./00_Figure/Fig1F-Neuron-Orco-track.pdf",width=13,height=4)
+pdf("./00_Figure/Fig1/Fig1F-Neuron-Orco-track.pdf",width=13,height=4)
 p1|p3|p2
 dev.off()
 
@@ -290,15 +296,15 @@ data<-data.frame(group=c(rep("ORN",3),rep("Non-ORN",3)),
   cellnumber=c(ORN,Non_ORN))
 data$group<-factor(data$group,levels=c("ORN","Non-ORN"))
 data$Sample<-factor(data$Sample,levels=c("NE","Nurse","Forager"))
-pdf("./00_Figure/Fig1G-ORNvsNonORN_proportion.pdf",width=4,height=4)
+pdf("./00_Figure/Fig1/Fig1G-ORNvsNonORN_proportion.pdf",width=4,height=4)
 ggplot(data = data, aes_string(x = "group", y = "cellnumber", 
         fill = "Sample")) +  xlab("orig.ident") + ylab("Percent of cells") + 
-        scale_fill_manual(values = c("#5CC8F2","#009E73","#E69F00")) + 
+        scale_fill_manual(values = c(myUmapcolors[17],myUmapcolors[1],myUmapcolors[2])) + 
         geom_bar(position = "fill", stat = "identity", width = 0.6) +
         theme_bw();
 ggplot(data = data, aes_string(x = "group", y = "cellnumber", 
         fill = "Sample")) +  xlab("orig.ident") + ylab("cell number") + 
-        scale_fill_manual(values = c("#5CC8F2","#009E73","#E69F00")) + 
+        scale_fill_manual(values = c(myUmapcolors[17],myUmapcolors[1],myUmapcolors[2])) + 
         geom_bar( stat = "identity", width = 0.6) +
         theme_classic()
 dev.off()
@@ -322,10 +328,10 @@ cross_species_cellnumber<-data.frame(species=c(rep("Apis mellifera",3),rep("D.me
   cellnumber=c(Apis_mellifera,Drosophila_melanogaster,Aedes_aegypti))
 cross_species_cellnumber$celltype<-factor(cross_species_cellnumber$celltype,levels=c("Orco+Neuron","Orco-Neuron","Non-neuron"));
 cross_species_cellnumber$species<-factor(cross_species_cellnumber$species,levels=c("Apis mellifera","D.melanogaster","Ae.aegypti"))
-pdf("./00_Figure/Fig1H-cross_species_ORNvsNonORN_proportion_3types_publishdata.pdf",width=4,height=4)
+pdf("./00_Figure/Fig1/Fig1H-cross_species_ORNvsNonORN_proportion_3types_publishdata.pdf",width=4,height=4)
 ggplot(data = cross_species_cellnumber, aes_string(x = "species", y = "cellnumber", 
         fill = "celltype")) +  xlab(" ") + ylab("% Percent of cells") + 
-        scale_fill_manual(values = c("#F0A04B","#183A1D","#D8D8D8")) + 
+        scale_fill_manual(values = c(color_for_neuron[1:2],"#CACCCC")) + 
         geom_bar(position = "fill", stat = "identity", width = 0.6) +
         theme_bw()+
         theme(axis.text.x = element_text(angle = 25,vjust = 0.5,hjust = 0.5));
@@ -345,10 +351,10 @@ cross_species_genenumber<-data.frame(species=c(rep("Apis_mellifera",3),rep("Dros
   genenumber=c(Apis_mellifera,Drosophila_melanogaster,Aedes_aegypti))
 cross_species_genenumber$genetype<-factor(cross_species_genenumber$genetype,levels=c("ORs","IRs","GRs"));
 cross_species_genenumber$species<- factor(cross_species_genenumber$species,levels=c("Apis_mellifera","Drosophila_melanogaster","Aedes_aegypti"))
-pdf("./00_Figure/Fig1I-cross_species_ORGRIRgene_proportion.pdf",width=4,height=4)
+pdf("./00_Figure/Fig1/Fig1I-cross_species_ORGRIRgene_proportion.pdf",width=4,height=4)
 p<-ggplot(data = cross_species_genenumber, aes_string(x = "species", y = "genenumber", 
         fill = "genetype")) +  xlab(" ") + ylab("chemosensory receptor genes") + 
-        scale_fill_manual(values = c("#9D6EB0","#EA6376","#3D63AD")) + 
+        scale_fill_manual(values = c("#B781CC","#7A9BCC","#CC6E7B")) + 
         geom_bar( stat = "identity", width = 0.6) +
         theme_classic()+
         theme(axis.text.x = element_text(angle = 25,vjust = 0.5,hjust = 0.5));
@@ -362,11 +368,10 @@ dev.off();
 cross_species_glomeruli<-data.frame(species=c("Apis mellifera","D. melanogaster","Ae. aegypti"),
   glomeruli=c(160,55,65));
 cross_species_glomeruli$species<- factor(cross_species_glomeruli$species,levels=c("Apis mellifera","D. melanogaster","Ae. aegypti"))
-pdf("./00_Figure/Fig1J-cross_species_glomeruli.pdf",width=4,height=4)
+pdf("./00_Figure/Fig1/Fig1J-cross_species_glomeruli.pdf",width=3,height=4)
 p<-ggplot(data = cross_species_glomeruli, aes_string(x = "species", y = "glomeruli", 
         fill = "species")) +  xlab(" ") + ylab("# of glomeruli") + 
-        scale_fill_manual(values = c("#C8B6E2" ,"#7A86B6" ,"#495C83")) + 
-        geom_bar( stat = "identity", width = 0.6) +
+        geom_bar( stat = "identity",width=0.6,color = 'black', fill='grey') +
         theme_classic()+
         theme(axis.text.x = element_text(angle = 25,vjust = 0.5,hjust = 0.5));
 p

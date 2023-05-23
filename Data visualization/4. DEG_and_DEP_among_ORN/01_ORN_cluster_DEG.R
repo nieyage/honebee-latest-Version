@@ -13,9 +13,9 @@ GR_gene<- unique(chemoreceptor[chemoreceptor$gene_type=="GR",]$gene_name)
 IR_gene<- unique(c("LOC412949","LOC100577496","LOC102653640","LOC727346","LOC100578352","LOC552552","LOC726019","LOC551704","LOC410623","LOC100576097","LOC409777"))
 Orco<- c("Or2","LOC552552","LOC726019","LOC551704")
 all_receptor_gene <- unique(c(Orco,OR_gene,IR_gene,GR_gene))
-ORN<- readRDS("./05_ORN_cluster/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_modify_the_tsne_order_by_tree_recall_peak.rds")
+ORN<- readRDS("./05_ORN_cluster2/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_modify_the_tsne_recall_peak.rds")
 DefaultAssay(ORN)<-"raw_RNA"
-dotplot_data<-read.csv("./05_ORN_cluster/02_second_cluster/06_rm_without_power/dotplot_data_remove_nopower.csv")
+dotplot_data<-read.csv("./05_ORN_cluster2/02_second_cluster/06_rm_without_power/dotplot_data_remove_nopower.csv")
 
 # 1. Find All Markers:
 DefaultAssay(ORN)<-"raw_RNA"
@@ -23,7 +23,7 @@ ORN <- ScaleData(ORN,features=rownames(ORN))
 
 markers <- FindAllMarkers(ORN, only.pos = TRUE, min.pct = 0.2, logfc.threshold = 0.2)
 table(markers$cluster)
-write.csv(markers,"/md01/nieyg/project/honeybee/honebee-latest-Version/05_ORN_cluster/06_DEG_and_DEP/FindAllMarkers_gene.csv")
+write.csv(markers,"/md01/nieyg/project/honeybee/honebee-latest-Version/05_ORN_cluster2/07_DEG_and_DEP/FindAllMarkers_gene.csv")
 
 # verification
 myUmapcolors <- c(  '#53A85F', '#F1BB72', '#F3B1A0', '#D6E7A3', '#57C3F3', '#476D87',
@@ -40,7 +40,7 @@ top5 <- signif_markers %>% group_by(cluster) %>% top_n(n = 5, wt = avg_log2FC);
 top5_Avg <- AverageExpression(ORN,features=top5$gene,assays = "raw_RNA")
 library(pheatmap)
 count=t(scale(t(top5_Avg$raw_RNA),scale = T,center = T))
-pdf("/md01/nieyg/project/honeybee/honebee-latest-Version/05_ORN_cluster/06_DEG_and_DEP/DEG_FindAllMarkers_heatmap_top5.pdf",width=15,height=15)
+pdf("/md01/nieyg/project/honeybee/honebee-latest-Version/05_ORN_cluster2/07_DEG_and_DEP/DEG_FindAllMarkers_heatmap_top5.pdf",width=15,height=15)
 pheatmap(count,cluster_cols = F,cluster_rows = F,color = colorRampPalette(c("white", "firebrick3"))(100),show_rownames=T,show_colnames=T)
 pheatmap(count,cluster_cols = F,cluster_rows = F,color = colorRampPalette(c("white", "#E41A1C"))(100),show_rownames=T,show_colnames=T)
 pheatmap(count,cluster_cols = F,cluster_rows = F,color = colorRampPalette(c("#377EB8", "white", "#E41A1C"))(100),show_rownames=T,show_colnames=T)
@@ -49,7 +49,7 @@ FC<-signif_markers[signif_markers$avg_log2FC>1,]
 Avg <- AverageExpression(ORN,features=FC$gene,assays = "raw_RNA")
 library(pheatmap)
 count=t(scale(t(Avg$raw_RNA),scale = T,center = T))
-pdf("/md01/nieyg/project/honeybee/honebee-latest-Version/05_ORN_cluster/06_DEG_and_DEP/DEG_FindAllMarkers_heatmap_avg_log2FC1.pdf",width=15,height=15)
+pdf("/md01/nieyg/project/honeybee/honebee-latest-Version/05_ORN_cluster2/07_DEG_and_DEP/DEG_FindAllMarkers_heatmap_avg_log2FC1.pdf",width=15,height=15)
 pheatmap(count,cluster_cols = F,cluster_rows = F,color = colorRampPalette(c("white", "firebrick3"))(100),show_rownames=T,show_colnames=T)
 pheatmap(count,cluster_cols = F,cluster_rows = F,color = colorRampPalette(c("white", "#E41A1C"))(100),show_rownames=T,show_colnames=T)
 pheatmap(count,cluster_cols = F,cluster_rows = F,color = colorRampPalette(c("#377EB8", "white", "#E41A1C"))(100),show_rownames=T,show_colnames=T)
@@ -89,7 +89,7 @@ gene_tau<-specificityScore(
 )
 names(gene_tau)<-rownames(ORN_avg)
 # plot the density plot for gene_tau 
-pdf("./05_ORN_cluster/06_DEG_and_DEP/DEG_tau_density.pdf",width=10,height=5)
+pdf("./05_ORN_cluster2/07_DEG_and_DEP/DEG_tau_density.pdf",width=10,height=5)
 data<- as.data.frame(gene_tau)
 ggplot(data, aes(x=data[,1])) + xlab("")+
               geom_density(alpha=.25) + theme_classic() 
@@ -101,7 +101,7 @@ lines(d, col="red", lty=2)
 dev.off()
 
 #plot the cluster specific pheatmap
-gene_specific<-names(which(gene_tau>0.9))
+gene_specific<-names(which(gene_tau>0.95))
 gene_specific_data<-as.data.frame(ORN_avg[gene_specific,])
 data<-data.frame()
 for (gene in gene_specific){
@@ -113,14 +113,14 @@ for (gene in gene_specific){
 data$cluster<-factor(data$cluster,levels=colnames(gene_specific_data))
 data<-data[order(data$cluster),]
 tau1_gene<-data$gene
-write.csv(data,"./05_ORN_cluster/06_DEG_and_DEP/DEG_tau-0.9_cluster_specfic_data.csv")
+write.csv(data,"./05_ORN_cluster2/07_DEG_and_DEP/DEG_tau-0.9_cluster_specfic_data.csv")
 #gene_specific_data<-gene_specific_data[do.call(order,gene_specific_data),]
 # plot the tau cluster specfic genes heatmap 
 #modify_tau_gene<-names(which(gene_tau>0.945))
 tau_Avg <- AverageExpression(ORN,features=tau1_gene,assays = "raw_RNA")
 library(pheatmap)
 count=t(scale(t(tau_Avg$raw_RNA),scale = T,center = T))
-pdf("/md01/nieyg/project/honeybee/honebee-latest-Version/05_ORN_cluster/06_DEG_and_DEP/DEG_tau_heatmap.pdf",width=15,height=15)
+pdf("/md01/nieyg/project/honeybee/honebee-latest-Version/05_ORN_cluster2/07_DEG_and_DEP/DEG_tau_heatmap.pdf",width=15,height=15)
 pheatmap(count,cluster_cols = F,cluster_rows = F,color = colorRampPalette(c("white", "firebrick3"))(100),show_rownames=T,show_colnames=T)
 pheatmap(count,cluster_cols = F,cluster_rows = F,color = colorRampPalette(c("white", "#E41A1C"))(100),show_rownames=T,show_colnames=T)
 pheatmap(count,cluster_cols = F,cluster_rows = F,color = colorRampPalette(c("#377EB8", "white", "#E41A1C"))(100),show_rownames=T,show_colnames=T)
@@ -147,7 +147,7 @@ data<-as.data.frame(gene_CV);
 range(data$gene_CV)
 #[1]  0.7724479 45.0444225
 library(ggplot2)
-pdf("./05_ORN_cluster/06_DEG_and_DEP/allgene_cv.pdf",width=10,height=4)
+pdf("./05_ORN_cluster2/07_DEG_and_DEP/allgene_cv.pdf",width=10,height=4)
 ggplot(data, aes(x=gene_CV)) + xlab("gene_CV")+
               geom_density(alpha=.25) + theme_classic() 
 dev.off()
@@ -191,12 +191,12 @@ for (i in 1:nrow(cluster_info)){
     Or_cor_data<-rbind(Or_cor_data,Or_cor_data_subset);
   }
 }
-write.csv(Or_cor_data,"./05_ORN_cluster/06_DEG_and_DEP/correlation_top10_data.csv")
+write.csv(Or_cor_data,"./05_ORN_cluster2/07_DEG_and_DEP/correlation_top10_data.csv")
 
 cor_Avg <- AverageExpression(ORN,features=Or_cor_data$gene,assays = "raw_RNA")
 library(pheatmap)
 count=t(scale(t(cor_Avg$raw_RNA),scale = T,center = T))
-pdf("/md01/nieyg/project/honeybee/honebee-latest-Version/05_ORN_cluster/06_DEG_and_DEP/DEG_cor_heatmap.pdf",width=15,height=15)
+pdf("/md01/nieyg/project/honeybee/honebee-latest-Version/05_ORN_cluster2/07_DEG_and_DEP/DEG_cor_heatmap.pdf",width=15,height=15)
 pheatmap(count,cluster_cols = F,cluster_rows = F,color = colorRampPalette(c("white", "firebrick3"))(100),show_rownames=T,show_colnames=T)
 pheatmap(count,cluster_cols = F,cluster_rows = F,color = colorRampPalette(c("white", "#E41A1C"))(100),show_rownames=T,show_colnames=T)
 pheatmap(count,cluster_cols = F,cluster_rows = F,color = colorRampPalette(c("#377EB8", "white", "#E41A1C"))(100),show_rownames=T,show_colnames=T)
@@ -235,12 +235,12 @@ for (i in 1:nrow(cluster_info)){
    Or_mi_data<-rbind(Or_mi_data,top10_mi);
   }
 }
-write.csv(Or_mi_data,"./05_ORN_cluster/06_DEG_and_DEP/MI_top10_data.csv")
+write.csv(Or_mi_data,"./05_ORN_cluster2/07_DEG_and_DEP/MI_top10_data.csv")
 
 mi_Avg <- AverageExpression(ORN,features=Or_mi_data$gene,assays = "raw_RNA")
 library(pheatmap)
 count=t(scale(t(mi_Avg$raw_RNA),scale = T,center = T))
-pdf("/md01/nieyg/project/honeybee/honebee-latest-Version/05_ORN_cluster/06_DEG_and_DEP/DEG_MI_heatmap.pdf",width=15,height=15)
+pdf("/md01/nieyg/project/honeybee/honebee-latest-Version/05_ORN_cluster2/07_DEG_and_DEP/DEG_MI_heatmap.pdf",width=15,height=15)
 pheatmap(count,cluster_cols = F,cluster_rows = F,color = colorRampPalette(c("white", "firebrick3"))(100),show_rownames=T,show_colnames=T)
 pheatmap(count,cluster_cols = F,cluster_rows = F,color = colorRampPalette(c("white", "#E41A1C"))(100),show_rownames=T,show_colnames=T)
 pheatmap(count,cluster_cols = F,cluster_rows = F,color = colorRampPalette(c("#377EB8", "white", "#E41A1C"))(100),show_rownames=T,show_colnames=T)
@@ -248,12 +248,12 @@ dev.off();
 
 library(VennDiagram)
 library(RColorBrewer)
-markers <-read.csv("./05_ORN_cluster/06_DEG_and_DEP/FindAllMarkers_gene.csv",row.names=1)
-tau_data<-read.csv("./05_ORN_cluster/06_DEG_and_DEP/DEG_tau-0.9_cluster_specfic_data.csv",row.names=1)
-cor_data<-read.csv("./05_ORN_cluster/06_DEG_and_DEP/correlation_top10_data.csv",row.names=1)
-mi_data <-read.csv("./05_ORN_cluster/06_DEG_and_DEP/MI_top10_data.csv",row.names=1)
+markers <-read.csv("./05_ORN_cluster2/07_DEG_and_DEP/FindAllMarkers_gene.csv",row.names=1)
+tau_data<-read.csv("./05_ORN_cluster2/07_DEG_and_DEP/DEG_tau-0.9_cluster_specfic_data.csv",row.names=1)
+cor_data<-read.csv("./05_ORN_cluster2/07_DEG_and_DEP/correlation_top10_data.csv",row.names=1)
+mi_data <-read.csv("./05_ORN_cluster2/07_DEG_and_DEP/MI_top10_data.csv",row.names=1)
 FeatureSelection_data<-data.frame()
-pdf("./05_ORN_cluster/06_DEG_and_DEP/DEG_4methods_venn..pdf")
+pdf("./05_ORN_cluster2/07_DEG_and_DEP/DEG_4methods_venn..pdf")
 for (i in 1:nrow(cluster_info)){
     cluster<-cluster_info[i,1];
     # 1.FindAllMarkers:
@@ -288,9 +288,8 @@ listInput <- list(
         tau = tau_data$gene, 
         FindAllMarkers = markers$gene,
         correlation = cor_data$gene)
-pdf("./05_ORN_cluster/06_DEG_and_DEP/DEG_4methods_upsetR.pdf")
-upset(fromList(listInput), nsets = 7, nintersects = 30, mb.ratio = c(0.5, 0.5),
-      order.by = c("freq", "degree"), decreasing = c(TRUE,FALSE))
+pdf("./05_ORN_cluster2/07_DEG_and_DEP/DEG_4methods_upsetR.pdf")
+upset(fromList(listInput),intersect=10)
 dev.off()
 
 # Highlight genes in the three category 
@@ -311,4 +310,7 @@ Apis_mellifera.OrgDb <-loadDb("/data/R02/nieyg/ref/10X/Amel_HAv3.1/Amel_HAv3_1/A
 columns(Apis_mellifera.OrgDb)
 specfic_gene<- gsub("-[abc]","",tau_data$gene)
 gene.df <- bitr(specfic_gene, fromType = "SYMBOL",toType =  c("ENTREZID","GO","EVIDENCEALL"),OrgDb = Apis_mellifera.OrgDb)
+TF_list_info<- read.csv("./05_ORN_cluster2/07_DEG_and_DEP/TF_Information.txt")
+
+
 

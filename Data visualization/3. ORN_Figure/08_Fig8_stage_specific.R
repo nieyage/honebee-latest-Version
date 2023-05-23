@@ -12,9 +12,9 @@ GR_gene<- unique(chemoreceptor[chemoreceptor$gene_type=="GR",]$gene_name)
 IR_gene<- unique(c("LOC412949","LOC100577496","LOC102653640","LOC727346","LOC100578352","LOC552552","LOC726019","LOC551704","LOC410623","LOC100576097","LOC409777"))
 Orco<- c("Or2","LOC552552","LOC726019","LOC551704")
 all_receptor_gene <- unique(c(Orco,OR_gene,IR_gene,GR_gene))
-ORN<- readRDS("./05_ORN_cluster/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_modify_the_tsne_order_by_tree_recall_peak.rds")
+ORN<- readRDS("./05_ORN_cluster2/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_modify_the_tsne_recall_peak.rds")
 DefaultAssay(ORN)<-"raw_RNA"
-dotplot_data<-read.csv("./05_ORN_cluster/02_second_cluster/06_rm_without_power/dotplot_data_remove_nopower.csv")
+dotplot_data<-read.csv("./05_ORN_cluster2/02_second_cluster/06_rm_without_power/dotplot_data_remove_nopower.csv")
 
 ## stage specific cluster
 ORN$orig.ident<-factor(ORN$orig.ident,levels=c("NE","Nurse","Forager"))
@@ -67,7 +67,7 @@ for(i in 1:length(por_data$grouping)){
 por_data$grouping<-factor(por_data$grouping,levels=levels(Idents(ORN)))
 one_class_por_data<-por_data
 
-pdf("./05_ORN_cluster/05_stage_specific/stage_specific_cluster_proportion.pdf",height=2,width=12)
+pdf("./05_ORN_cluster2/06_stage_specific/stage_specific_cluster_proportion.pdf",height=2,width=12)
 ggplot(data = por_data, aes_string(x = "grouping", y = "percent", 
         fill = "label")) +  xlab("orig.ident") + ylab("Percent of cells") + 
         scale_fill_manual(values = c("#5CC8F2","#009E73","#E69F00")) + 
@@ -82,16 +82,6 @@ signif<-por_data[por_data$p_value<0.05,]
 global_ratio<-c(NE_all_number/total,Nurse_all_number/total,Forager_all_number/total)
 signif$global_ratio<-c(rep(global_ratio,nrow(signif)/3))
 signif$FC<-signif$percent/signif$global_ratio;
-
-#manage the signif cluster 
-dotplot_data<-read.csv("./05_ORN_cluster/02_second_cluster/06_rm_without_power/dotplot_data_remove_nopower.csv")
-dotplot_data$state<-"No";
-for(i in 1:nrow(dotplot_data)){
-  if(dotplot_data[i,]$pct.exp>90&&dotplot_data[i,]$avg.exp.scaled> -0.05){dotplot_data[i,]$state="Yes"};
-  if(dotplot_data[i,]$pct.exp>50&&dotplot_data[i,]$avg.exp.scaled> 1){dotplot_data[i,]$state="Yes"};
-  if(dotplot_data[i,]$pct.exp>25&&dotplot_data[i,]$avg.exp.scaled>2.4){dotplot_data[i,]$state="Yes"};
-}
-dotplot_data<-dotplot_data[which(dotplot_data$state=="Yes"),]
 
 #all_class_Data<-rbind(one_class_data,multiple_classes_data)
 cluster<-unique(signif$grouping)
@@ -108,47 +98,25 @@ for (i in cluster){
   cluster_specific_subset<-data.frame(cluster=i,OR_specfic,sample_specific)
   cluster_specific<-rbind(cluster_specific,cluster_specific_subset)
 } 
-write.csv(cluster_specific,"./05_ORN_cluster/05_stage_specific/cluster_specific.csv")
+write.csv(cluster_specific,"./05_ORN_cluster2/06_stage_specific/cluster_specific.csv")
 
 
 library(scCustomize)
 # this is batch effect in NE,Nurse and Forager
 DefaultAssay(ORN)<-"RNA";
-ORN<-NormalizeData(ORN)
-ORN@assays$SCT@data
-pdf("./05_ORN_cluster/05_stage_specific/global_batch_profile_among_stage.pdf",width=10,height=20)
-p1 <- Stacked_VlnPlot(seurat_object = ORN, features = c("nCount_RNA","nFeature_RNA","nCount_ATAC","nFeature_ATAC","nCount_raw_RNA","nFeature_raw_RNA","nCount_SCT","nFeature_SCT"),group.by ="orig.ident", 
-   x_lab_rotate = TRUE,plot_spacing = 0.3, plot_legend = T,colors_use = c("#5CC8F2","#009E73","#E69F00"))
-p2 <- Stacked_VlnPlot(seurat_object = ORN, features = c("percent.mt","nucleosome_signal","TSS.enrichment","nCount_peaks","nFeature_peaks","nCount_peaks_ORN_subcluster","nFeature_peaks_ORN_subcluster"),group.by ="orig.ident", 
-  x_lab_rotate = TRUE,plot_spacing = 0.3, plot_legend = T,colors_use = c("#5CC8F2","#009E73","#E69F00"))
-p1|p2
-dev.off()
+#ORN<-NormalizeData(ORN)
+#pdf("./05_ORN_cluster2/06_stage_specific/global_batch_profile_among_stage.pdf",width=10,height=20)
+#p1 <- Stacked_VlnPlot(seurat_object = ORN, features = c("nCount_RNA","nFeature_RNA","nCount_ATAC","nFeature_ATAC","nCount_raw_RNA","nFeature_raw_RNA","nCount_SCT","nFeature_SCT"),group.by ="orig.ident", 
+#   x_lab_rotate = TRUE,plot_spacing = 0.3, plot_legend = T,colors_use = c("#5CC8F2","#009E73","#E69F00"))
+#p2 <- Stacked_VlnPlot(seurat_object = ORN, features = c("percent.mt","nucleosome_signal","TSS.enrichment","nCount_peaks","nFeature_peaks","nCount_peaks_ORN_subcluster","nFeature_peaks_ORN_subcluster"),group.by ="orig.ident", 
+#  x_lab_rotate = TRUE,plot_spacing = 0.3, plot_legend = T,colors_use = c("#5CC8F2","#009E73","#E69F00"))
+#p1|p2
+#dev.off()
 
-# Raw_UMI 
-specfic<-cluster_specific$cluster;
-pdf("./05_ORN_cluster/05_stage_specific/cluster_specific_OR_exp_raw_RNA_counts.pdf",width=5,height=15)
-for(cluster in specfic){
-  obj<-subset(ORN,idents=cluster);
-  obj_feature<- strsplit(cluster_specific[cluster_specific$cluster==cluster,2],",")[[1]]
-  #p<-VlnPlot(obj,cols =c("#5CC8F2","#009E73","#E69F00"),features=obj_feature,group.by ="orig.ident",stack = F,pt.size = 1)
-  p1<-Stacked_VlnPlot(seurat_object = obj,assay = "raw_RNA",slot="counts",features = obj_feature,group.by ="orig.ident", x_lab_rotate = TRUE,plot_spacing = 0.3, plot_legend = T,colors_use = c("#5CC8F2","#009E73","#E69F00"))
-  print(p1)
-}
-dev.off()
 
-pdf("./05_ORN_cluster/05_stage_specific/cluster_specific_OR_exp_raw_RNA_data.pdf",width=5,height=15)
-for(cluster in specfic){
-  obj<-subset(ORN,idents=cluster);
-  obj_feature<- strsplit(cluster_specific[cluster_specific$cluster==cluster,2],",")[[1]]
-  
-  #p<-VlnPlot(obj,cols =c("#5CC8F2","#009E73","#E69F00"),features=obj_feature,group.by ="orig.ident",stack = F,pt.size = 1)
-  p1<-Stacked_VlnPlot(seurat_object = obj,assay = "raw_RNA",slot="data",features = obj_feature,group.by ="orig.ident", x_lab_rotate = TRUE,plot_spacing = 0.3, plot_legend = T,colors_use = c("#5CC8F2","#009E73","#E69F00"))
-  print(p1)
-}
-dev.off()
-
+specfic <- cluster_specific$cluster
 # SCT 
-pdf("./05_ORN_cluster/05_stage_specific/cluster_specific_OR_exp_SCT_data.pdf",width=5,height=10)
+pdf("./05_ORN_cluster2/06_stage_specific/cluster_specific_OR_exp_SCT_data.pdf",width=5,height=10)
 for(cluster in specfic){
 	obj<-subset(ORN,idents=cluster);
 	obj_feature<- strsplit(cluster_specific[cluster_specific$cluster==cluster,2],",")[[1]]
@@ -157,7 +125,7 @@ for(cluster in specfic){
 	print(p1)
 }
 dev.off()
-pdf("./05_ORN_cluster/05_stage_specific/cluster_specific_OR_exp_SCT_counts.pdf",width=5,height=15)
+pdf("./05_ORN_cluster2/06_stage_specific/cluster_specific_OR_exp_SCT_counts.pdf",width=5,height=15)
 for(cluster in specfic){
   obj<-subset(ORN,idents=cluster);
   obj_feature<- strsplit(cluster_specific[cluster_specific$cluster==cluster,2],",")[[1]]
@@ -166,7 +134,7 @@ for(cluster in specfic){
   print(p1)
 }
 dev.off()
-pdf("./05_ORN_cluster/05_stage_specific/OR2_exp_SCT_counts.pdf",width=20,height=15)
+pdf("./05_ORN_cluster2/06_stage_specific/OR2_exp_SCT_counts.pdf",width=20,height=15)
 p1 <- Stacked_VlnPlot(ORN,colors_use =c("#5CC8F2","#009E73","#E69F00"),assay = "SCT",slot="counts",features=Orco,group.by ="orig.ident",stack = F,pt.size = 1)
 p2 <- Stacked_VlnPlot(ORN,colors_use =c("#5CC8F2","#009E73","#E69F00"),assay = "SCT",slot="data",features=Orco,group.by ="orig.ident",stack = F,pt.size = 1)
 p3 <- Stacked_VlnPlot(ORN,colors_use =c("#5CC8F2","#009E73","#E69F00"),assay = "RNA",slot="counts",features=Orco,group.by ="orig.ident",stack = F,pt.size = 1)
@@ -176,22 +144,29 @@ p6 <- Stacked_VlnPlot(ORN,colors_use =c("#5CC8F2","#009E73","#E69F00"),assay = "
 p1|p2|p3|p4|p5|p6
 dev.off()
 
-
 # OR exp in their cluster among stages
-pdf("./05_ORN_cluster/05_stage_specific/cluster_specific_OR_exp_raw_RNA_data_modify.pdf",width=10,height=10)
+pdf("./05_ORN_cluster2/06_stage_specific/cluster_specific_OR_exp_raw_RNA_data_modify.pdf",width=10,height=10)
 for(cluster in specfic){
   obj<-subset(ORN,idents=cluster);
   obj_feature<- strsplit(cluster_specific[cluster_specific$cluster==cluster,2],",")[[1]]
   #for(i in 1:length(obj_feature))
   #p<-VlnPlot(obj,cols =c("#5CC8F2","#009E73","#E69F00"),features=obj_feature,group.by ="orig.ident",stack = F,pt.size = 1)
-  p1<-VlnPlot_scCustom(num_columns = 2,seurat_object = obj,assay = "raw_RNA",slot="data",features = obj_feature,group.by ="orig.ident", colors_use = c("#5CC8F2","#009E73","#E69F00"))
+  p1<-VlnPlot_scCustom(num_columns = 2,seurat_object = obj,assay = "SCT",slot="counts",features = obj_feature,group.by ="orig.ident", colors_use = c("#5CC8F2","#009E73","#E69F00"))
 
   print(p1)
 }
 dev.off()
+pdf("./05_ORN_cluster2/06_stage_specific/cluster_specific_OR_exp_raw_RNA_data_modify.pdf",width=5,height=3)
+obj<-subset(ORN,idents="p4:0_0");
+VlnPlot_scCustom(num_columns = 1,seurat_object = obj,assay = "SCT",slot="counts",features = "Or56",group.by ="orig.ident", colors_use = c("#5CC8F2","#009E73","#E69F00"))
+obj<-subset(ORN,idents="p4:0_2");
+VlnPlot_scCustom(num_columns = 1,seurat_object = obj,assay = "SCT",slot="counts",features = "Or55",group.by ="orig.ident", colors_use = c("#5CC8F2","#009E73","#E69F00"))
+obj<-subset(ORN,idents="p2:17");
+VlnPlot_scCustom(num_columns = 1,seurat_object = obj,assay = "SCT",slot="counts",features = "Or109",group.by ="orig.ident", colors_use = c("#5CC8F2","#009E73","#E69F00"))
+dev.off()
 
 #sample cell number in obj 
-pdf("./05_ORN_cluster/05_stage_specific/cluster_specific_cellnumber.pdf",width=4,height=4)
+pdf("./05_ORN_cluster2/06_stage_specific/cluster_specific_cellnumber.pdf",width=4,height=4)
 for(cluster in specfic){
 	obj<-subset(ORN,idents=cluster);
 	data<-as.data.frame(table(obj$orig.ident))
@@ -227,11 +202,11 @@ for(cluster in specfic){
   Idents(obj)<- obj$orig.ident
   markers <- FindAllMarkers(obj, only.pos = TRUE, min.pct = 0.2, logfc.threshold = 0.2)
   markers <- markers[which(markers$p_val<0.05),]
-  write.csv(markers,paste0("./05_ORN_cluster/05_stage_specific/Cluster",cluster,"_specific_markers.csv",sep=""))
+  write.csv(markers,paste0("./05_ORN_cluster2/06_stage_specific/Cluster",cluster,"_specific_markers.csv",sep=""))
   top10 <- markers %>% group_by(cluster) %>% top_n(n = 10, wt = avg_log2FC);
   obj<-ScaleData(obj,features=rownames(obj))
   p<- DoHeatmap(object = obj,features=top10$gene,label=T, group.colors =c("#E69F00","#55B4E9","#009E73"),disp.min = -0.5,disp.max = 0.5,size = 2,group.by = "orig.ident") + scale_fill_gradientn(colors = c("#377EB8", "white", "#E41A1C"))+NoLegend()
-  pdf(paste0("./05_ORN_cluster/05_stage_specific/Cluster",cluster,"_specific_heatmap.pdf",sep=""))
+  pdf(paste0("./05_ORN_cluster2/06_stage_specific/Cluster",cluster,"_specific_heatmap.pdf",sep=""))
   print(p)
   dev.off()
   # Go and KEGG 

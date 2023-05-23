@@ -189,7 +189,7 @@ for (cluster in unique(combination_data$combination)){
     extend.downstream = 100,
     tile = TRUE,
     tile.size = 100,
-    tile.cells = 30,s
+    tile.cells = 30,
     links=F
   )
   #p1<- p1&scale_fill_manual(values = col )

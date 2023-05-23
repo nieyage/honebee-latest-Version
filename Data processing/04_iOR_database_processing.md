@@ -113,7 +113,60 @@ for (row in 1:length(ID)){
 ```
 
 ***fly and honybee coreceptor 
+```
+ls *.pdb > pdb_list.txt
+for file1 in $(<pdb_list.txt)
+do
+ for file2 in $(<pdb_list.txt)
+ do 
+  python ../RMSD.py $file1 $file2 >> RMSD_result.txt
+ done
+done
+```
 
+```
+RMSD <- read.table("RMSD_result.txt")
+RMSD<- RMSD$V1
+pdb <- read.table("pdb_list.txt")
+ID <- gsub(".pdb","",pdb$V1)
+ID<-gsub(".*_","",ID)
+
+data<- matrix(ncol=length(ID),nrow=length(ID))
+rownames(data)<- ID
+colnames(data)<- ID
+i=1
+for (row in 1:length(ID)){
+	for(col in 1:length(ID)){
+		data[row,col]=RMSD[i];
+		i=i+1
+	}
+}
+
+# plot heatmap 
+library(pheatmap)
+label_pheatmap<- data.frame(species=c(rep("D.melanogaster",5),rep("Apis mellifera",4)))
+rownames(label_pheatmap) <- colnames(data)
+data[data==0]<- 0.5
+data<- log2(data)
+ann_colors<-list(
+species = c("D.melanogaster"="#7985B6", "Apis mellifera"="#C7B6E1"))
+
+pdf("./honeybee_OR_feature_RMSD.pdf",width=7,height=5)
+pheatmap(data,
+      cluster_cols = T,
+      cluster_rows = T,
+      color = colorRampPalette(c("#1C214F","#3082BD","#F1ECEC"))(100),
+      annotation_col = label_pheatmap,
+      annotation_colors = ann_colors,
+      annotation_row = label_pheatmap,
+      annotation_legend = TRUE,
+      show_rownames=T,
+      show_colnames=T
+ )
+dev.off()
+
+
+```
 
 
 

@@ -215,53 +215,6 @@ scale_color_manual(values =c("#F55050","#86A3B8"))
 plot_grid(p1,p2,labels = c(" "," "),rel_widths = c(1.5, 1))
 dev.off()
 
-# the RMSD (structure similarity)
-RMSD <- read.table("/md01/nieyg/project/honeybee/honebee-latest-Version/06_iOR_database/rename_pdb/RMSD_result.txt")
-RMSD<- RMSD$V1
-pdb <- read.table("/md01/nieyg/project/honeybee/honebee-latest-Version/06_iOR_database/rename_pdb/pdb_list.txt")
-ID <- gsub(".pdb","",pdb$V1)
-data<- matrix(ncol=length(ID),nrow=length(ID))
-rownames(data)<- ID
-colnames(data)<- ID
-i=1
-for (row in 1:length(ID)){
-    for(col in 1:length(ID)){
-        data[row,col]=RMSD[i];
-        i=i+1
-    }
-}
-# plot heatmap 
-library(pheatmap)
-data[data==0]<- 0.5
-data<- log2(data)
-same_cluster <- c()
-not_same_cluster <- c()
-remaining_gene<-rownames(data)
-
-for(gene1 in remaining_gene){
-  remaining_gene<-remaining_gene[-which(remaining_gene%in%gene1)]
-  for (gene2 in remaining_gene){
-    cluster_id<-dotplot_data[which(dotplot_data$features.plot%in%c(gene1,gene2)),]$id
-    dist<-data[gene1,gene2]
-    if(length(which(duplicated(cluster_id)))){
-        same_cluster<-c(same_cluster,dist)
-    }else{not_same_cluster<-c(not_same_cluster,dist)}
-  }
-}
-
-type<-c(rep("same_cluster",length(same_cluster)),rep("not_same_cluster",length(not_same_cluster)))
-var<-c(same_cluster,not_same_cluster)
-data2<-data.frame(type,var)
-data2$type<-factor(data2$type,levels=c("same_cluster","not_same_cluster"))
-library(ggpubr)
-
-library(cowplot)
-pdf("./00_Figure/Fig3F-OR_structure_similarity_distribution.pdf",width=3,height=3)
-ggboxplot(data2, x="type", y="var", color = "type",width=0.6, notch = T)+
-stat_compare_means()+theme(legend.position="none")+ylab("% OR structure similarity")+
-scale_color_manual(values =c("#F55050","#86A3B8"))
-dev.off()
-
 #the distance of OR pair in the same cluster and random OR pair 
 DefaultAssay(ORN)<-"ATAC"
 gene_transcript<-Annotation(ORN)[which(Annotation(ORN)$type=="transcript"),];
