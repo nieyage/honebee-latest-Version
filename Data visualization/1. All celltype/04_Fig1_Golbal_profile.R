@@ -51,6 +51,9 @@ dev.off()
 # Fig1D:
 # Major celltype track and violin plot 
 ##Track for Marker genes promoters
+# remove unannotated 
+honeybee<- subset(honeybee,idents=setdiff(levels(honeybee),"Unannotated"))
+
 DefaultAssay(honeybee) <- "peaks"
 # first compute the GC content for each peak
 honeybee <- RegionStats(honeybee, genome = BSgenome.Amel.HAv3.1.update.chemoreceptor)
@@ -154,13 +157,61 @@ p4<-CombineTracks(
   heights = c(10, 3),
   widths = c(10,5)
 )
+# Obp4
+cov_plot <- CoveragePlot(
+  object = honeybee,
+  region = "Group9-11980000-11983000",
+  #annotation = FALSE,
+  peaks = FALSE,links = F,annotation = F
+)
+gene_plot <- AnnotationPlot(
+  object = honeybee,
+  region = "Group9-11980000-11983000"
+)
+expr_plot <- ExpressionPlot(
+  object = honeybee,
+  features = "Obp4",
+  assay = "SCT"
+)
+p5<-CombineTracks(
+  plotlist = list(cov_plot,gene_plot),
+  expression.plot = expr_plot,
+  heights = c(10, 3),
+  widths = c(10,5)
+)
+# obp5
+cov_plot <- CoveragePlot(
+  object = honeybee,
+  region = "Group9-11944000-11946000",
+  #annotation = FALSE,
+  peaks = FALSE,links = F,annotation = F
+)
+gene_plot <- AnnotationPlot(
+  object = honeybee,
+  region = "Group9-11944000-11946000"
+)
+expr_plot <- ExpressionPlot(
+  object = honeybee,
+  features = "Obp5",
+  assay = "RNA"
+)
+p6<-CombineTracks(
+  plotlist = list(cov_plot,gene_plot),
+  expression.plot = expr_plot,
+  heights = c(10, 3),
+  widths = c(10,5)
+)
+
 set<- c("#8ECC92","#49A5CC",myUmapcolors[6:10])
 p1<-p1& scale_fill_manual(values=set)&labs(title="Syt1")
 p2<-p2& scale_fill_manual(values=set)&labs(title="LOC411079(GRH)") & theme(strip.text.y.left = element_blank(),strip.background = element_blank())
 p3<-p3& scale_fill_manual(values=set)&labs(title="LOC410151(repo)") & theme(strip.text.y.left = element_blank(),strip.background = element_blank())
 p4<-p4& scale_fill_manual(values=set)&labs(title="5-ht7") & theme(strip.text.y.left = element_blank(),strip.background = element_blank())
-pdf("./00_Figure/Fig1/Fig1D-Marker_gene-select-peaktrack-WNN.pdf",height=8,width=16) 
-p1|p2|p3|p4
+p5<-p5& scale_fill_manual(values=set)& theme(strip.text.y.left = element_blank(),strip.background = element_blank())
+p6<-p6& scale_fill_manual(values=set)& theme(strip.text.y.left = element_blank(),strip.background = element_blank())
+
+pdf("./00_Figure/Fig1/Fig1D-Marker_gene-select-peaktrack-WNN.pdf",height=8,width=24) 
+p1|p2|p3|p4|p5|p6
 dev.off()
 
 # Fig1E:
