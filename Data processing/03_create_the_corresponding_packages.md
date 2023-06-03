@@ -64,4 +64,3 @@ bitr(keys(Apis_mellifera.OrgDb)[1:10], 'ENTREZID', "SYMBOL", Apis_mellifera.OrgD
 bitr(keys(Apis_mellifera.OrgDb)[1:2], 'ENTREZID', c("SYMBOL","REFSEQ", "GO", "ONTOLOGY"), Apis_mellifera.OrgDb) 
 saveDb(Apis_mellifera.OrgDb, "/md01/nieyg/ref/10X/Amel_HAv3.1/Amel_HAv3_1/Apis_mellifera_AH102515.OrgDb")
 ```
-

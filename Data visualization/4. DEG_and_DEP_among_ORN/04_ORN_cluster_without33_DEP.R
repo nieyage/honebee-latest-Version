@@ -1,18 +1,13 @@
-#Identify DEP by FindMarkers, Kendall tau,correlation and mutual information 
-
 library(Signac)
 library(Seurat)
 library(ggplot2)
 library(dplyr)
 library(JASPAR2020)
 library(TFBSTools)
-library(BSgenome.Amel.antenan)
 library(patchwork)
-set.seed(1234);
-library(pheatmap)
+set.seed(1234)
 # remove nopower cluster,then plot UMAP
 ORN<- readRDS("./05_ORN_cluster2/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_modify_the_tsne_recall_peak.rds")
-
 myUmapcolors <- c(  '#53A85F', '#F1BB72', '#F3B1A0', '#D6E7A3', '#57C3F3', '#476D87',
          '#E95C59', '#E59CC4', '#AB3282', '#23452F', '#BD956A', '#8C549C', '#585658',
          '#9FA3A8', '#E0D4CA', '#5F3D69', '#58A4C3', '#AA9A59', '#E63863', '#E39A35', 
@@ -22,8 +17,9 @@ myUmapcolors <- c(  '#53A85F', '#F1BB72', '#F3B1A0', '#D6E7A3', '#57C3F3', '#476
          "#FFFFB3", "#BEBADA", "#FB8072", "#80B1D3", "#FDB462", "#B3DE69", "#FCCDE5", 
          "#D9D9D9", "#BC80BD", "#CCEBC5", "#FFED6F", "#E41A1C", "#377EB8", "#4DAF4A", 
          "#FF7F00", "#FFFF33", "#A65628", "#F781BF" )
+ORN<- subset(ORN,idents=setdiff(levels(ORN),"33"))
 # 1. Find All Markers:
-DefaultAssay(ORN)<-"peaks_ORN_subcluster"
+DefaultAssay(ORN)<- "peaks_ORN_subcluster"
 da_peaks <- FindAllMarkers(
   object = ORN,
   test.use = 'LR',
@@ -31,7 +27,7 @@ da_peaks <- FindAllMarkers(
   min.pct = 0.05,
   latent.vars = 'nCount_peaks'
 )
-write.csv(da_peaks,"./05_ORN_cluster2/07_DEG_and_DEP/01_All_ORN_cluster/DEP_FindAllMarkers.csv")
+write.csv(da_peaks,"./05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/DEP_FindAllMarkers.csv")
 #markers <- FindAllMarkers(ORN, only.pos = TRUE, min.pct = 0.2, logfc.threshold = 0.2)
 da_peaks<-da_peaks[da_peaks$p_val_adj<0.05,]
 da_peaks<- da_peaks[da_peaks$avg_log2FC>1,]
@@ -43,7 +39,7 @@ peak2show<- rownames(da_peaks)
 # plot the avg heatmap 
 peak_Avg <- AverageExpression(ORN,features=peak2show,assays = "peaks")
 count=t(scale(t(peak_Avg$peaks),scale = T,center = F))
-pdf("./05_ORN_cluster2/07_DEG_and_DEP/01_All_ORN_cluster/DEP_FindAllMarkers_ORN_heatmap_avg.pdf",width=15,height=15)
+pdf("./05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/DEP_FindAllMarkers_ORN_heatmap_avg.pdf",width=15,height=15)
 pheatmap(count,cluster_cols = F,cluster_rows = F,color = colorRampPalette(c("white", "firebrick3"))(100),show_rownames=F,show_colnames=T)
 pheatmap(count,cluster_cols = F,cluster_rows = F,color = colorRampPalette(c("white", "#E41A1C"))(100),show_rownames=F,show_colnames=T)
 pheatmap(count,cluster_cols = F,cluster_rows = F,color = colorRampPalette(c("#377EB8", "white", "#E41A1C"))(100),show_rownames=F,show_colnames=T)
@@ -80,7 +76,7 @@ peak_tau<-specificityScore(
 )
 names(peak_tau)<-rownames(ORN_avg)
 # plot the density plot for peak_tau 
-pdf("./05_ORN_cluster2/07_DEG_and_DEP/01_All_ORN_cluster/DEP_tau_density.pdf",width=10,height=5)
+pdf("./05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/DEP_tau_density.pdf",width=10,height=5)
 data<- as.data.frame(peak_tau)
 ggplot(data, aes(x=data[,1])) + xlab("")+
               geom_density(alpha=.25) + theme_classic() 
@@ -112,7 +108,7 @@ write.csv(data,"./05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/DEP_tau-0.9_clus
 peak_Avg <-ORN_avg[tau1_peak,]
 count=t(scale(t(peak_Avg),scale = T,center = F))
 count<- count[tau1_peak,]
-pdf("./05_ORN_cluster2/07_DEG_and_DEP/01_All_ORN_cluster/DEP_tau_ORN_heatmap_avg.pdf",width=15,height=15)
+pdf("./05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/DEP_tau_ORN_heatmap_avg.pdf",width=15,height=15)
 pheatmap(count,cluster_cols = F,cluster_rows = F,color = colorRampPalette(c("white", "firebrick3"))(100),show_rownames=F,show_colnames=T)
 pheatmap(count,cluster_cols = F,cluster_rows = F,color = colorRampPalette(c("white", "#E41A1C"))(100),show_rownames=F,show_colnames=T)
 pheatmap(count,cluster_cols = F,cluster_rows = F,color = colorRampPalette(c("#377EB8", "white", "#E41A1C"))(100),show_rownames=F,show_colnames=T)
@@ -259,12 +255,12 @@ dev.off();
 # plot the overlap among 4 methods
 library(VennDiagram)
 library(RColorBrewer)
-markers <-read.csv("./05_ORN_cluster2/07_DEG_and_DEP/01_All_ORN_cluster/DEP_FindAllMarkers_gene_peak_ORN.csv",row.names=1)
-tau_data<-read.csv("./05_ORN_cluster2/07_DEG_and_DEP/01_All_ORN_cluster/DEP_tau-0.9_cluster_specfic_data_peak_ORN.csv",row.names=1)
+markers <-read.csv("./05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/DEP_FindAllMarkers_gene_peak_ORN.csv",row.names=1)
+tau_data<-read.csv("./05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/DEP_tau-0.9_cluster_specfic_data_peak_ORN.csv",row.names=1)
 #cor_data<-read.csv("./ORN/remove_nopower/DEGandDEP/DEP_correlation_top100_data_peak_ORN.csv",row.names=1)
 #mi_data <-read.csv("./ORN/remove_nopower/DEGandDEP/DEP_MI_top100_data.csv",row.names=1)
 FeatureSelection_data<-data.frame()
-pdf("./05_ORN_cluster2/07_DEG_and_DEP/01_All_ORN_cluster/DEP_2methods_venn..pdf")
+pdf("./05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/DEP_2methods_venn..pdf")
 for (i in levels(ORN)){
     cluster<-i;
     # 1.FindAllMarkers:
@@ -355,7 +351,7 @@ for (i in 1:nrow(last_motif_info)){
 
 library(pheatmap)
 #count=t(scale(t(motif_matrix),scale = T,center = T))
-pdf("./ORN/07_DEG_and_DEP/01_All_ORN_cluster/tau_DEP_motif_heatmap.pdf",width=20,height=20)
+pdf("./05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/tau_DEP_motif_heatmap.pdf",width=20,height=20)
 pheatmap(motif_matrix,cluster_cols = T,cluster_rows = F,
               color = colorRampPalette(c("white", "firebrick3"))(100),
               cellwidth = 10, cellheight = 10,

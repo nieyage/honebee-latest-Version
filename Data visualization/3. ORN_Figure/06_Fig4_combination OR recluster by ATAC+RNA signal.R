@@ -298,12 +298,10 @@ chorddiag(as.matrix(coexp.df3), groupColors = col, groupnamePadding = 20)
 
 
 # upsetR 
-# for C1 
 
-# Fig2F Upset plot for 4 coreceptor barcode 
+
+# Fig2F Upset plot for 4  
 # 1: Observation
-
-#obj_C1<- subset(obj,idents="C1")
 ORN_count<-obj@assays$RNA
 ORN_count<-ORN_count[which(rownames(ORN_count)%in%obj_features),]
 ORN_matrix<-as.matrix(ORN_count)
@@ -347,4 +345,400 @@ dev.off()
 
 saveRDS(obj,"./05_ORN_cluster2/05_combination_group_recluster/obj_recluster.rds")
 
+obj<- readRDS("./05_ORN_cluster2/05_combination_group_recluster/obj_recluster.rds")
+# for C1: promoter1 
+obj_C1<- subset(obj,idents="C1")
+ORN_count<-obj_C1@assays$raw_RNA
+ORN_count<-ORN_count[which(rownames(ORN_count)%in%obj_features),]
+ORN_matrix<-as.matrix(ORN_count)
+library(UpSetR)
+listInput <- list(
+        Or63_b = names(which(ORN_matrix[4,]>0)), 
+        LOC410603 = names(which(ORN_matrix[3,]>0)), 
+        LOC107963999 = names(which(ORN_matrix[2,]>0)), 
+        LOC100578045 = names(which(ORN_matrix[1,]>0)))
+data<- fromList(listInput)
+obj_upset<- c("Or63_b","LOC410603","LOC107963999","LOC100578045")
+pdf("./00_Figure/Fig4/Fig4F-promoter1-combination_group_recluster-upsetR_Observation.pdf", width=8, height=4)
+#upset(data, sets=c("Or63_b","LOC410603","LOC107963999","LOC100578045"), order.by=c("degree","freq"),empty.intersections=TRUE,  mb.ratio = c(0.5, 0.5), keep.order = F)
+upset(
+    data,
+    c("Or63_b","LOC410603","LOC107963999","LOC100578045"),
+    sort_sets=FALSE,
+    mode = "exclusive_intersection",
+    sort_intersections = FALSE,
+    intersections = list(obj_upset[1:4],obj_upset[1:3],obj_upset[1:2],obj_upset[1],obj_upset[c(1,3,4)],
+      obj_upset[c(1,2,4)],obj_upset[c(1,3)],obj_upset[c(1,4)],
+      obj_upset[2:4],obj_upset[2:3],obj_upset[2],obj_upset[c(2,4)],obj_upset[3:4],obj_upset[3],obj_upset[4]#'Outside of known sets'
+         ),
+    queries=list(
+        upset_query(intersect=obj_upset[1],color="#4BA9D1",fill="#4BA9D1"),
+        upset_query(intersect=obj_upset[1:2],color="#4BA9D1",fill="#4BA9D1"),
+        upset_query(intersect=obj_upset[1:3],color="#4BA9D1",fill="#4BA9D1"),
+        upset_query(intersect=obj_upset[1:4],color="#4BA9D1",fill="#4BA9D1")
+    )
+)
+dev.off()
 
+# simulation 
+obj_barcode<-colnames(obj_C1)
+ORN_count<-obj_C1@assays$raw_RNA
+ORN_count<-ORN_count[which(rownames(ORN_count)%in%obj_features),]
+ORN_matrix<-as.matrix(ORN_count)
+data<- as.data.frame(ORN_matrix)
+data$features<- rownames(data)
+data_long<-melt(data, id.vars = c("features"),
+               measure.vars = c(colnames(data)[-length(colnames(data))]),
+               variable.name = c('barcode'),
+               value.name = 'value')
+data_long<- data_long[data_long$value>0,]
+listInput <- split(data_long$barcode,data_long$features)
+total_cell <- length(colnames(ORN_matrix))
+gene1<- names(listInput)[1]
+gene2<- names(listInput)[2]
+gene3<- names(listInput)[3]
+gene4<- names(listInput)[4]
+gene1_dropout <- 1-length(listInput[[gene1]])/length(colnames(ORN_matrix))
+gene2_dropout <- 1-length(listInput[[gene2]])/length(colnames(ORN_matrix))
+gene3_dropout <- 1-length(listInput[[gene3]])/length(colnames(ORN_matrix))
+gene4_dropout <- 1-length(listInput[[gene4]])/length(colnames(ORN_matrix))
+input <- c(
+  "gene1" =total_cell*(1-gene1_dropout)*gene2_dropout*gene3_dropout*gene4_dropout,
+  "gene2" =total_cell*(1-gene2_dropout)*gene1_dropout*gene3_dropout*gene4_dropout,
+  "gene3" =total_cell*(1-gene3_dropout)*gene1_dropout*gene2_dropout*gene4_dropout,
+  "gene4" =total_cell*(1-gene4_dropout)*gene1_dropout*gene2_dropout*gene3_dropout,
+  "gene1&gene2" =total_cell*(1-gene1_dropout)*(1-gene2_dropout)*gene3_dropout*gene4_dropout, 
+  "gene1&gene3" =total_cell*(1-gene1_dropout)*(1-gene3_dropout)*gene2_dropout*gene4_dropout, 
+  "gene1&gene4" =total_cell*(1-gene1_dropout)*(1-gene4_dropout)*gene2_dropout*gene3_dropout, 
+  "gene2&gene3" =total_cell*(1-gene2_dropout)*(1-gene3_dropout)*gene1_dropout*gene4_dropout, 
+  "gene2&gene4" =total_cell*(1-gene2_dropout)*(1-gene4_dropout)*gene1_dropout*gene3_dropout, 
+  "gene3&gene4" =total_cell*(1-gene3_dropout)*(1-gene4_dropout)*gene1_dropout*gene2_dropout, 
+  "gene1&gene2&gene3"=total_cell*(1-gene1_dropout)*(1-gene2_dropout)*(1-gene3_dropout)*gene4_dropout,
+  "gene1&gene2&gene4"=total_cell*(1-gene1_dropout)*(1-gene2_dropout)*(1-gene4_dropout)*gene3_dropout,
+  "gene1&gene3&gene4"=total_cell*(1-gene1_dropout)*(1-gene3_dropout)*(1-gene4_dropout)*gene2_dropout, 
+  "gene2&gene3&gene4"=total_cell*(1-gene2_dropout)*(1-gene3_dropout)*(1-gene4_dropout)*gene1_dropout,
+  "gene1&gene2&gene3&gene4"=total_cell*(1-gene1_dropout)*(1-gene2_dropout)*(1-gene3_dropout)*(1-gene4_dropout))
+data <- UpSetR::fromExpression(input)
+colnames(data)<- names(listInput)
+obj_upset<- c("Or63-b","LOC410603","LOC107963999","LOC100578045")
+pdf("./00_Figure/Fig4/Fig4F-promoter1-combination_group_recluster-upsetR_Expecption.pdf", width=8, height=4)
+upset(
+    data,
+    c("Or63-b","LOC410603","LOC107963999","LOC100578045"),
+    sort_sets=FALSE,
+    mode = "exclusive_intersection",
+    sort_intersections = FALSE,
+    intersections = list(obj_upset[1:4],obj_upset[1:3],obj_upset[1:2],obj_upset[1],obj_upset[c(1,3,4)],
+      obj_upset[c(1,2,4)],obj_upset[c(1,3)],obj_upset[c(1,4)],
+      obj_upset[2:4],obj_upset[2:3],obj_upset[2],obj_upset[c(2,4)],obj_upset[3:4],obj_upset[3],obj_upset[4]),
+    queries=list(
+        upset_query(intersect=obj_upset[1],color="#4BA9D1",fill="#4BA9D1"),
+        upset_query(intersect=obj_upset[1:2],color="#4BA9D1",fill="#4BA9D1"),
+        upset_query(intersect=obj_upset[1:3],color="#4BA9D1",fill="#4BA9D1"),
+        upset_query(intersect=obj_upset[1:4],color="#4BA9D1",fill="#4BA9D1")
+    )
+)
+dev.off()
+# four gene exp violin plot in C1 
+DefaultAssay(obj) <- "raw_RNA"
+selected_cells <- names(Idents(obj)[Idents(obj) == "C1"])
+data <- FetchData(obj,vars = obj_upset,cells = selected_cells ,slot = "counts")
+long_data <- melt(data)
+pdf("./00_Figure/Fig4/Fig4F-promoter1-combination_group_recluster-geneexp.pdf", width=4, height=4)
+ggplot(long_data,aes(x = variable, y = value)) + geom_violin() + geom_boxplot(width=0.1,cex=1.2)+theme_classic()
+dev.off()
+
+
+# for C2: promoter2 
+obj_C2<- subset(obj,idents="C2")
+ORN_count<-obj_C2@assays$raw_RNA
+ORN_count<-ORN_count[which(rownames(ORN_count)%in%obj_features),]
+ORN_matrix<-as.matrix(ORN_count)
+listInput <- list(
+        Or63_b = names(which(ORN_matrix[4,]>0)), 
+        LOC410603 = names(which(ORN_matrix[3,]>0)), 
+        LOC107963999 = names(which(ORN_matrix[2,]>0)), 
+        LOC100578045 = names(which(ORN_matrix[1,]>0)))
+data<- fromList(listInput)
+pdf("./00_Figure/Fig4/Fig4F-promoter2-combination_group_recluster-upsetR_Observation.pdf", width=8, height=4)
+obj_upset<- c("Or63_b","LOC410603","LOC107963999","LOC100578045")
+upset(
+    data,
+    c("Or63_b","LOC410603","LOC107963999","LOC100578045"),
+    sort_sets=FALSE,
+    mode = "exclusive_intersection",
+    sort_intersections = FALSE,
+    intersections = list(obj_upset[1:4],obj_upset[1:3],obj_upset[1:2],obj_upset[1],obj_upset[c(1,3,4)],
+      obj_upset[c(1,2,4)],obj_upset[c(1,3)],obj_upset[c(1,4)],
+      obj_upset[2:4],obj_upset[2:3],obj_upset[2],obj_upset[c(2,4)],obj_upset[3:4],obj_upset[3],obj_upset[4]),
+    queries=list(
+        upset_query(intersect=obj_upset[2],  color=color_for_cluster[2],fill=color_for_cluster[2]),
+        upset_query(intersect=obj_upset[2:3],color=color_for_cluster[2],fill=color_for_cluster[2]),
+        upset_query(intersect=obj_upset[2:4],color=color_for_cluster[2],fill=color_for_cluster[2])
+    ))
+dev.off()
+
+# simulation 
+obj_barcode<-colnames(obj_C2)
+ORN_count<-obj_C2@assays$raw_RNA
+ORN_count<-ORN_count[obj_features,]
+ORN_matrix<-as.matrix(ORN_count)
+data<- as.data.frame(ORN_matrix)
+data$features<- rownames(data)
+data_long<-melt(data, id.vars = c("features"),
+               measure.vars = c(colnames(data)[-length(colnames(data))]),
+               variable.name = c('barcode'),
+               value.name = 'value')
+data_long<- data_long[data_long$value>0,]
+listInput <- split(data_long$barcode,data_long$features)
+total_cell <- length(colnames(ORN_matrix))
+gene1<- names(listInput)[1]
+gene2<- names(listInput)[2]
+gene3<- names(listInput)[3]
+gene4<- names(listInput)[4]
+gene1_dropout <- 1-length(listInput[[gene1]])/length(colnames(ORN_matrix))
+gene2_dropout <- 1-length(listInput[[gene2]])/length(colnames(ORN_matrix))
+gene3_dropout <- 1-length(listInput[[gene3]])/length(colnames(ORN_matrix))
+gene4_dropout <- 1-length(listInput[[gene4]])/length(colnames(ORN_matrix))
+input <- c(
+  "gene1" =total_cell*(1-gene1_dropout)*gene2_dropout*gene3_dropout*gene4_dropout,
+  "gene2" =total_cell*(1-gene2_dropout)*gene1_dropout*gene3_dropout*gene4_dropout,
+  "gene3" =total_cell*(1-gene3_dropout)*gene1_dropout*gene2_dropout*gene4_dropout,
+  "gene4" =total_cell*(1-gene4_dropout)*gene1_dropout*gene2_dropout*gene3_dropout,
+  "gene1&gene2" =total_cell*(1-gene1_dropout)*(1-gene2_dropout)*gene3_dropout*gene4_dropout, 
+  "gene1&gene3" =total_cell*(1-gene1_dropout)*(1-gene3_dropout)*gene2_dropout*gene4_dropout, 
+  "gene1&gene4" =total_cell*(1-gene1_dropout)*(1-gene4_dropout)*gene2_dropout*gene3_dropout, 
+  "gene2&gene3" =total_cell*(1-gene2_dropout)*(1-gene3_dropout)*gene1_dropout*gene4_dropout, 
+  "gene2&gene4" =total_cell*(1-gene2_dropout)*(1-gene4_dropout)*gene1_dropout*gene3_dropout, 
+  "gene3&gene4" =total_cell*(1-gene3_dropout)*(1-gene4_dropout)*gene1_dropout*gene2_dropout, 
+  "gene1&gene2&gene3"=total_cell*(1-gene1_dropout)*(1-gene2_dropout)*(1-gene3_dropout)*gene4_dropout,
+  "gene1&gene2&gene4"=total_cell*(1-gene1_dropout)*(1-gene2_dropout)*(1-gene4_dropout)*gene3_dropout,
+  "gene1&gene3&gene4"=total_cell*(1-gene1_dropout)*(1-gene3_dropout)*(1-gene4_dropout)*gene2_dropout, 
+  "gene2&gene3&gene4"=total_cell*(1-gene2_dropout)*(1-gene3_dropout)*(1-gene4_dropout)*gene1_dropout,
+  "gene1&gene2&gene3&gene4"=total_cell*(1-gene1_dropout)*(1-gene2_dropout)*(1-gene3_dropout)*(1-gene4_dropout))
+data <- UpSetR::fromExpression(input)
+colnames(data)<- names(listInput)
+
+pdf("./00_Figure/Fig4/Fig4F-promoter2-combination_group_recluster-upsetR_Expecption.pdf", width=8, height=4)
+obj_upset<- c("Or63-b","LOC410603","LOC107963999","LOC100578045")
+upset(
+    data,
+    c("Or63-b","LOC410603","LOC107963999","LOC100578045"),
+    sort_sets=FALSE,
+    mode = "exclusive_intersection",
+    sort_intersections = FALSE,
+    intersections = list(obj_upset[1:4],obj_upset[1:3],obj_upset[1:2],obj_upset[1],obj_upset[c(1,3,4)],
+      obj_upset[c(1,2,4)],obj_upset[c(1,3)],obj_upset[c(1,4)],
+      obj_upset[2:4],obj_upset[2:3],obj_upset[2],obj_upset[c(2,4)],obj_upset[3:4],obj_upset[3],obj_upset[4]),
+    queries=list(
+        upset_query(intersect=obj_upset[2],  color=color_for_cluster[2],fill=color_for_cluster[2]),
+        upset_query(intersect=obj_upset[2:3],color=color_for_cluster[2],fill=color_for_cluster[2]),
+        upset_query(intersect=obj_upset[2:4],color=color_for_cluster[2],fill=color_for_cluster[2])
+    ))
+dev.off()
+
+# four gene exp violin plot in C2
+DefaultAssay(obj) <- "raw_RNA"
+selected_cells <- names(Idents(obj)[Idents(obj) == "C2"])
+data <- FetchData(obj,vars = obj_upset,cells = selected_cells ,slot = "counts")
+long_data <- melt(data)
+pdf("./00_Figure/Fig4/Fig4F-promoter2-combination_group_recluster-geneexp.pdf", width=4, height=4)
+ggplot(long_data,aes(x = variable, y = value)) + geom_violin() + geom_boxplot(width=0.1,cex=1.2)+theme_classic()
+dev.off()
+
+
+
+# for C3: promoter3 
+obj_C3<- subset(obj,idents="C3")
+ORN_count<-obj_C3@assays$raw_RNA
+ORN_count<-ORN_count[which(rownames(ORN_count)%in%obj_features),]
+ORN_matrix<-as.matrix(ORN_count)
+listInput <- list(
+        Or63_b = names(which(ORN_matrix[4,]>0)), 
+        LOC410603 = names(which(ORN_matrix[3,]>0)), 
+        LOC107963999 = names(which(ORN_matrix[2,]>0)), 
+        LOC100578045 = names(which(ORN_matrix[1,]>0)))
+data<- fromList(listInput)
+pdf("./00_Figure/Fig4/Fig4F-promoter3-combination_group_recluster-upsetR_Observation.pdf", width=8, height=4)
+obj_upset<- c("Or63_b","LOC410603","LOC107963999","LOC100578045")
+upset(
+    data,
+    c("Or63_b","LOC410603","LOC107963999","LOC100578045"),
+    sort_sets=FALSE,
+    mode = "exclusive_intersection",
+    sort_intersections = FALSE,
+    intersections = list(obj_upset[1:4],obj_upset[1:3],obj_upset[1:2],obj_upset[1],obj_upset[c(1,3,4)],
+      obj_upset[c(1,2,4)],obj_upset[c(1,3)],obj_upset[c(1,4)],
+      obj_upset[2:4],obj_upset[2:3],obj_upset[2],obj_upset[c(2,4)],obj_upset[3:4],obj_upset[3],obj_upset[4]),
+    queries=list(
+        upset_query(intersect=obj_upset[3],  color=color_for_cluster[3],fill=color_for_cluster[3]),
+        #upset_query(intersect=obj_upset[3:3],color=color_for_cluster[3],fill=color_for_cluster[3]),
+        upset_query(intersect=obj_upset[3:4],color=color_for_cluster[3],fill=color_for_cluster[3])
+    ))
+dev.off()
+
+# simulation 
+obj_barcode<-colnames(obj_C3)
+ORN_count<-obj_C3@assays$raw_RNA
+ORN_count<-ORN_count[obj_features,]
+ORN_matrix<-as.matrix(ORN_count)
+data<- as.data.frame(ORN_matrix)
+data$features<- rownames(data)
+data_long<-melt(data, id.vars = c("features"),
+               measure.vars = c(colnames(data)[-length(colnames(data))]),
+               variable.name = c('barcode'),
+               value.name = 'value')
+data_long<- data_long[data_long$value>0,]
+listInput <- split(data_long$barcode,data_long$features)
+total_cell <- length(colnames(ORN_matrix))
+gene1<- names(listInput)[1]
+gene2<- names(listInput)[2]
+gene3<- names(listInput)[3]
+gene4<- names(listInput)[4]
+gene1_dropout <- 1-length(listInput[[gene1]])/length(colnames(ORN_matrix))
+gene2_dropout <- 1-length(listInput[[gene2]])/length(colnames(ORN_matrix))
+gene3_dropout <- 1-length(listInput[[gene3]])/length(colnames(ORN_matrix))
+gene4_dropout <- 1-length(listInput[[gene4]])/length(colnames(ORN_matrix))
+input <- c(
+  "gene1" =total_cell*(1-gene1_dropout)*gene2_dropout*gene3_dropout*gene4_dropout,
+  "gene2" =total_cell*(1-gene2_dropout)*gene1_dropout*gene3_dropout*gene4_dropout,
+  "gene3" =total_cell*(1-gene3_dropout)*gene1_dropout*gene2_dropout*gene4_dropout,
+  "gene4" =total_cell*(1-gene4_dropout)*gene1_dropout*gene2_dropout*gene3_dropout,
+  "gene1&gene2" =total_cell*(1-gene1_dropout)*(1-gene2_dropout)*gene3_dropout*gene4_dropout, 
+  "gene1&gene3" =total_cell*(1-gene1_dropout)*(1-gene3_dropout)*gene2_dropout*gene4_dropout, 
+  "gene1&gene4" =total_cell*(1-gene1_dropout)*(1-gene4_dropout)*gene2_dropout*gene3_dropout, 
+  "gene2&gene3" =total_cell*(1-gene2_dropout)*(1-gene3_dropout)*gene1_dropout*gene4_dropout, 
+  "gene2&gene4" =total_cell*(1-gene2_dropout)*(1-gene4_dropout)*gene1_dropout*gene3_dropout, 
+  "gene3&gene4" =total_cell*(1-gene3_dropout)*(1-gene4_dropout)*gene1_dropout*gene2_dropout, 
+  "gene1&gene2&gene3"=total_cell*(1-gene1_dropout)*(1-gene2_dropout)*(1-gene3_dropout)*gene4_dropout,
+  "gene1&gene2&gene4"=total_cell*(1-gene1_dropout)*(1-gene2_dropout)*(1-gene4_dropout)*gene3_dropout,
+  "gene1&gene3&gene4"=total_cell*(1-gene1_dropout)*(1-gene3_dropout)*(1-gene4_dropout)*gene2_dropout, 
+  "gene2&gene3&gene4"=total_cell*(1-gene2_dropout)*(1-gene3_dropout)*(1-gene4_dropout)*gene1_dropout,
+  "gene1&gene2&gene3&gene4"=total_cell*(1-gene1_dropout)*(1-gene2_dropout)*(1-gene3_dropout)*(1-gene4_dropout))
+data <- UpSetR::fromExpression(input)
+colnames(data)<- names(listInput)
+
+pdf("./00_Figure/Fig4/Fig4F-promoter3-combination_group_recluster-upsetR_Expecption.pdf", width=8, height=4)
+obj_upset<- c("Or63-b","LOC410603","LOC107963999","LOC100578045")
+upset(
+    data,
+    c("Or63-b","LOC410603","LOC107963999","LOC100578045"),
+    sort_sets=FALSE,
+    mode = "exclusive_intersection",
+    sort_intersections = FALSE,
+    intersections = list(obj_upset[1:4],obj_upset[1:3],obj_upset[1:2],obj_upset[1],obj_upset[c(1,3,4)],
+      obj_upset[c(1,2,4)],obj_upset[c(1,3)],obj_upset[c(1,4)],
+      obj_upset[2:4],obj_upset[2:3],obj_upset[2],obj_upset[c(2,4)],obj_upset[3:4],obj_upset[3],obj_upset[4]),
+    queries=list(
+        upset_query(intersect=obj_upset[3],  color=color_for_cluster[3],fill=color_for_cluster[3]),
+        #upset_query(intersect=obj_upset[2:3],color=color_for_cluster[3],fill=color_for_cluster[3]),
+        upset_query(intersect=obj_upset[3:4],color=color_for_cluster[3],fill=color_for_cluster[3])
+    ))
+dev.off()
+
+# four gene exp violin plot in C3
+DefaultAssay(obj) <- "raw_RNA"
+selected_cells <- names(Idents(obj)[Idents(obj) == "C3"])
+data <- FetchData(obj,vars = obj_upset,cells = selected_cells ,slot = "counts")
+long_data <- melt(data)
+pdf("./00_Figure/Fig4/Fig4F-promoter3-combination_group_recluster-geneexp.pdf", width=4, height=4)
+ggplot(long_data,aes(x = variable, y = value)) + geom_violin() + geom_boxplot(width=0.1,cex=1.2)+theme_classic()
+dev.off()
+
+
+# for C4: promoter4
+obj_C4<- subset(obj,idents="C4")
+ORN_count<-obj_C4@assays$raw_RNA
+ORN_count<-ORN_count[which(rownames(ORN_count)%in%obj_features),]
+ORN_matrix<-as.matrix(ORN_count)
+listInput <- list(
+        Or63_b = names(which(ORN_matrix[4,]>0)), 
+        LOC410603 = names(which(ORN_matrix[3,]>0)), 
+        LOC107963999 = names(which(ORN_matrix[2,]>0)), 
+        LOC100578045 = names(which(ORN_matrix[1,]>0)))
+data<- fromList(listInput)
+pdf("./00_Figure/Fig4/Fig4F-promoter4-combination_group_recluster-upsetR_Observation.pdf", width=8, height=4)
+obj_upset<- c("Or63_b","LOC410603","LOC107963999","LOC100578045")
+upset(
+    data,
+    c("Or63_b","LOC410603","LOC107963999","LOC100578045"),
+    sort_sets=FALSE,
+    mode = "exclusive_intersection",
+    sort_intersections = FALSE,
+    intersections = list(obj_upset[1:4],obj_upset[1:3],obj_upset[1:2],obj_upset[1],obj_upset[c(1,3,4)],
+      obj_upset[c(1,2,4)],obj_upset[c(1,3)],obj_upset[c(1,4)],
+      obj_upset[2:4],obj_upset[2:3],obj_upset[2],obj_upset[c(2,4)],obj_upset[3:4],obj_upset[3],obj_upset[4]),
+    queries=list(
+        upset_query(intersect=obj_upset[4],  color=color_for_cluster[4],fill=color_for_cluster[4])#,
+        #upset_query(intersect=obj_upset[3:3],color=color_for_cluster[3],fill=color_for_cluster[3]),
+        #upset_query(intersect=obj_upset[3:4],color=color_for_cluster[3],fill=color_for_cluster[3])
+    ))
+dev.off()
+
+# simulation 
+obj_barcode<-colnames(obj_C4)
+ORN_count<-obj_C4@assays$raw_RNA
+ORN_count<-ORN_count[obj_features,]
+ORN_matrix<-as.matrix(ORN_count)
+data<- as.data.frame(ORN_matrix)
+data$features<- rownames(data)
+data_long<-melt(data, id.vars = c("features"),
+               measure.vars = c(colnames(data)[-length(colnames(data))]),
+               variable.name = c('barcode'),
+               value.name = 'value')
+data_long<- data_long[data_long$value>0,]
+listInput <- split(data_long$barcode,data_long$features)
+total_cell <- length(colnames(ORN_matrix))
+gene1<- names(listInput)[1]
+gene2<- names(listInput)[2]
+gene3<- names(listInput)[3]
+gene4<- names(listInput)[4]
+gene1_dropout <- 1-length(listInput[[gene1]])/length(colnames(ORN_matrix))
+gene2_dropout <- 1-length(listInput[[gene2]])/length(colnames(ORN_matrix))
+gene3_dropout <- 1-length(listInput[[gene3]])/length(colnames(ORN_matrix))
+gene4_dropout <- 1-length(listInput[[gene4]])/length(colnames(ORN_matrix))
+input <- c(
+  "gene1" =total_cell*(1-gene1_dropout)*gene2_dropout*gene3_dropout*gene4_dropout,
+  "gene2" =total_cell*(1-gene2_dropout)*gene1_dropout*gene3_dropout*gene4_dropout,
+  "gene3" =total_cell*(1-gene3_dropout)*gene1_dropout*gene2_dropout*gene4_dropout,
+  "gene4" =total_cell*(1-gene4_dropout)*gene1_dropout*gene2_dropout*gene3_dropout,
+  "gene1&gene2" =total_cell*(1-gene1_dropout)*(1-gene2_dropout)*gene3_dropout*gene4_dropout, 
+  "gene1&gene3" =total_cell*(1-gene1_dropout)*(1-gene3_dropout)*gene2_dropout*gene4_dropout, 
+  "gene1&gene4" =total_cell*(1-gene1_dropout)*(1-gene4_dropout)*gene2_dropout*gene3_dropout, 
+  "gene2&gene3" =total_cell*(1-gene2_dropout)*(1-gene3_dropout)*gene1_dropout*gene4_dropout, 
+  "gene2&gene4" =total_cell*(1-gene2_dropout)*(1-gene4_dropout)*gene1_dropout*gene3_dropout, 
+  "gene3&gene4" =total_cell*(1-gene3_dropout)*(1-gene4_dropout)*gene1_dropout*gene2_dropout, 
+  "gene1&gene2&gene3"=total_cell*(1-gene1_dropout)*(1-gene2_dropout)*(1-gene3_dropout)*gene4_dropout,
+  "gene1&gene2&gene4"=total_cell*(1-gene1_dropout)*(1-gene2_dropout)*(1-gene4_dropout)*gene3_dropout,
+  "gene1&gene3&gene4"=total_cell*(1-gene1_dropout)*(1-gene3_dropout)*(1-gene4_dropout)*gene2_dropout, 
+  "gene2&gene3&gene4"=total_cell*(1-gene2_dropout)*(1-gene3_dropout)*(1-gene4_dropout)*gene1_dropout,
+  "gene1&gene2&gene3&gene4"=total_cell*(1-gene1_dropout)*(1-gene2_dropout)*(1-gene3_dropout)*(1-gene4_dropout))
+data <- UpSetR::fromExpression(input)
+colnames(data)<- c( "LOC100578045" ,"LOC410603" ,   "Or63-b","LOC107963999")
+
+pdf("./00_Figure/Fig4/Fig4F-promoter4-combination_group_recluster-upsetR_Expecption.pdf", width=8, height=4)
+obj_upset<- c("Or63-b","LOC410603","LOC107963999","LOC100578045")
+upset(
+    data,
+    c("Or63-b","LOC410603","LOC107963999","LOC100578045"),
+    sort_sets=FALSE,
+    mode = "exclusive_intersection",
+    sort_intersections = FALSE,
+    intersections = list(obj_upset[1:4],obj_upset[1:3],obj_upset[1:2],obj_upset[1],obj_upset[c(1,3,4)],
+      obj_upset[c(1,2,4)],obj_upset[c(1,3)],obj_upset[c(1,4)],
+      obj_upset[2:4],obj_upset[2:3],obj_upset[2],obj_upset[c(2,4)],obj_upset[3:4],obj_upset[3],obj_upset[4]),
+    queries=list(
+        upset_query(intersect=obj_upset[4],  color=color_for_cluster[4],fill=color_for_cluster[4])#,
+        #upset_query(intersect=obj_upset[2:3],color=color_for_cluster[3],fill=color_for_cluster[3]),
+        #upset_query(intersect=obj_upset[3:4],color=color_for_cluster[3],fill=color_for_cluster[3])
+    ))
+dev.off()
+
+# four gene exp violin plot in C3
+DefaultAssay(obj) <- "raw_RNA"
+selected_cells <- names(Idents(obj)[Idents(obj) == "C4"])
+data <- FetchData(obj,vars = obj_upset,cells = selected_cells ,slot = "counts")
+long_data <- melt(data)
+pdf("./00_Figure/Fig4/Fig4F-promoter4-combination_group_recluster-geneexp.pdf", width=4, height=4)
+ggplot(long_data,aes(x = variable, y = value)) + geom_violin() + geom_boxplot(width=0.1,cex=1.2)+theme_classic()
+dev.off()

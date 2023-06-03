@@ -67,6 +67,7 @@ cor_data<-cor(as.data.frame(t(matrix)))
 dist_data <- cor_data[rev(gene_order),rev(gene_order)]
 pdf("./00_Figure/Fig3/Fig3A-b-OR_in_dotplot_sequence_correlation.pdf",width=17,height=16)
 pheatmap(dist_data,
+        border = F,
          cluster_cols = F,
          cluster_rows = F,
          color = colorRampPalette(c("white", "#3082BD","#1C214F"))(100),
@@ -303,6 +304,7 @@ pdf("./00_Figure/Fig3/Fig3G-a-coexp-heatmap-SCT.pdf",height=3,width=12)
 pheatmap(ORN_matrix,
      cluster_cols = T,
      cluster_rows = T,
+     border=F,
      color = colorRampPalette(c("white", "#CC0000"))(100),
      annotation_legend = TRUE,
      show_rownames=T,
@@ -438,7 +440,7 @@ ORN_matrix<-ORN_matrix[,colSums(ORN_matrix)>0]
 pdf("./00_Figure/Fig3/Fig3H-a-coexp-heatmap-SCT-singlepromoter.pdf",height=3,width=12)
 pheatmap(ORN_matrix,
      cluster_cols = T,
-     cluster_rows = T,
+     cluster_rows = T,border=F,
      color = colorRampPalette(c("white", "#CC0000"))(100),
      annotation_legend = TRUE,
      show_rownames=T,

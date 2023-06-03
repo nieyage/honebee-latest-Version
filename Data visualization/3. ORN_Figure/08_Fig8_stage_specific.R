@@ -181,6 +181,7 @@ for(cluster in specfic){
 dev.off()
 
 
+
 # stage DEG in cluster 
 
 library(AnnotationHub)
@@ -265,3 +266,16 @@ dev.off()
 
 
 
+### true  or false DEG 
+# p4:0_0
+cluster<- "p4:0_0"
+obj<- subset(ORN,idents=cluster);
+  DefaultAssay(obj)<- "raw_RNA";
+  Idents(obj)<- obj$orig.ident
+  markers <- FindAllMarkers(obj, only.pos = TRUE, min.pct = 0.2, logfc.threshold = 0.2)
+  markers <- markers[which(markers$p_val<0.05),]
+  write.csv(markers,paste0("./05_ORN_cluster2/06_stage_specific/Cluster",cluster,"_specific_markers.csv",sep=""))
+  top10 <- markers %>% group_by(cluster) %>% top_n(n = 10, wt = avg_log2FC);
+  obj<-ScaleData(obj,features=rownames(obj))
+
+# p distribution 
