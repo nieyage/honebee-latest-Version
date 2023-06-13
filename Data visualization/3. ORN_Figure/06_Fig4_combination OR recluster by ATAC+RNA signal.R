@@ -35,15 +35,14 @@ obj<-subset(ORN,idents=combination_group);
 obj_features<- unique(dotplot_data[dotplot_data$id%in%combination_group,]$features.plot)
 #####done integrate ATAC and RNA ################
 # RNA analysis
+
 DefaultAssay(obj)<-"RNA"
 obj<-FindVariableFeatures(obj, selection.method = "vst")
 top20 <- head(VariableFeatures(obj),20)
 
-DefaultAssay(obj)<-"raw_RNA"
-obj<-ScaleData(obj,rownames(obj))
 DefaultAssay(obj)<-"integratedRNA_onecluster"
-obj <- RunPCA(obj,features=c(top20,obj_features),reduction.name="obj_features_pca") 
-obj <- RunUMAP(obj, dims = 1:20, reduction.name = 'umap.rna', reduction.key = 'rnaUMAP_')
+obj <- RunPCA(obj,features=unique(c(obj_features,top20)),reduction.name="obj_features_pca") 
+obj <- RunUMAP(obj, dims = 1:21, reduction.name = 'umap.rna', reduction.key = 'rnaUMAP_')
 
 # ATAC analysis
 # We exclude the first dimension as this is typically correlated with sequencing depth
@@ -52,32 +51,27 @@ start<- min(start(Annotation(obj)[which(Annotation(obj)$gene_name%in%obj_feature
 end  <- max(end(Annotation(obj)[which(Annotation(obj)$gene_name%in%obj_features),]))
 seq  <- as.character(Annotation(obj)[which(Annotation(obj)$gene_name%in%obj_features),]@seqnames@values)
 ranges.show <- paste(seq,start,end,sep="-")
-obj_peaks<- c(rownames(obj)[grep("Group15-695....-.......",rownames(obj))],rownames(obj)[grep("Group15-697....-.......",rownames(obj))],rownames(obj)[grep("Group15-697....-.......",rownames(obj))])
-obj <- RunTFIDF(obj)
-obj <- FindTopFeatures(obj, min.cutoff = "q25")
-#obj <- RunSVD(obj,n=2,reduction.name="obj_vf_lsi",)
-obj <- RunSVD(obj,n=4,features=obj_peaks,reduction.name="obj_peaks_lsi",)
-obj <- RunUMAP(obj, reduction = 'obj_peaks_lsi', dims = 1:3, reduction.name = "umap.atac", reduction.key = "atacUMAP_")
+obj_peaks<- c( rownames(obj)[grep("Group15-697....-.......",rownames(obj))],rownames(obj)[grep("Group15-695....-.......",rownames(obj))],
+  rownames(obj)[grep("Group15-696....-.......",rownames(obj))])
 
-# build a joint neighbor graph using both assays
-# We calculate a WNN graph, representing a weighted combination of RNA and ATAC-seq modalities. 
-# We use this graph for UMAP visualization and clustering
-#obj <- RunPCA(obj, npcs = 50, verbose = FALSE)
+obj <- RunTFIDF(obj)
+obj <- FindTopFeatures(obj,assay="peaks_ORN_subcluster", min.cutoff = "q35")
+obj <- RunSVD(obj,n=4,features=c(obj_peaks),reduction.name="obj_peaks_lsi")
+obj <- RunUMAP(obj, reduction = 'obj_peaks_lsi', dims = 1:4, reduction.name = "umap.atac", reduction.key = "atacUMAP_")
 obj <- FindMultiModalNeighbors(
   object = obj,
   reduction.list = list("obj_features_pca", "obj_peaks_lsi"), 
-  dims.list = list(1:20, 1:4),
+  dims.list = list(1:21,1:4),
   modality.weight.name = "RNA.weight",
   verbose = TRUE
 )
 obj <- RunUMAP(obj, nn.name = "weighted.nn", reduction.name = "wnn.umap", reduction.key = "wnnUMAP_")
 obj <- FindClusters(obj, graph.name = "wsnn", resolution =1.7, algorithm = 3, verbose = FALSE)
-
 table(obj$seurat_clusters)
 table(obj$seurat_clusters,obj$subcluster)
 
 ###reorder the level of sample#####
-Idents(obj)<-obj$orig.ident
+Idents(obj)<-obj$Annotation
 obj$orig.ident<-factor(obj$orig.ident,levels=c("NE","Nurse","Forager"))
 my47colors <- c('#E5D2DD', '#53A85F', '#F1BB72', '#F3B1A0', '#D6E7A3', '#57C3F3', '#476D87',
          '#E95C59', '#E59CC4', '#AB3282', '#23452F', '#BD956A', '#8C549C', '#585658',
@@ -86,36 +80,46 @@ my47colors <- c('#E5D2DD', '#53A85F', '#F1BB72', '#F3B1A0', '#D6E7A3', '#57C3F3'
          '#712820', '#DCC1DD', '#CCE0F5', '#CCC9E6', '#625D9E', '#68A180', '#3A6963',
          '#968175', '#161853', '#FF9999', '#344CB7', '#FFCC1D', '#116530', '#678983',
          '#678983', '#A19882', '#FFBCBC', '#24A19C', '#FF9A76')
-pdf("./05_ORN_cluster2/05_combination_group_recluster/combination_group_recluster_WNN.pdf.pdf",width=15,height=5)
+pdf("./05_ORN_cluster2/05_combination_group_recluster/combination_group_recluster_WNN.pdf",width=15,height=5)
 ###cluster
-p1 <- DimPlot(obj, cols=my47colors[22:30],pt.size = 1.2, reduction = "umap.rna", group.by = "seurat_clusters", label = TRUE, label.size = 3.5, repel = TRUE) + ggtitle("RNA")
-p2 <- DimPlot(obj, cols=my47colors[22:30],pt.size = 1.2, reduction = "umap.atac",group.by = "seurat_clusters", label = TRUE, label.size = 3.5, repel = TRUE) + ggtitle("ATAC")
-p3 <- DimPlot(obj, cols=my47colors[22:30],pt.size = 1.2, reduction = "wnn.umap", group.by = "seurat_clusters", label = TRUE, label.size = 3.5, repel = TRUE) + ggtitle("WNNUMAP")
+p1 <- DimPlot(obj, cols=my47colors[22:40],pt.size = 1.2, reduction = "umap.rna", group.by = "seurat_clusters", label = TRUE, label.size = 3.5, repel = TRUE) + ggtitle("RNA")
+p2 <- DimPlot(obj, cols=my47colors[22:40],pt.size = 1.2, reduction = "umap.atac",group.by = "seurat_clusters", label = TRUE, label.size = 3.5, repel = TRUE) + ggtitle("ATAC")
+p3 <- DimPlot(obj, cols=my47colors[22:40],pt.size = 1.2, reduction = "wnn.umap", group.by = "seurat_clusters", label = TRUE, label.size = 3.5, repel = TRUE) + ggtitle("WNNUMAP")
 p1 + p2 + p3 & NoLegend() & theme(plot.title = element_text(hjust = 0.5))
 ###sample
-p1 <- DimPlot(obj, cols=my47colors[22:30],pt.size = 1.2, reduction = "umap.rna", group.by = "orig.ident", shuffle=TRUE,label = F, label.size = 5, repel = TRUE) + ggtitle("RNA")
-p2 <- DimPlot(obj, cols=my47colors[22:30],pt.size = 1.2, reduction = "umap.atac",group.by = "orig.ident", shuffle=TRUE,label = F, label.size = 5, repel = TRUE) + ggtitle("ATAC")
-p3 <- DimPlot(obj, cols=my47colors[22:30],pt.size = 1.2, reduction = "wnn.umap", group.by = "orig.ident", shuffle=TRUE,label = F, label.size = 5, repel = TRUE) + ggtitle("WNNUMAP")
+p1 <- DimPlot(obj, cols=my47colors[22:40],pt.size = 1.2, reduction = "umap.rna", group.by = "Annotation", shuffle=TRUE,label = F, label.size = 5, repel = TRUE) + ggtitle("RNA")
+p2 <- DimPlot(obj, cols=my47colors[22:40],pt.size = 1.2, reduction = "umap.atac",group.by = "Annotation", shuffle=TRUE,label = F, label.size = 5, repel = TRUE) + ggtitle("ATAC")
+p3 <- DimPlot(obj, cols=my47colors[22:40],pt.size = 1.2, reduction = "wnn.umap", group.by = "Annotation", shuffle=TRUE,label = F, label.size = 5, repel = TRUE) + ggtitle("WNNUMAP")
 p1 + p2 + p3 & theme(plot.title = element_text(hjust = 0.5))& NoLegend()
 dev.off()
 
 Idents(obj)<-obj$seurat_clusters
-#####further annotation########
+######further annotation########
 obj <- RenameIdents(
   object = obj,
-  '0' = 'C2',
-  '1' = 'C1',
-  '2' = 'C4',
-  '3' = 'C1',
-  '4' = 'C1',
-  '5' = 'C3',
-  '6' = 'C1' )
-obj@meta.data$Annotation<-factor(Idents(obj),levels=c("C1","C2","C3","C4"))
+  '0' = 'P4',
+  '1' = 'P1',
+  '2' = 'P1',
+  '3' = 'P4',
+  '4' = 'P2',
+  '5' = 'P1' ,
+  '6' = 'P3' ,
+  '7' = 'P1' )
+obj@meta.data$Annotation<-factor(Idents(obj),levels=c("P1","P2","P3","P4"))
 
 # color set 
-color_for_cluster<- c("#4BA9D1",myUmapcolors[6:8])
+myUmapcolors <- c(  '#53A85F', '#F1BB72', '#F3B1A0', '#D6E7A3', '#57C3F3', '#476D87',
+         '#E95C59', '#E59CC4', '#AB3282', '#23452F', '#BD956A', '#8C549C', '#585658',
+         '#9FA3A8', '#E0D4CA', '#5F3D69', '#58A4C3', '#AA9A59', '#E63863', '#E39A35', 
+         '#C1E6F3', '#6778AE', '#B53E2B', '#712820', '#DCC1DD', '#CCE0F5', '#625D9E', 
+         '#68A180', '#3A6963', '#968175', '#161853', '#FF9999', '#344CB7', '#FFCC1D', 
+         '#116530', '#678983', '#A19882', '#FFBCBC', '#24A19C', '#FF9A76', "#8DD3C7",
+         "#FFFFB3", "#BEBADA", "#FB8072", "#80B1D3", "#FDB462", "#B3DE69", "#FCCDE5", 
+         "#D9D9D9", "#BC80BD", "#CCEBC5", "#FFED6F", "#E41A1C"  , "#377EB8", "#4DAF4A", 
+         "#FF7F00", "#FFFF33", "#A65628", "#F781BF")
+color_for_cluster<- c("#4BA9D1",myUmapcolors[6:30])
 color_for_group <- c("#476D87","#E95C59")
-
+obj$Annotation<- obj$seurat_clusters
 ORN_count<-obj@assays$SCT
 barcode_label<-data.frame(barcode=colnames(obj),label=obj$Annotation)
 ORN_count<-ORN_count[which(rownames(ORN_count)%in%obj_features),]
@@ -128,12 +132,12 @@ barcode_label<-barcode_label[order(barcode_label$label),]
 #DefaultAssay(obj)<-"integratedRNA_onecluster"
 #obj<- ScaleData(obj)
 #obj <- RunPCA(obj,reduction.name="pca") 
-embeddings <- Embeddings(object = obj, reduction = "obj_features_pca")[,1:20]
+embeddings <- Embeddings(object = obj, reduction = "obj_features_pca")
 embeddings <- embeddings[barcode_label$barcode,]
 trans_dist <- 1-cosine(t(embeddings))
 barcode_label_pheatmap<-data.frame(label=barcode_label$label)
 rownames(barcode_label_pheatmap)<-barcode_label$barcode
-col <- color_for_cluster
+col <- color_for_cluster[1:length(unique(barcode_label_pheatmap$label))]
 names(col)<-unique(barcode_label_pheatmap$label)
 ann_colors= list(label = col)
 #trans_dist<-trans_dist[rownames(barcode_label_pheatmap),rownames(barcode_label_pheatmap)]
@@ -208,7 +212,7 @@ p3 <- ggboxplot(data, x="type", y="var", color = "type",width=0.6,) +stat_compar
       )
     add_title<-plot_grid(title, last,ncol = 1 , rel_heights = c(0.1, 1) )
 
-pdf("./00_Figure/Fig4/Fig4ABCD0combination_group_recluster_trans_exp.pdf",width=12,height=5)
+pdf("./05_ORN_cluster2/05_combination_group_recluster/Fig4ABCD0combination_group_recluster_trans_exp.pdf",width=12,height=5)
 print(add_title)
 dev.off()
 
@@ -240,12 +244,17 @@ DefaultAssay(obj)<-"peaks_ORN_subcluster"
     links=F
   )
 
-pdf("./00_Figure/Fig4/Fig4E-combination_group_recluster_trackplot.pdf",width=10,height=10)
+pdf("./05_ORN_cluster2/05_combination_group_recluster/Fig4E-combination_group_recluster_trackplot.pdf",width=10,height=10)
 #p1<-p1& scale_fill_manual(values=col)
 print(p1)
 dev.off()
 
-
+pdf("./05_ORN_cluster2/05_combination_group_recluster/Fig4A-TSNE-cluster.pdf", width=12, height=4)
+p1 <- DimPlot(obj, cols=color_for_cluster,pt.size = 0.8, reduction = "wnn.umap", label = TRUE, label.size = 3.5, repel = TRUE)
+p2 <- DimPlot(obj, cols=color_for_cluster,pt.size = 0.8, reduction = "umap.atac", label = TRUE, label.size = 3.5, repel = TRUE)
+p3 <- DimPlot(obj, cols=color_for_cluster,pt.size = 0.8, reduction = "umap.rna", label = TRUE, label.size = 3.5, repel = TRUE)
+p3 + p2 + p1 & NoLegend() & theme(plot.title = element_text(hjust = 0.5))
+dev.off()
 # obj_feature circle plot 
 ##########################################################
 ### chord plot
@@ -359,6 +368,7 @@ listInput <- list(
         LOC100578045 = names(which(ORN_matrix[1,]>0)))
 data<- fromList(listInput)
 obj_upset<- c("Or63_b","LOC410603","LOC107963999","LOC100578045")
+library(ComplexUpset)
 pdf("./00_Figure/Fig4/Fig4F-promoter1-combination_group_recluster-upsetR_Observation.pdf", width=8, height=4)
 #upset(data, sets=c("Or63_b","LOC410603","LOC107963999","LOC100578045"), order.by=c("degree","freq"),empty.intersections=TRUE,  mb.ratio = c(0.5, 0.5), keep.order = F)
 upset(
@@ -367,9 +377,8 @@ upset(
     sort_sets=FALSE,
     mode = "exclusive_intersection",
     sort_intersections = FALSE,
-    intersections = list(obj_upset[1:4],obj_upset[1:3],obj_upset[1:2],obj_upset[1],obj_upset[c(1,3,4)],
-      obj_upset[c(1,2,4)],obj_upset[c(1,3)],obj_upset[c(1,4)],
-      obj_upset[2:4],obj_upset[2:3],obj_upset[2],obj_upset[c(2,4)],obj_upset[3:4],obj_upset[3],obj_upset[4]#'Outside of known sets'
+    intersections = list(obj_upset[1:4],obj_upset[1:3],obj_upset[1:2],obj_upset[1],
+      obj_upset[2:4],obj_upset[2:3],obj_upset[2],obj_upset[3:4],obj_upset[3],obj_upset[4]#'Outside of known sets'
          ),
     queries=list(
         upset_query(intersect=obj_upset[1],color="#4BA9D1",fill="#4BA9D1"),
@@ -468,9 +477,8 @@ upset(
     sort_sets=FALSE,
     mode = "exclusive_intersection",
     sort_intersections = FALSE,
-    intersections = list(obj_upset[1:4],obj_upset[1:3],obj_upset[1:2],obj_upset[1],obj_upset[c(1,3,4)],
-      obj_upset[c(1,2,4)],obj_upset[c(1,3)],obj_upset[c(1,4)],
-      obj_upset[2:4],obj_upset[2:3],obj_upset[2],obj_upset[c(2,4)],obj_upset[3:4],obj_upset[3],obj_upset[4]),
+    intersections = list(obj_upset[1:4],obj_upset[1:3],obj_upset[1:2],obj_upset[1],
+      obj_upset[2:4],obj_upset[2:3],obj_upset[2],obj_upset[3:4],obj_upset[3],obj_upset[4]),
     queries=list(
         upset_query(intersect=obj_upset[2],  color=color_for_cluster[2],fill=color_for_cluster[2]),
         upset_query(intersect=obj_upset[2:3],color=color_for_cluster[2],fill=color_for_cluster[2]),
@@ -567,9 +575,8 @@ upset(
     sort_sets=FALSE,
     mode = "exclusive_intersection",
     sort_intersections = FALSE,
-    intersections = list(obj_upset[1:4],obj_upset[1:3],obj_upset[1:2],obj_upset[1],obj_upset[c(1,3,4)],
-      obj_upset[c(1,2,4)],obj_upset[c(1,3)],obj_upset[c(1,4)],
-      obj_upset[2:4],obj_upset[2:3],obj_upset[2],obj_upset[c(2,4)],obj_upset[3:4],obj_upset[3],obj_upset[4]),
+    intersections = list(obj_upset[1:4],obj_upset[1:3],obj_upset[1:2],obj_upset[1],
+      obj_upset[2:4],obj_upset[2:3],obj_upset[2],obj_upset[3:4],obj_upset[3],obj_upset[4]),
     queries=list(
         upset_query(intersect=obj_upset[3],  color=color_for_cluster[3],fill=color_for_cluster[3]),
         #upset_query(intersect=obj_upset[3:3],color=color_for_cluster[3],fill=color_for_cluster[3]),
@@ -665,9 +672,8 @@ upset(
     sort_sets=FALSE,
     mode = "exclusive_intersection",
     sort_intersections = FALSE,
-    intersections = list(obj_upset[1:4],obj_upset[1:3],obj_upset[1:2],obj_upset[1],obj_upset[c(1,3,4)],
-      obj_upset[c(1,2,4)],obj_upset[c(1,3)],obj_upset[c(1,4)],
-      obj_upset[2:4],obj_upset[2:3],obj_upset[2],obj_upset[c(2,4)],obj_upset[3:4],obj_upset[3],obj_upset[4]),
+    intersections = list(obj_upset[1:4],obj_upset[1:3],obj_upset[1:2],obj_upset[1],
+      obj_upset[2:4],obj_upset[2:3],obj_upset[2],obj_upset[3:4],obj_upset[3],obj_upset[4]),
     queries=list(
         upset_query(intersect=obj_upset[4],  color=color_for_cluster[4],fill=color_for_cluster[4])#,
         #upset_query(intersect=obj_upset[3:3],color=color_for_cluster[3],fill=color_for_cluster[3]),
@@ -742,3 +748,62 @@ long_data <- melt(data)
 pdf("./00_Figure/Fig4/Fig4F-promoter4-combination_group_recluster-geneexp.pdf", width=4, height=4)
 ggplot(long_data,aes(x = variable, y = value)) + geom_violin() + geom_boxplot(width=0.1,cex=1.2)+theme_classic()
 dev.off()
+
+
+# obj TSNE plot 
+p1 <- DimPlot(obj, cols=my47colors[22:30],pt.size = 1.2, reduction = "umap.rna", group.by = "seurat_clusters", label = TRUE, label.size = 3.5, repel = TRUE) + ggtitle("RNA")
+p2 <- DimPlot(obj, cols=my47colors[22:30],pt.size = 1.2, reduction = "umap.atac",group.by = "seurat_clusters", label = TRUE, label.size = 3.5, repel = TRUE) + ggtitle("ATAC")
+p3 <- DimPlot(obj, cols=my47colors[22:30],pt.size = 1.2, reduction = "wnn.umap", group.by = "seurat_clusters", label = TRUE, label.size = 3.5, repel = TRUE) + ggtitle("WNNUMAP")
+###sample
+
+pdf("./00_Figure/Fig4/Fig4A-TSNE-cluster.pdf", width=12, height=4)
+p1 <- DimPlot(obj, cols=color_for_cluster,pt.size = 0.5, reduction = "wnn.umap", label = TRUE, label.size = 3.5, repel = TRUE)
+p2 <- DimPlot(obj, cols=color_for_cluster,pt.size = 0.5, reduction = "umap.atac", label = TRUE, label.size = 3.5, repel = TRUE)
+p3 <- DimPlot(obj, cols=color_for_cluster,pt.size = 0.5, reduction = "umap.rna", label = TRUE, label.size = 3.5, repel = TRUE)
+p3 + p2 + p1 & NoLegend() & theme(plot.title = element_text(hjust = 0.5))
+
+dev.off()
+
+
+metadata <- obj@meta.data
+library(tidyr)
+for(i in levels(obj)){
+  print(i);
+  barcode <- rownames(metadata[metadata$Annotation==i,])
+  barcode_sample<-separate(as.data.frame(barcode),"barcode",c("sample","barcode"),"_")
+  barcode <- barcode_sample$barcode
+  write.table(barcode,paste0("./05_ORN_cluster2/05_combination_group_recluster/cell_barcode/",i,".txt",sep=""),row.name=F,col.names=F)
+}
+
+sed -i 's/"//g' *.txt
+
+# merge bam 
+
+# barcode bam 
+ls *.txt> ORN_barcode.list
+for file1 in $(<ORN_barcode.list)
+do
+  /md01/nieyg/software/subset-bam_linux --bam /md01/nieyg/project/honeybee/honebee-latest-Version/08_ORN_cluster_bw/merged.bam --cell-barcodes $file1 --cores 10 --out-bam $file1.bam
+ 
+  bedtools  genomecov  -bg -split -ibam $file1.bam  > $file1.bedGraph
+  echo "make normalized bedGraph"
+  perl /data/R02/nieyg/pipeline/ATACseq/norm_bedGraph.pl $file1.bedGraph $file1.norm.bedGraph 
+  sort -k1,1 -k2,2n $file1.norm.bedGraph > $file1.norm.sorted.bedGraph
+  bedGraphToBigWig $file1.norm.sorted.bedGraph ~/ref/10X/Amel_HAv3.1/Amel_HAv3_1/star/chrNameLength.txt ../RNA/$file1.norm.bw 
+done
+
+#/md01/nieyg/software/subset-bam_linux --bam <FILE> --bam-tag <bam_tag> --cell-barcodes <FILE> --cores <INTEGER> --log-level <log_level> --out-bam <OUTPUT_FILE>
+conda deactivate 
+nohup bash get_bw.sh &
+
+rm *bam
+rm *bedGraph
+
+for file1 in $(<ORN_barcode.list)
+do
+  /md01/nieyg/software/subset-bam_linux --bam  /md01/nieyg/project/honeybee/honebee-latest-Version/08_ORN_cluster_bw/ATAC-merged.bam --cell-barcodes $file1 --cores 10 --out-bam $file1.bam
+  bedtools  genomecov  -bg -split -ibam $file1.bam  > $file1.bedGraph
+  perl /data/R02/nieyg/pipeline/ATACseq/norm_bedGraph.pl $file1.bedGraph $file1.norm.bedGraph 
+  sort -k1,1 -k2,2n $file1.norm.bedGraph > $file1.norm.sorted.bedGraph
+  bedGraphToBigWig $file1.norm.sorted.bedGraph ~/ref/10X/Amel_HAv3.1/Amel_HAv3_1/star/chrNameLength.txt ../ATAC/$file1.norm.bw 
+done

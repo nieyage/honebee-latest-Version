@@ -77,8 +77,8 @@ counts=counts[,-1]
 #data_cor <- counts
 
 # k=5 
-data_cor<- counts[which(str_length(rownames(counts))==11),]
-data_cor<- data_cor[which(rowSums(data_cor)>5),]
+data_cor<- counts[which(str_length(rownames(counts))==5),]
+#data_cor<- data_cor[which(rowSums(data_cor)>5),]
 OR_kmer_cor <- cor(data_cor)
 
 OR_kmer_cor <-OR_kmer_cor[which(rownames(OR_kmer_cor)%in%dotplot_feature),which(colnames(OR_kmer_cor)%in%dotplot_feature)]
@@ -92,8 +92,55 @@ data<- data[,c(1,4,7)]
 colnames(data)<- c("OR_pair","sequence_dist","OR_kmer_cor")
 data<- data[!duplicated(data),]
 data<- data[data$sequence_dist!=0,]
-
-pdf("/data/R02/nieyg/project/honeybee/honebee-latest-Version/04_chemoreceptor/dotplot_OR/promoter_fa/kmer11_sequence_dist_OR_kmer.pdf")
-ggplot(data, aes(sequence_dist,OR_kmer_cor))+ geom_point()+theme_classic()
+data<- data[data$sequence_dist<300,]
+pdf("/data/R02/nieyg/project/honeybee/honebee-latest-Version/04_chemoreceptor/dotplot_OR/promoter_fa/kmer5_sequence_distm300_OR_kmer.pdf",width=6,height=4)
+ ggplot(data, aes(sequence_dist,OR_kmer_cor))+ 
+  geom_point()+ 
+  geom_smooth(method = "lm", formula = y~x, color = "#756bb1", fill = "#cbc9e2")+
+  theme_classic()+
+  stat_poly_eq(aes(label=paste(..eq.label..,..adj.rr.label..,..p.value.label..,sep = "~~~~")),formula = y~x,parse=T,size=2.5)
 dev.off()
+
+# file 300 dist 
+
+# density plot 
+data_kmer_freq<- rowSums(counts)
+data<-as.data.frame(data_kmer_freq);
+library(ggplot2)
+pdf("./data_kmer_freq.pdf",width=10,height=4)
+ggplot(data, aes(x=data_kmer_freq)) + xlab("gene_CV")+
+              geom_density(alpha=.25) + theme_classic() 
+dev.off()
+
+data_cor<- counts
+data_cor<- data_cor[which(rowSums(data_cor)>20),]
+data_kmer_freq<- rowSums(data_cor)
+data<-as.data.frame(data_kmer_freq);
+library(ggplot2)
+pdf("./data_kmer_freq.pdf",width=10,height=4)
+ggplot(data, aes(x=data_kmer_freq)) + xlab("gene_CV")+
+              geom_density(alpha=.25) + theme_classic() 
+dev.off()
+
+OR_kmer_cor <- cor(data_cor)
+OR_kmer_cor <-OR_kmer_cor[which(rownames(OR_kmer_cor)%in%dotplot_feature),which(colnames(OR_kmer_cor)%in%dotplot_feature)]
+OR_kmer_cor_long<- melt(OR_kmer_cor)
+sequence_dist_long<- melt(sequence_dist)
+sequence_dist_long$sample<- paste(sequence_dist_long$Var1,sequence_dist_long$Var2,sep="_")
+OR_kmer_cor_long$sample<- paste(OR_kmer_cor_long$Var1,OR_kmer_cor_long$Var2,sep="_")
+data <- merge(sequence_dist_long,OR_kmer_cor_long,by="sample")
+data<- data[,c(1,4,7)]
+colnames(data)<- c("OR_pair","sequence_dist","OR_kmer_cor")
+data<- data[!duplicated(data),]
+data<- data[data$sequence_dist!=0,]
+data<- data[data$sequence_dist<300,]
+library(ggpmisc)
+pdf("/data/R02/nieyg/project/honeybee/honebee-latest-Version/04_chemoreceptor/dotplot_OR/promoter_fa/filter_20_kmer_sequence_dist300_OR_kmer.pdf",width=6,height=4)
+ ggplot(data, aes(sequence_dist,OR_kmer_cor))+ 
+  geom_point()+ 
+  geom_smooth(method = "lm", formula = y~x, color = "#756bb1", fill = "#cbc9e2")+
+  theme_classic()+
+  stat_poly_eq(aes(label=paste(..eq.label..,..adj.rr.label..,..p.value.label..,sep = "~~~~")),formula = y~x,parse=T,size=2.5)
+dev.off()
+
 

@@ -38,40 +38,55 @@ GR_fasta<-readAAStringSet("/md01/nieyg/ref/10X/Amel_HAv3.1/GR_transcript_pep.aa"
 IR_fasta<-readAAStringSet("/md01/nieyg/ref/10X/Amel_HAv3.1/IR_transcript_pep.aa", format="fasta",nrec=-1L, skip=0L, seek.first.rec=FALSE, use.names=TRUE)
 supply_fasta<-readAAStringSet("/md01/nieyg/ref/10X/Amel_HAv3.1/supply.aa", format="fasta",nrec=-1L, skip=0L, seek.first.rec=FALSE, use.names=TRUE)
 #OR2 is placed in the last column;
-dotplot_feature_OR2<-c(Orco,dotplot_feature)
 all_receptor_gene_fasta<- c(OR_fasta,GR_fasta,IR_fasta,supply_fasta)
 # corelation heatmap tree
-dotplot_feature_fa<- all_receptor_gene_fasta[dotplot_feature_OR2,]
+dotplot_feature_fa<- all_receptor_gene_fasta[dotplot_feature,]
 # color by the group info 
 chemoreceptor_info_data<-read.table("/md01/nieyg/ref/10X/Amel_HAv3.1/chemoreceptor_info_data.csv",header=T)
 chemoreceptor_info_data$gene_name <- make.unique(chemoreceptor_info_data$gene_name, sep = "_")
-Group_info <- unique(chemoreceptor_info_data[,c(1,12)])
-rownames(Group_info)<-Group_info$gene_name
-groupInfo <- split(row.names(Group_info), Group_info$seqnames)
+# Group_info <- unique(chemoreceptor_info_data[,c(1,12)])
+# rownames(Group_info)<-Group_info$gene_name
+# groupInfo <- split(row.names(Group_info), Group_info$seqnames)
 aln <- muscle::muscle(dotplot_feature_fa)
 auto <- maskGaps(aln, min.fraction=0.5, min.block.width=4)
 sdist <- stringDist(as(auto,"AAStringSet"), method="hamming")
 clust <- hclust(sdist,method="complete")#"ward.D"’, ‘"ward.D2"’,‘"single"’, ‘"complete"’, ‘"average"’ (= UPGMA), ‘"mcquitty"’, ‘"median"’ or ‘"centroid"’ (= UPGMC)
 tree <- as.phylo(clust)
-data.tree <- groupOTU(tree, groupInfo)
+#data.tree <- groupOTU(tree, groupInfo)
+data.tree <- tree
 pdf("./00_Figure/Fig3/Fig3A-a-OR_sequence_protein_similarity-tree_add_groupinfo_heatmap.pdf",width=25,height=16)
-ggtree(data.tree,ladderize = FALSE, branch.length = "none",aes(color=group)) + geom_tiplab(size=3) + theme(legend.position = "right")+ scale_color_manual (values =myUmapcolors[5:30]) 
+ggtree(data.tree,ladderize = FALSE, branch.length = "none") + geom_tiplab(size=3) + 
+theme(legend.position = "right")+ scale_color_manual (values =myUmapcolors[5:30]) +  geom_treescale()
 dev.off()
-m<-ggtree(data.tree,ladderize = FALSE, branch.length = "none",aes(color=group))+ geom_tiplab(size=3) + theme(legend.position = "right")+ scale_color_manual (values =myUmapcolors[5:30]) 
+m<-ggtree(data.tree,ladderize = FALSE, branch.length = "none")+ geom_tiplab(size=3) + theme(legend.position = "right")+ scale_color_manual (values =myUmapcolors[5:30]) 
 gene_order<-na.omit(m$data[order(m$data$y),]$label)
-gene_order<-as.character(gene_order)
+gene_order<-as.character(gene_order);
+
+# OR color bar in heatmap 
+
 library(pheatmap)
 DefaultAssay(ORN)<-"SCT"
-matrix<- ORN@assays$SCT[dotplot_feature_OR2,]
+matrix<- ORN@assays$SCT[dotplot_feature,]
 cor_data<-cor(as.data.frame(t(matrix)))
 dist_data <- cor_data[rev(gene_order),rev(gene_order)]
+Group_info <- unique(chemoreceptor_info_data[,c(1,12)])
+label_pheatmap<- data.frame(Group=Group_info$seqnames)
+rownames(label_pheatmap) <- Group_info$gene_name
+
+ann_colors<-list(Group =    c("Group1"=myUmapcolors[1],    "Group2"=myUmapcolors[2],    "Group3"=myUmapcolors[3],    "Group4"=myUmapcolors[4],    "Group5"=myUmapcolors[5],    "Group6"=myUmapcolors[6],    "Group7"=myUmapcolors[7],    "Group8"=myUmapcolors[8],    "Group9"=myUmapcolors[9],    "Group10"=myUmapcolors[10],
+    "Group11"=myUmapcolors[11],    "Group12"=myUmapcolors[12],    "Group13"=myUmapcolors[13],    "Group14"=myUmapcolors[14],    "Group15"=myUmapcolors[15],    "Group16"=myUmapcolors[16],    "GroupUN3"=myUmapcolors[17],
+    "GroupUN226"=myUmapcolors[18],    "GroupUN243"=myUmapcolors[19],    "GroupUN248"=myUmapcolors[20]))
+
 pdf("./00_Figure/Fig3/Fig3A-b-OR_in_dotplot_sequence_correlation.pdf",width=17,height=16)
 pheatmap(dist_data,
         border = F,
          cluster_cols = F,
          cluster_rows = F,
+         cellwidth = 8, cellheight = 8,
          color = colorRampPalette(c("white", "#3082BD","#1C214F"))(100),
          annotation_legend = TRUE,
+         annotation_colors = ann_colors,
+         annotation_row = label_pheatmap,
          show_rownames=T,
          show_colnames=T
     )
@@ -292,7 +307,7 @@ scale_color_manual(values = colors_for_exp_pattern)
 a|b 
 dev.off()
 
-# Fig3F two promoter 
+# Fig3F two promoter  (first)
 obj<- subset(ORN,idents=c("p3:3"))
 DefaultAssay(obj)<-"raw_RNA"
 gene<- c("LOC107965761","LOC102655285")
@@ -361,43 +376,43 @@ set<- colors_for_exp_pattern[c(2,1)]
 p1
 dev.off()
 
-## Fig3F two promoter 
-#cluster="p3:4_1"
-#obj<- subset(ORN,idents=cluster)
-#obj_features<-dotplot_data[dotplot_data$id==cluster,]$features.plot
-#
-#DefaultAssay(obj)<-"raw_RNA"
-#ORN_count<-obj@assays$SCT
-#ORN_count<-ORN_count[which(rownames(ORN_count)%in%obj_features),]
-#ORN_matrix<-as.matrix(ORN_count)
-#ORN_matrix<-ORN_matrix[,colSums(ORN_matrix)>0]
-#pdf("./00_Figure/Fig3/Fig3H-a-coexp-heatmap-SCT.pdf",height=3,width=12)
-#pheatmap(ORN_matrix,
-#     cluster_cols = T,
-#     cluster_rows = T,
-#     color = colorRampPalette(c("white", "#CC0000"))(100),
-#     annotation_legend = TRUE,
-#     show_rownames=T,
-#     show_colnames=F
-#  )
-#dev.off()
-#
+# Fig3F two promoter (second)
+cluster="p3:4_1" #p2:21
+obj<- subset(ORN,idents=cluster)
+obj_features<-dotplot_data[dotplot_data$id==cluster,]$features.plot
+
+DefaultAssay(obj)<-"raw_RNA"
+ORN_count<-obj@assays$SCT
+ORN_count<-ORN_count[which(rownames(ORN_count)%in%obj_features),]
+ORN_matrix<-as.matrix(ORN_count)
+ORN_matrix<-ORN_matrix[,colSums(ORN_matrix)>0]
+pdf("./00_Figure/Fig3/Fig3H-MP2-coexp-heatmap-SCT.pdf",height=3,width=12)
+pheatmap(ORN_matrix,
+     cluster_cols = T,
+     cluster_rows = T,border=F,
+     color = colorRampPalette(c("white", "#CC0000"))(100),
+     annotation_legend = TRUE,
+     show_rownames=T,
+     show_colnames=F
+  )
+dev.off()
+
 # Fig3H coexp track plot
-## Track from scATAC-seq for all multiple cluster 
-#DefaultAssay(ORN)<-"peaks_ORN_subcluster"
-#obj_barcode<-colnames(obj)
-#all_barcode<-colnames(ORN)
-#random_barcode<-sample(setdiff(all_barcode,obj_barcode),length(obj_barcode))
-#obj<-subset(ORN,cells=c(obj_barcode,random_barcode))
-#obj$subcluster<-as.character(obj$subcluster)
-#for (i in 1:length(obj$subcluster)){
-#  if(obj$subcluster[i]!=cluster){obj$subcluster[i]="other"}
-#    }
-#Idents(obj)<-obj$subcluster
-## first compute the GC content for each peak
-#obj <- RegionStats(obj, genome = BSgenome.Amel.HAv3.1.update.chemoreceptor)
+# Track from scATAC-seq for all multiple cluster 
+DefaultAssay(ORN)<-"peaks_ORN_subcluster"
+obj_barcode<-colnames(obj)
+all_barcode<-colnames(ORN)
+random_barcode<-sample(setdiff(all_barcode,obj_barcode),length(obj_barcode))
+obj<-subset(ORN,cells=c(obj_barcode,random_barcode))
+obj$subcluster<-as.character(obj$subcluster)
+for (i in 1:length(obj$subcluster)){
+  if(obj$subcluster[i]!=cluster){obj$subcluster[i]="other"}
+    }
+Idents(obj)<-obj$subcluster
+# first compute the GC content for each peak
+obj <- RegionStats(obj, genome = BSgenome.Amel.HAv3.1.update.chemoreceptor)
 ##Annotation(obj)$tx_id <-gsub("_g","-g",Annotation(obj)$gene_name)
-#Annotation(obj)$tx_id <-Annotation(obj)$transcript_id
+Annotation(obj)$tx_id <-Annotation(obj)$transcript_id
 ## link peaks to genes
 #obj <- LinkPeaks(
 #  object = obj,
@@ -406,29 +421,94 @@ dev.off()
 #  genes.use = obj_features
 #)
 #######Visulize track and RNA exp######
-#idents.plot <- Idents(obj)
+idents.plot <- Idents(obj)
 ## plot region 
-#start<- min(start(Annotation(obj)[which(Annotation(obj)$gene_name%in%obj_features),]))
-#end  <- max(end(Annotation(obj)[which(Annotation(obj)$gene_name%in%obj_features),]))
-#seq  <- as.character(Annotation(obj)[which(Annotation(obj)$gene_name%in%obj_features),]@seqnames@values)
-#ranges.show <- paste(seq,start,end,sep="-")
-#pdf("./00_Figure/Fig3/Fig3H-b-multi_OR_without_nopower_trackplot2.pdf",width=12,height=6)
-#p1<-CoveragePlot(
-#  object = obj,
-#  region = ranges.show,
-#  window = 150,
-#  extend.upstream =500,
-#  annotation = TRUE,
-#  extend.downstream = 500,
-#  tile = TRUE,
-#  tile.size = 100,
-#  tile.cells = 30,
-#  links=F
-#)
-#print(p1)
-#dev.off()
+start<- min(start(Annotation(obj)[which(Annotation(obj)$gene_name%in%obj_features),]))
+end  <- max(end(Annotation(obj)[which(Annotation(obj)$gene_name%in%obj_features),]))
+seq  <- as.character(Annotation(obj)[which(Annotation(obj)$gene_name%in%obj_features),]@seqnames@values)
+ranges.show <- paste(seq,start,end,sep="-")
+pdf("./00_Figure/Fig3/Fig3H-MP2-multi_OR_without_nopower_trackplot2.pdf",width=12,height=6)
+p1<-CoveragePlot(
+  object = obj,
+  region = ranges.show,
+  window = 150,
+  extend.upstream =500,
+  annotation = TRUE,
+  extend.downstream = 500,
+  tile = TRUE,
+  tile.size = 100,
+  tile.cells = 30,
+  links=F
+)
+print(p1)
+dev.off()
+# Fig3F two promoter (third)
+cluster="p2:21" #p2:21
+obj<- subset(ORN,idents=cluster)
+obj_features<-dotplot_data[dotplot_data$id==cluster,]$features.plot
 
-#Fig3H single promoter 
+DefaultAssay(obj)<-"raw_RNA"
+ORN_count<-obj@assays$SCT
+ORN_count<-ORN_count[which(rownames(ORN_count)%in%obj_features),]
+ORN_matrix<-as.matrix(ORN_count)
+ORN_matrix<-ORN_matrix[,colSums(ORN_matrix)>0]
+pdf("./00_Figure/Fig3/Fig3H-MP3-coexp-heatmap-SCT.pdf",height=3,width=12)
+pheatmap(ORN_matrix,
+     cluster_cols = T,
+     cluster_rows = T,border=F,
+     color = colorRampPalette(c("white", "#CC0000"))(100),
+     annotation_legend = TRUE,
+     show_rownames=T,
+     show_colnames=F
+  )
+dev.off()
+
+# Fig3H coexp track plot
+# Track from scATAC-seq for all multiple cluster 
+DefaultAssay(ORN)<-"peaks_ORN_subcluster"
+obj_barcode<-colnames(obj)
+all_barcode<-colnames(ORN)
+random_barcode<-sample(setdiff(all_barcode,obj_barcode),length(obj_barcode))
+obj<-subset(ORN,cells=c(obj_barcode,random_barcode))
+obj$subcluster<-as.character(obj$subcluster)
+for (i in 1:length(obj$subcluster)){
+  if(obj$subcluster[i]!=cluster){obj$subcluster[i]="other"}
+    }
+Idents(obj)<-obj$subcluster
+# first compute the GC content for each peak
+obj <- RegionStats(obj, genome = BSgenome.Amel.HAv3.1.update.chemoreceptor)
+##Annotation(obj)$tx_id <-gsub("_g","-g",Annotation(obj)$gene_name)
+Annotation(obj)$tx_id <-Annotation(obj)$transcript_id
+## link peaks to genes
+#obj <- LinkPeaks(
+#  object = obj,
+#  peak.assay = "peaks_ORN_subcluster",
+#  expression.assay = "raw_RNA",
+#  genes.use = obj_features
+#)
+#######Visulize track and RNA exp######
+idents.plot <- Idents(obj)
+## plot region 
+start<- min(start(Annotation(obj)[which(Annotation(obj)$gene_name%in%obj_features),]))
+end  <- max(end(Annotation(obj)[which(Annotation(obj)$gene_name%in%obj_features),]))
+seq  <- as.character(Annotation(obj)[which(Annotation(obj)$gene_name%in%obj_features),]@seqnames@values)
+ranges.show <- paste(seq,start,end,sep="-")
+pdf("./00_Figure/Fig3/Fig3H-MP3-multi_OR_without_nopower_trackplot2.pdf",width=12,height=6)
+p1<-CoveragePlot(
+  object = obj,
+  region = ranges.show,
+  window = 150,
+  extend.upstream =2000,
+  annotation = TRUE,
+  extend.downstream = 2000,
+  tile = TRUE,
+  tile.size = 100,
+  tile.cells = 30,
+  links=F
+)
+print(p1)
+dev.off()
+#Fig3H single promoter (first)
 cluster="p1:14"
 obj<- subset(ORN,idents=cluster)
 obj_features<-dotplot_data[dotplot_data$id==cluster,]$features.plot
@@ -493,3 +573,71 @@ p1<-CoveragePlot(
 )
 print(p1)
 dev.off()
+
+
+#Fig3H single promoter (second)
+cluster="p4:5"
+obj<- subset(ORN,idents=cluster)
+obj_features<-dotplot_data[dotplot_data$id==cluster,]$features.plot
+DefaultAssay(obj)<-"raw_RNA"
+ORN_count<-obj@assays$SCT
+ORN_count<-ORN_count[which(rownames(ORN_count)%in%obj_features),]
+ORN_matrix<-as.matrix(ORN_count)
+ORN_matrix<-ORN_matrix[,colSums(ORN_matrix)>0]
+pdf("./00_Figure/Fig3/Fig3H-SP2-coexp-heatmap-SCT-singlepromoter.pdf",height=3,width=12)
+pheatmap(ORN_matrix,
+     cluster_cols = T,
+     cluster_rows = T,border=F,
+     color = colorRampPalette(c("white", "#CC0000"))(100),
+     annotation_legend = TRUE,
+     show_rownames=T,
+     show_colnames=F
+  )
+dev.off()
+
+# Fig3H coexp track plot
+## Track from scATAC-seq for all multiple cluster 
+DefaultAssay(ORN)<-"peaks_ORN_subcluster"
+obj_barcode<-colnames(obj)
+all_barcode<-colnames(ORN)
+random_barcode<-sample(setdiff(all_barcode,obj_barcode),length(obj_barcode))
+obj<-subset(ORN,cells=c(obj_barcode,random_barcode))
+obj$subcluster<-as.character(obj$subcluster)
+for (i in 1:length(obj$subcluster)){
+  if(obj$subcluster[i]!=cluster){obj$subcluster[i]="other"}
+    }
+Idents(obj)<-obj$subcluster
+# first compute the GC content for each peak
+obj <- RegionStats(obj, genome = BSgenome.Amel.HAv3.1.update.chemoreceptor)
+#Annotation(obj)$tx_id <-gsub("_g","-g",Annotation(obj)$gene_name)
+Annotation(obj)$tx_id <-Annotation(obj)$transcript_id
+# link peaks to genes
+obj <- LinkPeaks(
+  object = obj,
+  peak.assay = "peaks_ORN_subcluster",
+  expression.assay = "raw_RNA",
+  genes.use = obj_features
+)
+######Visulize track and RNA exp######
+idents.plot <- Idents(obj)
+# plot region 
+start<- min(start(Annotation(obj)[which(Annotation(obj)$gene_name%in%obj_features),]))
+end  <- max(end(Annotation(obj)[which(Annotation(obj)$gene_name%in%obj_features),]))
+seq  <- as.character(Annotation(obj)[which(Annotation(obj)$gene_name%in%obj_features),]@seqnames@values)
+ranges.show <- paste(seq,start,end,sep="-")
+pdf("./00_Figure/Fig3/Fig3H-SP2-multi_OR_without_nopower_trackplot-singlepromoter.pdf",width=10,height=6)
+p1<-CoveragePlot(
+  object = obj,
+  region = ranges.show,
+  window = 150,
+  extend.upstream = 500,
+  annotation = TRUE,
+  extend.downstream = 500,
+  tile = TRUE,
+  tile.size = 100,
+  tile.cells = 30,
+  links=F
+)
+print(p1)
+dev.off()
+

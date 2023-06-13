@@ -64,7 +64,7 @@ honeybee <- LinkPeaks(
   object = honeybee,
   peak.assay = "peaks",
   expression.assay = "RNA",
-  genes.use = c("Syt1","LOC411079","LOC410151","5-ht7")
+  genes.use = c("Syt1","LOC411079","LOC410151","5-ht7","Obp4","Obp5")
 )
 ######Visulize track and RNA exp######
 idents.plot <- Idents(honeybee)
@@ -207,8 +207,8 @@ p1<-p1& scale_fill_manual(values=set)&labs(title="Syt1")
 p2<-p2& scale_fill_manual(values=set)&labs(title="LOC411079(GRH)") & theme(strip.text.y.left = element_blank(),strip.background = element_blank())
 p3<-p3& scale_fill_manual(values=set)&labs(title="LOC410151(repo)") & theme(strip.text.y.left = element_blank(),strip.background = element_blank())
 p4<-p4& scale_fill_manual(values=set)&labs(title="5-ht7") & theme(strip.text.y.left = element_blank(),strip.background = element_blank())
-p5<-p5& scale_fill_manual(values=set)& theme(strip.text.y.left = element_blank(),strip.background = element_blank())
-p6<-p6& scale_fill_manual(values=set)& theme(strip.text.y.left = element_blank(),strip.background = element_blank())
+p5<-p5& scale_fill_manual(values=set)&labs(title="Obp4") & theme(strip.text.y.left = element_blank(),strip.background = element_blank())
+p6<-p6& scale_fill_manual(values=set)&labs(title="Obp5") & theme(strip.text.y.left = element_blank(),strip.background = element_blank())
 
 pdf("./00_Figure/Fig1/Fig1D-Marker_gene-select-peaktrack-WNN.pdf",height=8,width=24) 
 p1|p2|p3|p4|p5|p6
@@ -336,6 +336,38 @@ p3<-p3& scale_fill_manual(values=set)&labs(title="LOC551837 (bgm)") & theme(stri
 pdf("./00_Figure/Fig1/Fig1F-Neuron-Orco-track.pdf",width=13,height=4)
 p1|p3|p2
 dev.off()
+
+
+# dotplot in Orco-/+ neuron and non-neuron cluster 
+honeybee<-readRDS("./02_All_celltype/WNN_honeybee_integrated_all_celltype.rds")
+Neuron<-readRDS("./03_Neuron/WNN_Neuron_integrated.rds")
+Orco_p_barcode<- rownames(Neuron@meta.data[Neuron$Annotation=="Orco+Neuron",])
+Orco_n_barcode<- rownames(Neuron@meta.data[Neuron$Annotation=="Orco-Neuron",])
+
+type<- rep("Non-neuron",length(honeybee$Annotation))
+for (i in 1:nrow(honeybee@meta.data)){
+  if(colnames(honeybee)[i] %in% Orco_p_barcode){type[i]="Orco+Neuron"}
+  if(colnames(honeybee)[i] %in% Orco_n_barcode){type[i]="Orco-Neuron"}
+}
+table(type)
+honeybee$Annotation_type<- type
+Idents(honeybee)<- honeybee$Annotation_type
+markers <- FindAllMarkers(honeybee, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+Orco_n_Neuron_top<-markers[markers$cluster=="Orco-Neuron",7]
+Orco_p_Neuron_top<-markers[markers$cluster=="Orco+Neuron",7]
+Non_Neuron_top<-markers[markers$cluster=="Non-Neuron",7]
+
+
+Neuron_marker <- c("LOC726238","LOC724243","LOC100820634","LOC726770")
+#Neuron_marker <- intersect(Orco_n_Neuron_top,Orco_p_Neuron_top)
+Orco_marker <- c("LOC552552","LOC726019","LOC551704")
+Orco_n_marker <- Orco_n_Neuron_top[1:4]
+Idents(honeybee)<- factor(Idents(honeybee),levels=c("Non-neuron","Orco-Neuron","Orco+Neuron"))
+DefaultAssay(honeybee)<-"SCT"
+pdf("./00_Figure/Fig1/Fig1F-b-dotplot.pdf",width=8,height=4)
+DotPlot(honeybee,features = c(Neuron_marker,Orco_n_marker,Orco_marker)) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
+dev.off()
+
 
 
 #Fig1G: proportion of cell: ORN vs Non ORN;
