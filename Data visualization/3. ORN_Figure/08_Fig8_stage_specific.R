@@ -267,15 +267,204 @@ dev.off()
 
 
 ### true  or false DEG 
-# p4:0_0
-cluster<- "p4:0_0"
-obj<- subset(ORN,idents=cluster);
+myUmapcolors <- c(  '#53A85F', '#F1BB72', '#F3B1A0', '#D6E7A3', '#57C3F3', '#476D87',
+         '#E95C59', '#E59CC4', '#AB3282', '#23452F', '#BD956A', '#8C549C', '#585658',
+         '#9FA3A8', '#E0D4CA', '#5F3D69', '#58A4C3', '#AA9A59', '#E63863', '#E39A35', 
+         '#C1E6F3', '#6778AE', '#B53E2B', '#712820', '#DCC1DD', '#CCE0F5', '#625D9E', 
+         '#68A180', '#3A6963', '#968175', '#161853', '#FF9999', '#344CB7', '#FFCC1D', 
+         '#116530', '#678983', '#A19882', '#FFBCBC', '#24A19C', '#FF9A76', "#8DD3C7",
+         "#FFFFB3", "#BEBADA", "#FB8072", "#80B1D3", "#FDB462", "#B3DE69", "#FCCDE5", 
+         "#D9D9D9", "#BC80BD", "#CCEBC5", "#FFED6F", "#E41A1C", "#377EB8", "#4DAF4A", 
+         "#FF7F00", "#FFFF33", "#A65628", "#F781BF")
+
+# random select 3 cluster as control 
+pdf("./05_ORN_cluster2/06_stage_specific/cluster_DEG_pval_MAplot-raw_RNA.pdf",width=24,height=6)
+for (cluster in levels(ORN)){
+  print(cluster)
+  obj<- subset(ORN,idents=cluster);
   DefaultAssay(obj)<- "raw_RNA";
   Idents(obj)<- obj$orig.ident
-  markers <- FindAllMarkers(obj, only.pos = TRUE, min.pct = 0.2, logfc.threshold = 0.2)
-  markers <- markers[which(markers$p_val<0.05),]
-  write.csv(markers,paste0("./05_ORN_cluster2/06_stage_specific/Cluster",cluster,"_specific_markers.csv",sep=""))
-  top10 <- markers %>% group_by(cluster) %>% top_n(n = 10, wt = avg_log2FC);
-  obj<-ScaleData(obj,features=rownames(obj))
+  markers <- FindAllMarkers(obj, only.pos = TRUE, min.pct = 0.2, logfc.threshold = 0.5)
+  # p distribution 
+  p_val_data<- data.frame()
+  for(nrow in 1:nrow(markers)){
+    p_val<- markers[nrow,]$p_val;
+    filter_data <- markers[markers$p_val<p_val,]
+    number<- as.data.frame(table(filter_data$cluster))
+    p_val_data_subset<- data.frame(p_val,NE=number[1,2],Nurse=number[2,2],Forager=number[3,2])
+    p_val_data<- rbind(p_val_data,p_val_data_subset)
+  }
+  p_val_data_long<- melt(p_val_data,"p_val")
+  colnames(p_val_data_long)<- c("p_val","Stage","Freq")
+  p1<-ggplot(p_val_data_long, aes(x=p_val, y=Freq, color=Stage,shape=Stage,labels=p_val)) + 
+  geom_line()+
+  geom_point(size=4)+
+   theme(axis.title=element_text(size = 20),
+        axis.text=element_text(size = 20),
+        legend.text=element_text(size = 20),
+        legend.title=element_text(size = 20),
+        legend.position="top")+theme_bw()+
+   ggtitle(cluster)+
+  scale_color_manual(values = c(myUmapcolors[17],myUmapcolors[1],myUmapcolors[2]))
+   # MA plot
+   MA_data<- markers[,c(1,2,6,7)]
+   Avg <- AverageExpression(obj,features=MA_data$gene,assays = "raw_RNA")
+   MA_data<- MA_data[names(rowMeans(Avg$raw_RNA)),]
+   MA_data$baseMean<- rowMeans(Avg$raw_RNA)
+   MA_data$mlgPval<- -log10(MA_data$p_val)
+   xlim_max<- summary(MA_data$baseMean)[5]+100;
+   p2<- ggplot(MA_data, aes(x = baseMean, y = avg_log2FC)) +
+        geom_point(aes(color = cluster, size = mlgPval), show.legend = TRUE)+
+        scale_radius(range = c(.1, 2)) +
+        xlim(c(0,xlim_max))+theme_bw()+
+        scale_color_manual(values = c(myUmapcolors[17],myUmapcolors[1],myUmapcolors[2]))
+   data<-as.data.frame(table(obj$orig.ident))
+   colnames(data)<-c("Sample","cellnumber");
+    p4<- ggplot(data, aes(x=Sample,y=cellnumber,fill=Sample )) +  
+        geom_bar(stat = "identity" ) +
+        scale_fill_manual(values =  c(myUmapcolors[17],myUmapcolors[1],myUmapcolors[2]) ) +
+        theme_light();
+   p3<- p1+p2+p4
+   print(p3)
+}
+dev.off()
 
-# p distribution 
+# SCT matrix (counts)
+# random select 3 cluster as control 
+pdf("./05_ORN_cluster2/06_stage_specific/cluster_DEG_pval_MAplot-SCT.pdf",width=18,height=6)
+for (cluster in levels(ORN)){
+  print(cluster)
+  obj<- subset(ORN,idents=cluster);
+  DefaultAssay(obj)<- "SCT";
+  Idents(obj)<- obj$orig.ident
+  markers <- FindAllMarkers(obj, only.pos = TRUE, min.pct = 0.2, logfc.threshold = 0.5)
+  # p distribution 
+  p_val_data<- data.frame()
+  for(nrow in 1:nrow(markers)){
+    p_val<- markers[nrow,]$p_val;
+    filter_data <- markers[markers$p_val<p_val,]
+    number<- as.data.frame(table(filter_data$cluster))
+    p_val_data_subset<- data.frame(p_val,NE=number[1,2],Nurse=number[2,2],Forager=number[3,2])
+    p_val_data<- rbind(p_val_data,p_val_data_subset)
+  }
+  p_val_data_long<- melt(p_val_data,"p_val")
+  colnames(p_val_data_long)<- c("p_val","Stage","Freq")
+  p1<-ggplot(p_val_data_long, aes(x=p_val, y=Freq, color=Stage,shape=Stage,labels=p_val)) + 
+  geom_line()+
+  geom_point(size=4)+
+   theme(axis.title=element_text(size = 20),
+        axis.text=element_text(size = 20),
+        legend.text=element_text(size = 20),
+        legend.title=element_text(size = 20),
+        legend.position="top")+theme_bw()+ggtitle(cluster)+
+  scale_color_manual(values = c(myUmapcolors[17],myUmapcolors[1],myUmapcolors[2]))
+   # MA plot
+   MA_data<- markers[,c(1,2,6,7)]
+   Avg <- AverageExpression(obj,features=MA_data$gene,assays = "SCT")
+   MA_data<- MA_data[names(rowMeans(Avg$SCT)),]
+   MA_data$baseMean<- rowMeans(Avg$SCT)
+   MA_data$mlgPval<- -log10(MA_data$p_val)
+   xlim_max<- summary(MA_data$baseMean)[5]+100;
+   p2<- ggplot(MA_data, aes(x = baseMean, y = avg_log2FC)) +
+        geom_point(aes(color = cluster, size = mlgPval), show.legend = TRUE)+
+        scale_radius(range = c(.1, 2)) +
+        xlim(c(0,xlim_max))+theme_bw()+
+        scale_color_manual(values = c(myUmapcolors[17],myUmapcolors[1],myUmapcolors[2]))
+   data<-as.data.frame(table(obj$orig.ident))
+   colnames(data)<-c("Sample","cellnumber");
+    p4<- ggplot(data, aes(x=Sample,y=cellnumber,fill=Sample )) +  
+        geom_bar(stat = "identity" ) +
+        scale_fill_manual(values =  c(myUmapcolors[17],myUmapcolors[1],myUmapcolors[2]) ) +
+        theme_light();
+   p3<- p1+p2+p4
+   print(p3)
+}
+dev.off()
+
+# global 
+pdf("./05_ORN_cluster2/06_stage_specific/all_cluster_cluster_DEG_pval_MAplot-raw_RNAvsSCT.pdf",width=18,height=6)
+  obj<- ORN
+  DefaultAssay(obj)<- "SCT";
+  Idents(obj)<- obj$orig.ident
+  markers <- FindAllMarkers(obj, only.pos = TRUE, min.pct = 0.2, logfc.threshold = 0.5)
+  # p distribution 
+  p_val_data<- data.frame()
+  for(nrow in 1:nrow(markers)){
+    p_val<- markers[nrow,]$p_val;
+    filter_data <- markers[markers$p_val<p_val,]
+    number<- as.data.frame(table(filter_data$cluster))
+    p_val_data_subset<- data.frame(p_val,NE=number[1,2],Nurse=number[2,2],Forager=number[3,2])
+    p_val_data<- rbind(p_val_data,p_val_data_subset)
+  }
+  p_val_data_long<- melt(p_val_data,"p_val")
+  colnames(p_val_data_long)<- c("p_val","Stage","Freq")
+  p1<-ggplot(p_val_data_long, aes(x=p_val, y=Freq, color=Stage,shape=Stage,labels=p_val)) + 
+  geom_line()+
+  geom_point(size=4)+
+   theme(axis.title=element_text(size = 20),
+        axis.text=element_text(size = 20),
+        legend.text=element_text(size = 20),
+        legend.title=element_text(size = 20),
+        legend.position="top")+theme_bw()+
+   ggtitle(cluster)+
+  scale_color_manual(values = c(myUmapcolors[17],myUmapcolors[1],myUmapcolors[2]))
+   # MA plot
+   MA_data<- markers[,c(1,2,6,7)]
+   Avg <- AverageExpression(obj,features=MA_data$gene,assays = "SCT")
+   MA_data<- MA_data[names(rowMeans(Avg$SCT)),]
+   MA_data$baseMean<- rowMeans(Avg$SCT)
+   MA_data$mlgPval<- -log10(MA_data$p_val)
+   xlim_max<- summary(MA_data$baseMean)[5]+100;
+   p2<- ggplot(MA_data, aes(x = baseMean, y = avg_log2FC)) +
+        geom_point(aes(color = cluster, size = mlgPval), show.legend = TRUE)+
+        scale_radius(range = c(.1, 2)) +ggtitle("SCT")+
+        xlim(c(0,xlim_max))+theme_bw()+
+        scale_color_manual(values = c(myUmapcolors[17],myUmapcolors[1],myUmapcolors[2]))
+   p3<- p1+p2
+   print(p3)
+dev.off()
+
+# UpsetR for NE gene in different cluster 
+NE_list<- list()
+Nurse_list<- list()
+Forager_list<- list()
+
+for (cluster in cluster_specific$cluster){
+  print(cluster)
+  obj<- subset(ORN,idents=cluster);
+  DefaultAssay(obj)<- "raw_RNA";
+  Idents(obj)<- obj$orig.ident
+  markers <- FindAllMarkers(obj, only.pos = TRUE, min.pct = 0.2, logfc.threshold = 0.5)
+  NE_gene<- markers[markers$cluster=="NE",]$gene;
+  Nurse_gene<- markers[markers$cluster=="Nurse",]$gene
+  Forager_gene<- markers[markers$cluster=="Forager",]$gene
+  NE_list<- c(NE_list,as.data.frame(NE_gene))
+  Nurse_list<- c(Nurse_list,as.data.frame(Nurse_gene))
+  Forager_list<- c(Forager_list,as.data.frame(Forager_gene))
+}
+  obj<- ORN
+  DefaultAssay(obj)<- "raw_RNA";
+  Idents(obj)<- obj$orig.ident
+  markers <- FindAllMarkers(obj, only.pos = TRUE, min.pct = 0.2, logfc.threshold = 0.5)
+  NE_gene<- markers[markers$cluster=="NE",]$gene;
+  Nurse_gene<- markers[markers$cluster=="Nurse",]$gene
+  Forager_gene<- markers[markers$cluster=="Forager",]$gene
+  NE_list<- c(NE_list,as.data.frame(NE_gene))
+  Nurse_list<- c(Nurse_list,as.data.frame(Nurse_gene))
+  Forager_list<- c(Forager_list,as.data.frame(Forager_gene))
+names(NE_list)<- c(cluster_specific$cluster,"global")
+names(Nurse_list)<- c(cluster_specific$cluster,"global")
+names(Forager_list)<- c(cluster_specific$cluster,"global")
+
+library(UpSetR)
+pdf("./05_ORN_cluster2/06_stage_specific/UpsetR_Stage_DEG_raw_RNA.pdf",width=16,height=6)
+upset(fromList(NE_list),nsets=8,nintersects = 100, mb.ratio = c(0.5, 0.5), order.by = c("freq", "degree"), decreasing = c(FALSE,FALSE))
+upset(fromList(Nurse_list),nsets=8, nintersects = 100, mb.ratio = c(0.5, 0.5), order.by = c("freq", "degree"), decreasing = c(FALSE,FALSE))
+upset(fromList(Forager_list),nsets=8, nintersects = 100, mb.ratio = c(0.5, 0.5), order.by = c("freq", "degree"), decreasing = c(FALSE,FALSE))
+dev.off()
+
+
+
+
+
+

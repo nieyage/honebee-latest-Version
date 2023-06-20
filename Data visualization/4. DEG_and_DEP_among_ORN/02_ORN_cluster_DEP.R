@@ -259,7 +259,7 @@ dev.off();
 # plot the overlap among 4 methods
 library(VennDiagram)
 library(RColorBrewer)
-markers <-read.csv("./05_ORN_cluster2/07_DEG_and_DEP/01_All_ORN_cluster/DEP_FindAllMarkers_gene_peak_ORN.csv",row.names=1)
+#markers <-read.csv("./05_ORN_cluster2/07_DEG_and_DEP/01_All_ORN_cluster/DEP_FindAllMarkers_gene_peak_ORN.csv",row.names=1)
 tau_data<-read.csv("./05_ORN_cluster2/07_DEG_and_DEP/01_All_ORN_cluster/DEP_tau-0.9_cluster_specfic_data_peak_ORN.csv",row.names=1)
 #cor_data<-read.csv("./ORN/remove_nopower/DEGandDEP/DEP_correlation_top100_data_peak_ORN.csv",row.names=1)
 #mi_data <-read.csv("./ORN/remove_nopower/DEGandDEP/DEP_MI_top100_data.csv",row.names=1)

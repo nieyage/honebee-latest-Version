@@ -255,7 +255,7 @@ dev.off();
 # plot the overlap among 4 methods
 library(VennDiagram)
 library(RColorBrewer)
-markers <-read.csv("./05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/DEP_FindAllMarkers_gene_peak_ORN.csv",row.names=1)
+#markers <-read.csv("./05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/DEP_FindAllMarkers_gene_peak_ORN.csv",row.names=1)
 tau_data<-read.csv("./05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/DEP_tau-0.9_cluster_specfic_data_peak_ORN.csv",row.names=1)
 #cor_data<-read.csv("./ORN/remove_nopower/DEGandDEP/DEP_correlation_top100_data_peak_ORN.csv",row.names=1)
 #mi_data <-read.csv("./ORN/remove_nopower/DEGandDEP/DEP_MI_top100_data.csv",row.names=1)
@@ -315,12 +315,18 @@ pfm <- getMatrixSet(
   x = JASPAR2020,
   opts = list(collection = "CORE", tax_group = 'insects', all_versions = FALSE)
 )
+pfm_honeybee <-  readJASPARMatrix("/data/R04/liyh526/project/Honeybee/03_CisBP2JASPAR/honeybee_jaspar/CisBP-honeybee.jaspar", matrixClass=c("PFM", "PWM", "PWMProb"))
+
+# Merge the two PFMatrixList objects
+mergedPfmList <- c(pfm, pfm_honeybee)
+
+library(BSgenome.Amel.HAv3.1.update.chemoreceptor)
 DefaultAssay(ORN) <- 'peaks_ORN_subcluster'
 # add motif information
 ORN <- AddMotifs(
   object = ORN,
-  genome = BSgenome.Amel.antenan,
-  pfm = pfm
+  genome = BSgenome.Amel.HAv3.1.update.chemoreceptor,
+  pfm = mergedPfmList
 )
 
 # tau 
@@ -328,9 +334,10 @@ ORN <- AddMotifs(
 All_motif_info <- data.frame()
 for (cluster in levels(ORN)){
   cluster_peak <- tau_data[tau_data$cluster==cluster,]$peak;
+  if(length(cluster_peak!=0)){
   enriched.motifs <- FindMotifs(ORN,features = cluster_peak);
   enriched.motifs$cluster <- cluster;
-  All_motif_info <- rbind(All_motif_info,enriched.motifs)
+  All_motif_info <- rbind(All_motif_info,enriched.motifs)}
 }  
 library(dplyr)
 top3 <- All_motif_info %>% group_by(cluster) %>% top_n(n = 3, wt = fold.enrichment)
@@ -350,14 +357,14 @@ for (i in 1:nrow(last_motif_info)){
 }
 
 library(pheatmap)
-#count=t(scale(t(motif_matrix),scale = T,center = T))
+motif_matrix[is.na(motif_matrix)]<- 0 
+motif_matrix=log2(motif_matrix)
 pdf("./05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/tau_DEP_motif_heatmap.pdf",width=20,height=20)
-pheatmap(motif_matrix,cluster_cols = T,cluster_rows = F,
+pheatmap(motif_matrix,cluster_cols = T,cluster_rows = TRUE,
               color = colorRampPalette(c("white", "firebrick3"))(100),
               cellwidth = 10, cellheight = 10,
               show_rownames=T,show_colnames=T)
 dev.off()
-
 
 #Find markers
 All_motif_info <- data.frame()
