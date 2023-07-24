@@ -7,6 +7,7 @@ library(muscle)
 library(ape);
 library(ggtree)
 library(tidytree)
+library(reshape2)
 OR_fasta<-readAAStringSet("/md01/nieyg/ref/10X/Amel_HAv3.1/OR_transcript_pep.aa", format="fasta",nrec=-1L, skip=0L, seek.first.rec=FALSE, use.names=TRUE)
 GR_fasta<-readAAStringSet("/md01/nieyg/ref/10X/Amel_HAv3.1/GR_transcript_pep.aa", format="fasta",nrec=-1L, skip=0L, seek.first.rec=FALSE, use.names=TRUE)
 IR_fasta<-readAAStringSet("/md01/nieyg/ref/10X/Amel_HAv3.1/IR_transcript_pep.aa", format="fasta",nrec=-1L, skip=0L, seek.first.rec=FALSE, use.names=TRUE)
@@ -65,19 +66,21 @@ write.csv(OR_pair,"/md01/nieyg/ref/10X/Amel_HAv3.1/kaks_calculate/OR_pair.homolo
 sed -i 's/"//g' OR_pair.homologs
 conda activate kaks_calculate
 
-ParaAT.pl -h /md01/nieyg/ref/10X/Amel_HAv3.1/kaks_calculate/OR_pair.homologs \
+nohup ParaAT.pl -h /md01/nieyg/ref/10X/Amel_HAv3.1/kaks_calculate/OR_pair.homologs \
  -n /md01/nieyg/ref/10X/Amel_HAv3.1/kaks_calculate/all_receptor_gene_cds.fa \
  -a /md01/nieyg/ref/10X/Amel_HAv3.1/kaks_calculate/all_receptor_gene_pep.aa \
- -p proc -m mafft -f axt -g -k -o /md01/nieyg/ref/10X/Amel_HAv3.1/kaks_calculate/result_dir
+ -p proc -m muscle -f axt -g -k -o /md01/nieyg/ref/10X/Amel_HAv3.1/kaks_calculate/result_dir_muscle2 &
 
+cat *kaks > merge.kaks
 awk '!(NR%2)' merge.kaks > OR_pair_kaks.out
 
-kaks_data<- read.table("/md01/nieyg/ref/10X/Amel_HAv3.1/kaks_calculate/result_dir3/kaks/OR_pair_kaks.out")
+kaks_data<- read.table("/md01/nieyg/ref/10X/Amel_HAv3.1/kaks_calculate/result_dir_muscle2/OR_pair_kaks.out")
 colnames(kaks_data)<- c("OR_pair","method","KA","Ks","Ka/Ks","p_value","length","S-sites","N-sites","Folo-sites","Substitutions","S-sub","N-sub","Folo-S-sub","Folo-N-sub","Divergence-Time","Substitution-Rate-Ratio","GC","ML_score","AICc","Akaike-Weight","Model")
 dN_data <- kaks_data[,c(1,3)]
 dS_data <- kaks_data[,c(1,4)]
-
-
+N_data <- kaks_data[,c(1,9)]
+S_data <- kaks_data[,c(1,8)]
+dNdS_data <- kaks_data[,c(1,5)]
 # d. structure matrix 
 # the RMSD (structure similarity)
 RMSD <- read.table("/md01/nieyg/project/honeybee/honebee-latest-Version/06_iOR_database/rename_pdb/RMSD_result.txt")
@@ -135,18 +138,23 @@ OR_motif_braycurtis = as.matrix(vegdist(t(motif_data[,-1]), "bray"))
 library(reshape2)
 colnames(dN_data)<- c("OR_pair","value")
 colnames(dS_data)<- c("OR_pair","value")
+colnames(N_data)<- c("OR_pair","value")
+colnames(S_data)<- c("OR_pair","value")
+colnames(dNdS_data)<- c("OR_pair","value")
+colnames(sequence_data)<- c("gene1","gene2","value","OR_pair")
+colnames(RMSD_data)<- c("gene1","gene2","value","OR_pair")
 
-CDS_list <- list(sequence_data,dN_data,dS_data,RMSD_data)
+CDS_list <- list(sequence_data,dN_data,dS_data,N_data,S_data,dNdS_data,RMSD_data)
 promoter_list <- list(OR_kmer_cor,OR_kmer_dist,OR_motif_cor,OR_motif_braycurtis)
-names(CDS_list)<- c("distance","dN","dS","RMSD")
+names(CDS_list)<- c("distance","dN","dS","N","S","dNdS","RMSD")
 names(promoter_list)<- c("kmer_cor","kmer_dist","motif_cor","motif_dist")
-r2_data<- matrix(ncol=4,nrow=4)
-rownames(r2_data)<- c("distance","dN","dS","RMSD")
+r2_data<- matrix(ncol=4,nrow=7)
+rownames(r2_data)<- c("distance","dN","dS","N","S","dNdS","RMSD")
 colnames(r2_data)<- c("kmer_cor","kmer_dist","motif_cor","motif_dist")
 
 library(ggpmisc)
 pdf("/data/R02/nieyg/project/honeybee/honebee-latest-Version/04_chemoreceptor/All_OR_pair_cor.pdf",width=6,height=4)
-for (CDS_ID in 1:4){
+for (CDS_ID in 1:7){
 	for (promoter_ID in 1:4){
 		CDS_matrix<- CDS_list[[CDS_ID]];
 		promoter_matrix<- promoter_list[[promoter_ID]];
@@ -194,7 +202,7 @@ coexp_OR<- dotplot_data[dotplot_data$id%in%multiple_id,]$features.plot;
 # single OR 
 # pairwised compared -->R squard
 pdf("/data/R02/nieyg/project/honeybee/honebee-latest-Version/04_chemoreceptor/Single_OR_pair_cor.pdf",width=6,height=4)
-for (CDS_ID in 1:4){
+for (CDS_ID in 1:7){
 	for (promoter_ID in 1:4){
 		CDS_matrix<- CDS_list[[CDS_ID]];
 		promoter_matrix<- promoter_list[[promoter_ID]];
@@ -231,10 +239,10 @@ pheatmap(r2_data,
  )
 dev.off()
 
-# single OR 
+# coexp OR 
 # pairwised compared -->R squard
 pdf("/data/R02/nieyg/project/honeybee/honebee-latest-Version/04_chemoreceptor/coexp_OR_pair_cor.pdf",width=6,height=4)
-for (CDS_ID in 1:4){
+for (CDS_ID in 1:6){
 	for (promoter_ID in 1:4){
 		CDS_matrix<- CDS_list[[CDS_ID]];
 		promoter_matrix<- promoter_list[[promoter_ID]];

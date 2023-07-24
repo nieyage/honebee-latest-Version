@@ -29,6 +29,7 @@ da_peaks <- FindAllMarkers(
 )
 write.csv(da_peaks,"./05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/DEP_FindAllMarkers.csv")
 #markers <- FindAllMarkers(ORN, only.pos = TRUE, min.pct = 0.2, logfc.threshold = 0.2)
+
 da_peaks<-da_peaks[da_peaks$p_val_adj<0.05,]
 da_peaks<- da_peaks[da_peaks$avg_log2FC>1,]
 table(da_peaks$cluster)
@@ -88,7 +89,7 @@ dev.off()
 
 #plot the cluster specific pheatmap
 DefaultAssay(ORN)<- "peaks_ORN_subcluster"
-peak_specific<-names(which(peak_tau>0.92))
+peak_specific<-names(which(peak_tau>0.85))
 colnames(ORN_avg) <- levels(ORN)
 peak_specific_data<-as.data.frame(ORN_avg[peak_specific,])
 
@@ -102,16 +103,14 @@ for (peak in peak_specific){
 data$cluster<-factor(data$cluster,levels=levels(ORN))
 data<-data[order(data$cluster),]
 tau1_peak<-data$peak
-write.csv(data,"./05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/DEP_tau-0.9_cluster_specfic_data_peak_ORN.csv")
+write.csv(data,"./05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/DEP_tau-0.85_cluster_specfic_data_peak_ORN.csv")
 # plot the tau cluster specfic genes heatmap 
 # plot the avg heatmap 
 peak_Avg <-ORN_avg[tau1_peak,]
 count=t(scale(t(peak_Avg),scale = T,center = F))
 count<- count[tau1_peak,]
-pdf("./05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/DEP_tau_ORN_heatmap_avg.pdf",width=15,height=15)
+pdf("./05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/DEP_tau_ORN_heatmap_avg.pdf",width=10,height=15)
 pheatmap(count,cluster_cols = F,cluster_rows = F,color = colorRampPalette(c("white", "firebrick3"))(100),show_rownames=F,show_colnames=T)
-pheatmap(count,cluster_cols = F,cluster_rows = F,color = colorRampPalette(c("white", "#E41A1C"))(100),show_rownames=F,show_colnames=T)
-pheatmap(count,cluster_cols = F,cluster_rows = F,color = colorRampPalette(c("#377EB8", "white", "#E41A1C"))(100),show_rownames=F,show_colnames=T)
 dev.off();
 
 # 3. the correlation between ORx and other gene:
@@ -256,7 +255,7 @@ dev.off();
 library(VennDiagram)
 library(RColorBrewer)
 #markers <-read.csv("./05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/DEP_FindAllMarkers_gene_peak_ORN.csv",row.names=1)
-tau_data<-read.csv("./05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/DEP_tau-0.9_cluster_specfic_data_peak_ORN.csv",row.names=1)
+tau_data<-read.csv("./05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/DEP_tau-0.85_cluster_specfic_data_peak_ORN.csv",row.names=1)
 #cor_data<-read.csv("./ORN/remove_nopower/DEGandDEP/DEP_correlation_top100_data_peak_ORN.csv",row.names=1)
 #mi_data <-read.csv("./ORN/remove_nopower/DEGandDEP/DEP_MI_top100_data.csv",row.names=1)
 FeatureSelection_data<-data.frame()
@@ -315,7 +314,7 @@ pfm <- getMatrixSet(
   x = JASPAR2020,
   opts = list(collection = "CORE", tax_group = 'insects', all_versions = FALSE)
 )
-pfm_honeybee <-  readJASPARMatrix("/data/R04/liyh526/project/Honeybee/03_CisBP2JASPAR/honeybee_jaspar/CisBP-honeybee.jaspar", matrixClass=c("PFM", "PWM", "PWMProb"))
+pfm_honeybee <-  readJASPARMatrix("/md01/nieyg/project/honeybee/honebee-latest-Version/09_GRN/02_SCENIC/01_creat_cisTarget_databases/CisBP-honeybee.jaspar", matrixClass=c("PFM", "PWM", "PWMProb"))
 
 # Merge the two PFMatrixList objects
 mergedPfmList <- c(pfm, pfm_honeybee)
@@ -326,7 +325,7 @@ DefaultAssay(ORN) <- 'peaks_ORN_subcluster'
 ORN <- AddMotifs(
   object = ORN,
   genome = BSgenome.Amel.HAv3.1.update.chemoreceptor,
-  pfm = mergedPfmList
+  pfm = pfm_honeybee
 )
 
 # tau 
@@ -338,12 +337,82 @@ for (cluster in levels(ORN)){
   enriched.motifs <- FindMotifs(ORN,features = cluster_peak);
   enriched.motifs$cluster <- cluster;
   All_motif_info <- rbind(All_motif_info,enriched.motifs)}
-}  
-library(dplyr)
-top3 <- All_motif_info %>% group_by(cluster) %>% top_n(n = 3, wt = fold.enrichment)
-motif2show<-unique(top3$motif.name)
+}
+# motif barplot statistics
+table(All_motif_info$cluster)
+
+pdf("./05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/All_motif_info_pvalue_density.pdf",width=6,height=5)
+p<- All_motif_info$pvalue
+data<- as.data.frame(p)
+ggplot(data, aes(x=data[,1])) + xlab("")+
+              geom_density(alpha=.25) + theme_classic() + 
+              geom_vline(xintercept=0.2,col="red")
+p<- All_motif_info$p.adjust
+data<- as.data.frame(p)
+ggplot(data, aes(x=data[,1])) + xlab("")+
+              geom_density(alpha=.25) + theme_classic() 
+p<- All_motif_info$fold.enrichment
+data<- as.data.frame(p)
+ggplot(data, aes(x=data[,1])) + xlab("")+
+              geom_density(alpha=.25) + 
+              theme_classic() +
+              xlim(0,2)+ 
+              geom_vline(xintercept=1.5,col="red")
+dev.off()
+
+# cut off pvalue< 0.4 & fold.enrichment > 1 
+motif_info<- All_motif_info[All_motif_info$pvalue<0.2,]
+motif_info<- motif_info[motif_info$fold.enrichment>1.5,]
+# number of TF in cluster 
+cluster_number<-as.data.frame(table(table(motif_info$cluster)))
+cluster_number$Var1<-as.character(cluster_number$Var1)
+cluster_number[6,1]<-">5"
+cluster_number[6,2]<-sum(cluster_number$Freq[6:length(cluster_number$Freq)])
+cluster_number<-cluster_number[1:6,]
+cluster_number$percent<- cluster_number$Freq/sum(cluster_number$Freq)*100;
+cluster_number$Var1<- factor(cluster_number$Var1,levels=c("1","2","3","4","5",">5"))
+
+pdf("./05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/number_of_TF_in_cluster_percent.pdf",width=6,height=5)
+p<-ggplot(data = cluster_number, aes_string(x = "Var1", y = "percent")) +  
+        xlab("# of TF in cluster") +
+        ylab("percent of cluster(%)") + 
+        #scale_fill_manual(values = "#FFED6F") + 
+        geom_bar( stat = "identity",width=0.6,color = 'black', fill='grey') +
+        theme_classic()+
+        theme(axis.text.x = element_text(angle = 0,vjust = 0.5,hjust = 0.5));
+p
+#add number in plot 
+round(cluster_number$percent, 2)
+p+geom_text(aes(label = Freq), size = 3, hjust = 0.5, vjust = 3) 
+dev.off();
+# number of cluster TF enrich 
+OR_number<-as.data.frame(table(table(motif_info$motif.name)));
+OR_number$Var1<-as.character(OR_number$Var1)
+OR_number[6,1]<-">5"
+OR_number[6,2]<-sum(OR_number$Freq[6:length(OR_number$Freq)])
+OR_number<-OR_number[1:6,]
+OR_number$percent<- OR_number$Freq/sum(OR_number$Freq)*100;
+OR_number$Var1<- factor(OR_number$Var1,levels=c("1","2","3","4","5",">5"))
+
+pdf("./05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/number_of_cluster_TF_enrich_percent.pdf",width=6,height=5)
+p<-ggplot(data = OR_number, aes_string(x = "Var1", y = "percent")) +  
+        xlab("# of cluster motif enriched") +
+        ylab("percent of TF(%)") + 
+        #scale_fill_manual(values = "#FFED6F") + 
+        geom_bar( stat = "identity",width=0.6,color = 'black', fill='grey') +
+        theme_classic()+
+        theme(axis.text.x = element_text(angle = 0,vjust = 0.5,hjust = 0.5));
+p
+#add number in plot 
+p+geom_text(aes(label = Freq), size = 3, hjust = 0.5, vjust = 3) 
+dev.off();
+
 
 # motif enrich matrix
+
+library(dplyr)
+top3 <- motif_info %>% group_by(cluster) %>% top_n(n = 3, wt = fold.enrichment)
+motif2show<-unique(top3$motif.name)
 
 motif_matrix<-matrix(ncol=length(motif2show),nrow=length(levels(ORN)))
 colnames(motif_matrix)<-motif2show
@@ -358,7 +427,7 @@ for (i in 1:nrow(last_motif_info)){
 
 library(pheatmap)
 motif_matrix[is.na(motif_matrix)]<- 0 
-motif_matrix=log2(motif_matrix)
+
 pdf("./05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/tau_DEP_motif_heatmap.pdf",width=20,height=20)
 pheatmap(motif_matrix,cluster_cols = T,cluster_rows = TRUE,
               color = colorRampPalette(c("white", "firebrick3"))(100),

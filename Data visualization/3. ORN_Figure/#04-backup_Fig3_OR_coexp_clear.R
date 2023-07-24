@@ -16,7 +16,7 @@ Orco<- c("Or2","LOC552552","LOC726019","LOC551704")
 all_receptor_gene <- unique(c(Orco,OR_gene,IR_gene,GR_gene))
 ORN<- readRDS("./05_ORN_cluster2/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_modify_the_tsne_recall_peak.rds")
 DefaultAssay(ORN)<-"raw_RNA"
-dotplot_data<-read.csv("./05_ORN_cluster2/02_second_cluster/06_rm_without_power/dotplot_data_remove_nopower.csv")
+dotplot_data<-read.csv("/md01/nieyg/project/honeybee/honebee-latest-Version/05_ORN_cluster2/02_second_cluster/06_rm_without_power/dotplot_data_remove_nopower.csv")
 dotplot_feature<-unique(rev(as.character(dotplot_data$features.plot)));
 
 #Fig3A OR correlation  heatmap and sequence tree 
