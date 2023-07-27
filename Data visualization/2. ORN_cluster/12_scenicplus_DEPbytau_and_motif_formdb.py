@@ -28,6 +28,8 @@ sdata.loom <- as.loom(x = ORN, filename = "/md01/nieyg/project/honeybee/honebee-
 # Always remember to close loom files when done
 sdata.loom$close_all()
 
+/data/R02/nieyg/ori/biosoft/conda/envs/python37/lib/python3.7/site-packages/
+
 # sdata 2 scanpy
 conda activate scenicplus
 # in python
@@ -249,6 +251,8 @@ plt.show()
 # 1.First we will binarize the topics using the otsu method and by taking the top 3k regions per topic.
 
 from pycisTopic.topic_binarization import *
+
+cistopic_obj = pickle.load(open(os.path.join(work_dir, '02_scATAC/cistopic_obj_by_signac_pea.pkl'), 'rb'))
 region_bin_topics_otsu = binarize_topics(cistopic_obj, method='otsu')
 region_bin_topics_top3k = binarize_topics(cistopic_obj, method='ntop', ntop = 3000)
 
@@ -262,56 +266,39 @@ variable_regions = find_highly_variable_features(normalized_imputed_acc_obj, plo
 markers_dict = find_diff_features(cistopic_obj, imputed_acc_obj, variable='subcluster', var_features=variable_regions, split_pattern = '_',adjpval_thr=0.1,log2fc_thr=0.5,n_cpu=10)
 
 # DEP by tau 
-# in R 
-tau_data<-read.csv("./05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/DEP_tau-0.85_cluster_specfic_data_peak_ORN.csv",row.names=1)
-ORN<- readRDS("./05_ORN_cluster2/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_modify_the_tsne_recall_peak.rds")
-ORN<- subset(ORN,idents=setdiff(levels(ORN),"33"))
-# 1. Find All Markers:
-DefaultAssay(ORN)<- "peaks_ORN_subcluster"
 
-da_peaks <- FindAllMarkers(
-  object = ORN,
-  features = tau_data$peak,
-  #test.use = 'LR',
-  logfc.threshold = 0,
-  min.pct = 0
-  #latent.vars = 'nCount_peaks'
-)
+sed -i 's/-/:/' /md01/nieyg/project/honeybee/honebee-latest-Version/05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/DEP_tau-0.85_cluster_specfic_data_peak_ORN.csv
 
-match(tau_data$peak,rownames(markers))
+import pandas as pd
 
+def dataframe_to_dict_by_column(dataframe, column_name):
+    unique_values = dataframe[column_name].unique()
+    result_dict = {}
+    for value in unique_values:
+        result_dict[value] = dataframe[dataframe[column_name] == value].reset_index(drop=True)
+    return result_dict
 
+tau_data=pd.read_csv("/md01/nieyg/project/honeybee/honebee-latest-Version/05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/DEP_tau-0.85_cluster_specfic_data_peak_ORN.csv", sep=',')
+#tau_data.set_index('peak', inplace=True)
 
-[3320 rows x 3 columns], 'p4:9':                            Log2FC  Adjusted_pval Contrast
-Group11:3354366-3354566  0.337619       0.310197     p4:9
-Group2:5193130-5193330   0.318581       0.450110     p4:9
-
-
-tau_dict = {}
-
-for subcluster in ['1', '10', '11',  '13',  '16', '17',  '18',  '2', '23', '25', '27', '28', '3',
-  '34', '35', '36', '37', '38', '39', '4', '40',  '42',  '43', '44',
-  '46', '47', '49', '5', '51', '54', '55', '56',  '58',  '6', '60', '8', '9']:
-    regions = markers_dict[DAR].index[markers_dict[DAR].index.str.startswith('Group')] #only keep regions on known chromosomes
-    region_sets[DAR] = pr.PyRanges(region_names_to_coordinates(regions))
-
-
-
-
+tau_dict = dataframe_to_dict_by_column(tau_data, 'cluster')
 
 if not os.path.exists(os.path.join(work_dir, '02_scATAC/candidate_enhancers')):
     os.makedirs(os.path.join(work_dir, '02_scATAC/candidate_enhancers'))
 import pickle
-pickle.dump(region_bin_topics_otsu, open(os.path.join(work_dir, '02_scATAC/candidate_enhancers/region_bin_topics_otsu_by_signac_pea.pkl'), 'wb'))
-pickle.dump(region_bin_topics_top3k, open(os.path.join(work_dir, '02_scATAC/candidate_enhancers/region_bin_topics_top3k_by_signac_pea.pkl'), 'wb'))
-pickle.dump(markers_dict, open(os.path.join(work_dir, '02_scATAC/candidate_enhancers/markers_dict_by_signac_pea.pkl'), 'wb'))
+pickle.dump(region_bin_topics_otsu, open(os.path.join(work_dir, '02_scATAC/candidate_enhancers/region_bin_topics_otsu_by_signac_peak_DEPbycisTopic.pkl'), 'wb'))
+pickle.dump(region_bin_topics_top3k, open(os.path.join(work_dir, '02_scATAC/candidate_enhancers/region_bin_topics_top3k_by_signac_peak_DEPbycisTopic.pkl'), 'wb'))
+#pickle.dump(markers_dict, open(os.path.join(work_dir, '02_scATAC/candidate_enhancers/markers_dict_by_signac_peak_DEPbycisTopic.pkl'), 'wb'))
 
 # Step3: Motif enrichment analysis using pycistarget
 
 import pickle
-region_bin_topics_otsu = pickle.load(open(os.path.join(work_dir, '02_scATAC/candidate_enhancers/region_bin_topics_otsu_by_signac_pea.pkl'), 'rb'))
-region_bin_topics_top3k = pickle.load(open(os.path.join(work_dir, '02_scATAC/candidate_enhancers/region_bin_topics_top3k_by_signac_pea.pkl'), 'rb'))
-markers_dict = pickle.load(open(os.path.join(work_dir, '02_scATAC/candidate_enhancers/markers_dict_by_signac_pea.pkl'), 'rb'))
+region_bin_topics_otsu = pickle.load(open(os.path.join(work_dir, '02_scATAC/candidate_enhancers/region_bin_topics_otsu_by_signac_peak_DEPbycisTopic.pkl'), 'rb'))
+region_bin_topics_top3k = pickle.load(open(os.path.join(work_dir, '02_scATAC/candidate_enhancers/region_bin_topics_top3k_by_signac_peak_DEPbycisTopic.pkl'), 'rb'))
+#markers_dict = pickle.load(open(os.path.join(work_dir, '02_scATAC/candidate_enhancers/markers_dict_by_signac_peak_DEPbycisTopic.pkl'), 'rb'))
+markers_dict= tau_dict
+
+
 
 import pyranges as pr
 from pycistarget.utils import region_names_to_coordinates
@@ -328,21 +315,10 @@ for topic in region_bin_topics_top3k.keys():
     regions = region_bin_topics_top3k[topic].index[region_bin_topics_top3k[topic].index.str.startswith('Group')] #only keep regions on known chromosomes
     region_sets['topics_top_3'][topic] = pr.PyRanges(region_names_to_coordinates(regions))
 
-for DAR in ['1', '10', '11',  '13',  '16', '17',  '18',  '2', '23', '25', '27', '28', '3',
-  '34', '35', '36', '37', '38', '39', '4', '40',  '42',  '43', '44',
-  '46', '47', '49', '5', '51', '54', '55', '56',  '58',  '6', '60', '8', '9']:
-    regions = markers_dict[DAR].index[markers_dict[DAR].index.str.startswith('Group')] #only keep regions on known chromosomes
-    region_sets['DARs'][DAR] = pr.PyRanges(region_names_to_coordinates(regions))
-
 for DAR in markers_dict.keys():
-    regions = markers_dict[DAR].index[markers_dict[DAR].index.str.startswith('chr')] #only keep regions on known chromosomes
+    regions = markers_dict[DAR]['peak'][markers_dict[DAR]['peak'].str.startswith('Group')] #only keep regions on known chromosomes
     if len(regions) > 0:
         region_sets['DARs'][DAR] = pr.PyRanges(region_names_to_coordinates(regions))
-
-
-for key in region_sets.keys():
-    print(f'{key}: {region_sets[key].keys()}')
-
 
 # in R and shell 
 # create the custom annotation file 
@@ -356,7 +332,6 @@ sed -i 's/"//g' custom_annot.tbl
 sed -i '/MT/d;' custom_annot.tbl
 sed -i 's/+/1/g' custom_annot.tbl
 sed -i 's/-/-1/g' custom_annot.tbl
-
 
 if not os.path.exists(os.path.join(work_dir, '03_motifs')):
     os.makedirs(os.path.join(work_dir, '03_motifs'))
@@ -374,30 +349,28 @@ run_pycistarget(
     region_sets = region_sets,
     species = 'custom',
     custom_annot=custom_annot,
-    save_path = os.path.join(work_dir, '03_motifs'),
+    save_path = os.path.join(work_dir, '03_motifs/01_menr_honeybee_cisBp_motif'),
     ctx_db_path = our_rankings_db,
     dem_db_path = our_scores_db,
     promoter_space=20,
     path_to_motif_annotations = our_motif_annotation,
     run_without_promoters = True,
-    n_cpu = 1,
+    n_cpu = 5,
     _temp_dir = os.path.join(tmp_dir, 'ray_spill'),
     annotation_version = 'v10',
     )
 
 import dill
-menr = dill.load(open(os.path.join(work_dir, '03_motifs/menr_honeybee_cisBp_motif.pkl'), 'rb'))
+menr = dill.load(open(os.path.join(work_dir, '03_motifs/01_menr_honeybee_cisBp_motif/menr.pkl'), 'rb'))
 
-pb_fly_ranking_db =  os.path.join('/md01/nieyg/project/honeybee/honebee-latest-Version/09_GRN/02_SCENIC/01_creat_cisTarget_databases/03_region/01_honeybee_cisBp.regions_vs_motifs.rankings.feather')
-pb_fly_scores_db =  os.path.join('/md01/nieyg/project/honeybee/honebee-latest-Version/09_GRN/02_SCENIC/01_creat_cisTarget_databases/03_region/01_honeybee_cisBp.regions_vs_motifs.rankings.feather')
-
+pb_fly_ranking_db =  os.path.join('/md01/nieyg/project/honeybee/honebee-latest-Version/09_GRN/02_SCENIC/01_creat_cisTarget_databases/03_region/02_v10nr_clust_public_dmel6_to_honeybee.genes_vs_motifs.rankings.feather')
+pb_fly_scores_db =  os.path.join('/md01/nieyg/project/honeybee/honebee-latest-Version/09_GRN/02_SCENIC/01_creat_cisTarget_databases/03_region/02_v10nr_clust_public_dmel6_to_honeybee.genes_vs_motifs.scores.feather')
 pb_fly_motif_annotation = os.path.join('/data/R02/nieyg/project/honeybee/honebee-latest-Version/09_GRN/02_SCENIC/motifs-v10nr_clust-nr.flybase-m0.001-o0.0-trans2honeybee.tbl')
-
 run_pycistarget(
     region_sets = region_sets,
     species = 'custom',
     custom_annot=custom_annot,
-    save_path = os.path.join(work_dir, '03_motifs'),
+    save_path = os.path.join(work_dir, '03_motifs/02_menr_database_fly2honeybee'),
     ctx_db_path = pb_fly_ranking_db,
     dem_db_path = pb_fly_scores_db,
     path_to_motif_annotations = pb_fly_motif_annotation,
@@ -408,8 +381,9 @@ run_pycistarget(
     )
 
 import dill
-menr = dill.load(open(os.path.join(work_dir, '03_motifs/menr_database_fly.pkl'), 'rb'))
+menr = dill.load(open(os.path.join(work_dir, '03_motifs/02_menr_database_fly2honeybee/menr.pkl'), 'rb'))
 
+##!!!!!!!!!!!! import menr by honeybee cisbp motif !!!!!!!!!!!!!!##
 
 # We now have completed all the steps necessary for starting the SCENIC+ analysis
 # Step4: inferring enhancer-driven Gene Regulatory Networks (eGRNs) using SCENIC+
@@ -426,9 +400,10 @@ _stderr = sys.stderr
 null = open(os.devnull,'wb')
 work_dir = '/data/R02/nieyg/project/honeybee/honebee-latest-Version/09_GRN/02_SCENIC/04_scenicplus'
 
-adata = sc.read_h5ad(os.path.join(work_dir, '01_scRNA/adata.h5ad'))
-cistopic_obj = dill.load(open(os.path.join(work_dir, '02_scATAC/cistopic_obj.pkl'), 'rb'))
-menr = dill.load(open(os.path.join(work_dir, '03_motifs/menr_honeybee_cisBp_motif.pkl'), 'rb'))
+adata = sc.read_h5ad(os.path.join(work_dir, '01_scRNA/adata_subcluster.h5ad'))
+cistopic_obj = pickle.load(open(os.path.join(work_dir, '02_scATAC/cistopic_obj_by_signac_pea.pkl'), 'rb'))
+
+menr = dill.load(open(os.path.join(work_dir, '03_motifs/01_menr_honeybee_cisBp_motif/menr.pkl'), 'rb'))
 
 from scenicplus.scenicplus_class import create_SCENICPLUS_object
 import numpy as np
@@ -441,12 +416,10 @@ scplus_obj = create_SCENICPLUS_object(
 scplus_obj.X_EXP = np.array(scplus_obj.X_EXP.todense())
 scplus_obj
 
-
 #only keep the first two columns of the PCA embedding in order to be able to visualize this in SCope
 #scplus_obj.dr_cell['GEX_X_pca'] = scplus_obj.dr_cell['GEX_X_pca'].iloc[:, 0:2]
 #scplus_obj.dr_cell['GEX_rep'] = scplus_obj.dr_cell['GEX_rep'].iloc[:, 0:2]
 
-motifs_list_filename="/md01/nieyg/project/honeybee/honebee-latest-Version/09_GRN/02_SCENIC/01_creat_cisTarget_databases/01_we_collect_motifs.lst"
 
 # skip biomart_host 
 # https://github.com/aertslab/scenicplus/issues/48
@@ -492,8 +465,11 @@ get_search_space(
         assembly = None,
         pr_annot = pr_annot,
         pr_chromsizes = chromsizes,
-        upstream = [500, 150000],
-        downstream = [500, 150000])
+        upstream = [500, 10000],
+        downstream = [500, 10000])
+
+motifs_list_filename="/md01/nieyg/project/honeybee/honebee-latest-Version/09_GRN/02_SCENIC/01_creat_cisTarget_databases/TF_name.list"
+
 
 from scenicplus.wrappers.run_scenicplus import run_scenicplus
 try:
@@ -509,23 +485,110 @@ try:
         downstream = [500, 10000],
         calculate_TF_eGRN_correlation = True,
         calculate_DEGs_DARs = True,
-        export_to_loom_file = True,
-        export_to_UCSC_file = True,
+        export_to_loom_file = False,
+        export_to_UCSC_file = False,
         path_bedToBigBed = '/md01/nieyg/software/bedToBigBed',
-        n_cpu = 12,
+        n_cpu = 6,
         _temp_dir = os.path.join(tmp_dir, 'ray_spill'))
 except Exception as e:
     #in case of failure, still save the object
-    dill.dump(scplus_obj, open(os.path.join(work_dir, '04_scenicplus/scplus_obj.pkl'), 'wb'), protocol=-1)
+    dill.dump(scplus_obj, open(os.path.join(work_dir, '04_scenicplus/scplus_obj_honeybee_cisBPmotif.pkl'), 'wb'), protocol=-1)
     raise(e)
 import pickle
-pickle.dump(scplus_obj, open(os.path.join(work_dir, '04_scenicplus/scplus_obj_default_honeybee_cisBPmotif.pkl'), 'wb'))
+pickle.dump(scplus_obj, open(os.path.join(work_dir, '04_scenicplus/scplus_obj_honeybee_cisBPmotif.pkl'), 'wb'))
+
 
 # save html file 
 
 with open('output.html', 'w') as f:
    f.write(menr['DEM_topics_otsu_All']).DEM_results('Topic8').data)
 
+
+##!!!!!!!!!!!! import menr by fly database motif !!!!!!!!!!!!!!##
+
+# We now have completed all the steps necessary for starting the SCENIC+ analysis
+# Step4: inferring enhancer-driven Gene Regulatory Networks (eGRNs) using SCENIC+
+import dill
+import scanpy as sc
+import os
+import warnings
+warnings.filterwarnings("ignore")
+import pandas
+import pyranges
+# Set stderr to null to avoid strange messages from ray
+import sys
+_stderr = sys.stderr
+null = open(os.devnull,'wb')
+work_dir = '/data/R02/nieyg/project/honeybee/honebee-latest-Version/09_GRN/02_SCENIC/04_scenicplus'
+adata = sc.read_h5ad(os.path.join(work_dir, '01_scRNA/adata_subcluster.h5ad'))
+cistopic_obj = pickle.load(open(os.path.join(work_dir, '02_scATAC/cistopic_obj_by_signac_pea.pkl'), 'rb'))
+menr = dill.load(open(os.path.join(work_dir, '03_motifs/02_menr_database_fly2honeybee/menr.pkl'), 'rb'))
+
+from scenicplus.scenicplus_class import create_SCENICPLUS_object
+import numpy as np
+scplus_obj = create_SCENICPLUS_object(
+    GEX_anndata = adata,
+    cisTopic_obj = cistopic_obj,
+    menr = menr,
+    bc_transform_func = lambda x: f'{x}-ORN' #function to convert scATAC-seq barcodes to scRNA-seq ones
+)
+scplus_obj.X_EXP = np.array(scplus_obj.X_EXP.todense())
+scplus_obj
+# Get chromosome sizes (for hg38 here)
+import pyranges as pr
+import requests
+import pandas as pd
+chromsizes=pd.read_csv("/md01/nieyg/ref/10X/Amel_HAv3.1/Amel_HAv3_1/star/chrNameLength.txt", sep='\t', header=None)
+chromsizes.columns=['Chromosome', 'End']
+chromsizes['Start']=[0]*chromsizes.shape[0]
+chromsizes=chromsizes.loc[:,['Chromosome', 'Start', 'End']]
+# Exceptionally in this case, to agree with CellRangerARC annotations
+chromsizes['Chromosome'] = [chromsizes['Chromosome'][x].replace('v', '.') for x in range(len(chromsizes['Chromosome']))]
+chromsizes['Chromosome'] = [chromsizes['Chromosome'][x].split('_')[1] if len(chromsizes['Chromosome'][x].split('_')) > 1 else chromsizes['Chromosome'][x] for x in range(len(chromsizes['Chromosome']))]
+chromsizes=pr.PyRanges(chromsizes)
+pr_annot=pd.read_csv("/md01/nieyg/project/honeybee/honebee-latest-Version/09_GRN/02_SCENIC/custom_pr_annot.tbl", sep='\t')
+pr_annot=pr.PyRanges(pr_annot)
+
+from scenicplus.enhancer_to_gene import get_search_space
+get_search_space(
+        scplus_obj,
+        species = None,
+        assembly = None,
+        pr_annot = pr_annot,
+        pr_chromsizes = chromsizes,
+        upstream = [500, 10000],
+        downstream = [500, 10000])
+
+awk '{print $6}' /data/R02/nieyg/project/honeybee/honebee-latest-Version/09_GRN/02_SCENIC/motifs-v10nr_clust-nr.flybase-m0.001-o0.0-trans2honeybee.tbl > flybase-trans2honeybee-TF.list
+
+motifs_list_filename="/md01/nieyg/project/honeybee/honebee-latest-Version/09_GRN/02_SCENIC/flybase-trans2honeybee-TF.list"
+
+from scenicplus.wrappers.run_scenicplus import run_scenicplus
+try:
+    run_scenicplus(
+        scplus_obj = scplus_obj,
+        variable = ['GEX_subcluster'],
+        species = None,
+        assembly = None,
+        tf_file = motifs_list_filename,
+        save_path = os.path.join(work_dir, '05_scenicplus_flydb'),
+        biomart_host = 'http://www.ensembl.org',
+        upstream = [500, 10000],
+        downstream = [500, 10000],
+        calculate_TF_eGRN_correlation = True,
+        calculate_DEGs_DARs = True,
+        export_to_loom_file = False,
+        export_to_UCSC_file = False,
+        path_bedToBigBed = '/md01/nieyg/software/bedToBigBed',
+        n_cpu = 6,
+        _temp_dir = os.path.join(tmp_dir, 'ray_spill'))
+except Exception as e:
+    #in case of failure, still save the object
+    dill.dump(scplus_obj, open(os.path.join(work_dir, '05_scenicplus_flydb/scplus_obj_flybase_motif.pkl'), 'wb'), protocol=-1)
+    raise(e)
+
+import pickle
+pickle.dump(scplus_obj, open(os.path.join(work_dir, '05_scenicplus_flydb/scplus_obj_flybase_motif.pkl'), 'wb'))
 
 # Step5: Note on the output of SCENIC+
 
@@ -546,6 +609,7 @@ scplus_obj.uns['eRegulons'][0:5]
 for attr in dir(scplus_obj.uns['eRegulons'][0]):
     if not attr.startswith('_'):
         print(f"{attr}: {getattr(scplus_obj.uns['eRegulons'][0], attr) if not type(getattr(scplus_obj.uns['eRegulons'][0], attr)) == list else getattr(scplus_obj.uns['eRegulons'][0], attr)[0:5]}")
+
 scplus_obj.uns['eRegulon_metadata'].head()
 
 # Step6: Downstream analysis
@@ -556,8 +620,7 @@ import sys
 _stderr = sys.stderr
 null = open(os.devnull,'wb')
 import dill
-work_dir = 'pbmc_tutorial'
-scplus_obj = dill.load(open(os.path.join(work_dir, 'scenicplus/scplus_obj.pkl'), 'rb'))
+scplus_obj = dill.load(open(os.path.join(work_dir, '04_scenicplus/scplus_obj_honeybee_cisBPmotif.pkl'), 'rb'))
 
 from scenicplus.preprocessing.filtering import apply_std_filtering_to_eRegulons
 apply_std_filtering_to_eRegulons(scplus_obj)
@@ -683,43 +746,3 @@ TF_cistrome_correlation(
             out_key = 'filtered_region_based')
 
 scplus_obj.uns['TF_cistrome_correlation']['filtered_region_based'].head()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
