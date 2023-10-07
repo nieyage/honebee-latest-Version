@@ -146,7 +146,6 @@ python $atacworks/scripts/main.py denoise \
 done;
 
 
-
 # plot the track plot by refer bw:
 library(Signac)
 library(Seurat)
@@ -188,6 +187,137 @@ BigwigTrack(
   downsample.rate = 0.8
 )
 dev.off()
+
+
+# RT OR cluster bw and random 100 cell for other bw 
+library(Signac)
+library(Seurat)
+library(ggplot2)
+library(dplyr)
+library(JASPAR2020)
+library(TFBSTools)
+library(BSgenome.Amel.antenan)
+library(patchwork)
+set.seed(1234);
+library(pheatmap)
+ORN <- readRDS("./05_ORN_cluster2/01_first_cluster/ORN_integrated_antenna_first_cluster.rds")
+ORN_last <- readRDS("./05_ORN_cluster2/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_modify_the_tsne_recall_peak.rds")
+ORN_filtered_cells<- setdiff(colnames(ORN),colnames(ORN_last))
+library(tidyr)
+barcode <- ORN_filtered_cells
+barcode_sample<-separate(as.data.frame(barcode),"barcode",c("sample","barcode"),"_")
+barcode <- barcode_sample$barcode
+# random select 50 cell to get the bw file form filtered ORN 
+random_50cell<- sample(barcode,50)
+write.table(random_50cell,"/md01/nieyg/project/honeybee/honebee-latest-Version/12_Atacworks/5_RT_cluster/cell_barcode/random_50cell.txt",row.name=F,col.names=F)
+
+# random select 100 cell to get the bw file form filtered ORN 
+random_100cell<- sample(barcode,100)
+write.table(random_100cell,"/md01/nieyg/project/honeybee/honebee-latest-Version/12_Atacworks/5_RT_cluster/cell_barcode/random_100cell.txt",row.name=F,col.names=F)
+sed -i 's/"//g' *.txt
+
+ls *.txt> ORN_barcode.list
+for file1 in $(<ORN_barcode.list)
+do
+  /md01/nieyg/software/subset-bam_linux --bam /md01/nieyg/project/honeybee/honebee-latest-Version/08_ORN_cluster_bw/merged.bam --cell-barcodes $file1 --cores 10 --out-bam $file1.bam
+  bedtools  genomecov  -bg -split -ibam $file1.bam  > $file1.bedGraph
+  echo "make normalized bedGraph"
+  perl /data/R02/nieyg/pipeline/ATACseq/norm_bedGraph.pl $file1.bedGraph $file1.norm.bedGraph 
+  sort -k1,1 -k2,2n $file1.norm.bedGraph > $file1.norm.sorted.bedGraph
+  bedGraphToBigWig $file1.norm.sorted.bedGraph ~/ref/10X/Amel_HAv3.1/Amel_HAv3_1/star/chrNameLength.txt ./$file1.norm.bw 
+done
+
+# /md01/nieyg/project/honeybee/honebee-latest-Version/05_ORN_cluster2/05_combination_group_recluster/cell_barcode
+
+## PBS configure 
+#PBS -N Atacworks_denoise
+#PBS -j oe
+#PBS -q batch
+#PBS -S /bin/sh
+#PBS -l nodes=1:ppn=6
+#PBS -l mem=32G
+
+source /public/home/nieyg/.bash_profile
+cd /md01/nieyg/project/honeybee/honebee-latest-Version/12_Atacworks/5_RT_cluster/cell_barcode
+ls *.txt> ORN_barcode.list
+for file1 in $(<ORN_barcode.list)
+do
+  /md01/nieyg/software/subset-bam_linux --bam /md01/nieyg/project/honeybee/honebee-latest-Version/08_ORN_cluster_bw/merged.bam --cell-barcodes $file1 --cores 10 --out-bam $file1.bam
+  bedtools  genomecov  -bg -split -ibam $file1.bam  > $file1.bedGraph
+  echo "make normalized bedGraph"
+  perl /data/R02/nieyg/pipeline/ATACseq/norm_bedGraph.pl $file1.bedGraph $file1.norm.bedGraph 
+  sort -k1,1 -k2,2n $file1.norm.bedGraph > $file1.norm.sorted.bedGraph
+  bedGraphToBigWig $file1.norm.sorted.bedGraph ~/ref/10X/Amel_HAv3.1/Amel_HAv3_1/star/chrNameLength.txt ./$file1.norm.bw 
+done
+
+cd /md01/nieyg/project/honeybee/honebee-latest-Version/12_Atacworks/5_RT_cluster
+source /md01/nieyg/ori/biosoft/conda/etc/profile.d/conda.sh
+conda activate python37
+
+honebee_input=/md01/nieyg/project/honeybee/honebee-latest-Version/12_Atacworks/2_honeybee
+atacworks=/md01/nieyg/software/AtacWorks
+ATAC_bw=/md01/nieyg/project/honeybee/honebee-latest-Version/12_Atacworks/5_RT_cluster/cell_barcode
+
+ls $ATAC_bw/*.bw |cut -d "/" -f 10 > ORN_ATAC_bw.list
+for file1 in $(<ORN_ATAC_bw.list)
+do
+echo $file1
+python $atacworks/scripts/main.py denoise \
+    --noisybw $ATAC_bw/$file1 \
+    --genome /md01/nieyg/ref/10X/Amel_HAv3.1/Amel_HAv3_1/star/chrNameLength.txt \
+    --weights_path $honebee_input/atacworks_train_OSN_filtered_latest/model_best.pth.tar \
+    --out_home "./" \
+    --regions C234.genome_intervals.bed \
+    --exp_name "atacworks_denoise" \
+    --distributed \
+    --batch_size 10 \
+    --num_workers 6 \
+    --config /md01/nieyg/software/AtacWorks/configs/model_structure.yaml
+done;
+
+
+
+
+
+honebee_input=/md01/nieyg/project/honeybee/honebee-latest-Version/12_Atacworks/2_honeybee
+atacworks=/md01/nieyg/software/AtacWorks
+ATAC_bw=/md01/nieyg/project/honeybee/honebee-latest-Version/12_Atacworks/5_RT_cluster/cell_barcode
+
+file1="C4.txt.norm.bw"
+
+grep -v "GroupUN88" C234.genome_intervals.bed > temp.txt && mv temp.txt C234.genome_intervals.bed
+python $atacworks/scripts/main.py denoise \
+    --noisybw $ATAC_bw/$file1 \
+    --genome /md01/nieyg/ref/10X/Amel_HAv3.1/Amel_HAv3_1/star/chrNameLength.txt \
+    --weights_path $honebee_input/atacworks_train_OSN_filtered_latest/model_best.pth.tar \
+    --out_home "./" \
+    --exp_name "atacworks_denoise" \
+    --distributed \
+    --batch_size 10 \
+    --regions C234.genome_intervals.bed \
+    --num_workers 6 \
+    --config /md01/nieyg/software/AtacWorks/configs/model_structure.yaml
+
+
+
+
+file1="random_50cell.txt.norm.bw"
+grep -v "GroupUN11" C234.genome_intervals.bed > temp.txt && mv temp.txt C234.genome_intervals.bed
+python $atacworks/scripts/main.py denoise \
+    --noisybw $ATAC_bw/$file1 \
+    --genome /md01/nieyg/ref/10X/Amel_HAv3.1/Amel_HAv3_1/star/chrNameLength.txt \
+    --weights_path $honebee_input/atacworks_train_OSN_filtered_latest/model_best.pth.tar \
+    --out_home "./" \
+    --exp_name "atacworks_denoise" \
+    --distributed \
+    --batch_size 10 \
+    --regions C234.genome_intervals.bed \
+    --num_workers 6 \
+    --config /md01/nieyg/software/AtacWorks/configs/model_structure.yaml
+
+
+
+
 
 
 

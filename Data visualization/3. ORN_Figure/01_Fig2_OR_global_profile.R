@@ -238,6 +238,188 @@ pheatmap(data,
  )
 dev.off()
 
+# version 2023.10.7
+# Fig2C: cluster trans dist tree + chemoreceptor gene heatmap + cluster number 
+
+# make number 1:60 to replace subcluster id 
+
+ORN$cell_group <- as.numeric(factor(ORN$subcluster))
+Idents(ORN)<- ORN$cell_group
+
+cell_group<- levels(Idents(ORN))
+subcluster<- levels(ORN$subcluster)
+names(cell_group)<- subcluster
+
+# Fig2C-1: cluster trans dist tree
+
+colors_for_exp_pattern<- c("#476D87","#E95C59")
+DefaultAssay(ORN) <- "integratedRNA_onecluster"
+object<- ORN
+DefaultAssay(object)<-"RNA"
+obj<-FindVariableFeatures(object, selection.method = "vst")
+top <- head(VariableFeatures(obj),500)
+DefaultAssay(obj)<-"raw_RNA"
+obj<-ScaleData(obj,rownames(obj))
+DefaultAssay(obj)<-"integratedRNA_onecluster"
+object <- RunPCA(obj,features=c(all_receptor_gene,top),reduction.name="obj_features_pca") 
+embeddings <- Embeddings(object = object, reduction = "obj_features_pca")[,1:50]
+data.dims <- lapply(X = levels(x = object), FUN = function(x) {
+    cells <- WhichCells(object = object, idents = x)
+    if (length(x = cells) == 1) {
+        cells <- c(cells, cells)
+    }
+    temp <- colMeans(x = embeddings[cells, ])
+})
+data.dims <- do.call(what = "cbind", args = data.dims)
+colnames(x = data.dims) <- levels(x = object)
+library(lsa)
+cosine_dist <- as.dist(1-cosine(data.dims))
+data.tree <- ape::as.phylo(x = hclust(d = cosine_dist))
+ORN<- object
+cluster_info<-as.data.frame(table(dotplot_data$id))
+multiOR_cluster<-as.character(cluster_info[cluster_info$Freq>1,1])
+
+multiOR_cluster<- cell_group[multiOR_cluster]
+
+library(ggtree)
+pdf("./00_Figure/Fig2/Fig2C-1-remove_nopower-cluster-ORN-tree-cosine.pdf",width=5,height=14)
+tree <- groupOTU(data.tree, .node=multiOR_cluster)
+ggtree(tree,aes(color=group)) + geom_tiplab()+ geom_treescale() + scale_color_manual (values =colors_for_exp_pattern) 
+dev.off()
+
+# Fig2C-2: chemoreceptor gene heatmap
+m<-ggtree(tree,aes(color=group)) + geom_tiplab()+ geom_treescale() + scale_color_manual (values =colors_for_exp_pattern) 
+cluster_order<-na.omit(m$data[order(m$data$y),]$label)
+cluster_order<-as.character(cluster_order)
+Idents(ORN)<-factor(ORN$cell_group,levels=cluster_order)
+
+# change the OR gene name 
+ORgene_name_trans<- read.csv("/md01/nieyg/project/honeybee/honebee-latest-Version/04_chemoreceptor/OR_nameing/OR_gene_naming_result.csv")
+
+DefaultAssay(ORN)<- "SCT"
+all_gene<- rownames(ORN)
+
+RenameGenesSeurat_SCT <- function(obj = ls.Seurat[[i]], newnames = tmp) { # Replace gene names in different slots of a Seurat object. Run this before integration. Run this before integration. It only changes obj@assays$RNA@counts, @data and @scale.data.
+  print("Run this before integration. It only changes obj@assays$RNA@counts and @data ")
+  SCT <- obj@assays$SCT
+  if (nrow(SCT) == length(newnames)) {
+    if (length(SCT@counts)) SCT@counts@Dimnames[[1]]            <- newnames
+    if (length(SCT@data)) SCT@data@Dimnames[[1]]                <- newnames
+    #if (length(SCT@scale.data)) SCT@scale.data@Dimnames[[1]]    <- newnames
+  } else {"Unequal gene sets: nrow(SCT) != nrow(newnames)"}
+  obj@assays$SCT <- SCT
+  return(obj)
+}
+
+for (i in 1:length(all_gene)){
+    if(all_gene[i] %in% ORgene_name_trans$OR_gene){
+        tmp=ORgene_name_trans[which(ORgene_name_trans$OR_gene==all_gene[i]),]$last_name;
+        all_gene[i]=tmp
+    }
+}
+
+ORN_trans <- RenameGenesSeurat_SCT(ORN,newnames = all_gene)
+
+DefaultAssay(ORN)<-"raw_RNA"
+p<-DotPlot(ORN,features = all_receptor_gene) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
+dotplot_data<-p$data;
+#filter dotplot ;
+dotplot_data$state<-"No";
+for(i in 1:nrow(dotplot_data)){
+  if(dotplot_data[i,]$pct.exp>35&&dotplot_data[i,]$avg.exp>= 1){dotplot_data[i,]$state="Yes"};
+}
+dotplot_data<-dotplot_data[which(dotplot_data$state=="Yes"),]
+dotplot_data<-dotplot_data[-which(dotplot_data$features.plot%in% Orco),];
+gtf <- rtracklayer::import('/data/R02/nieyg/ref/10X/Amel_HAv3.1/Amel_HAv3_1/genes/genes.gtf.gz')
+gtf<- gtf[gtf$type=="transcript",]
+gtf_data<- as.data.frame(gtf[gtf$gene_name%in% all_receptor_gene])
+gtf_data<-gtf_data[order(gtf_data$seqnames,gtf_data$start),]
+gene_order<- unique(gtf_data$gene_name)
+
+dotplot_data$features.plot<- factor(dotplot_data$features.plot,levels=gene_order)
+dotplot_data<- dotplot_data[order(dotplot_data$id),]
+dotplot_feature<-unique(c(Orco,rev(as.character(dotplot_data$features.plot))))
+
+for (i in 1:length(dotplot_feature)){
+    if(dotplot_feature[i] %in% ORgene_name_trans$OR_gene){
+        tmp=ORgene_name_trans[which(ORgene_name_trans$OR_gene==dotplot_feature[i]),]$last_name;
+        dotplot_feature[i]=tmp
+    }
+}
+
+DefaultAssay(ORN_trans)<-"SCT"
+ORN_trans<- ScaleData(ORN_trans,features=dotplot_feature)
+blueYellow = c("1"="#352A86","2"="#343DAE","3"="#0262E0","4"="#1389D2","5"="#2DB7A3","6"="#A5BE6A","7"="#F8BA43","8"="#F6DA23","9"="#F8FA0D")
+
+pdf("./00_Figure/Fig2/Fig2C-2-remove_nopower-chemoreceptor_gene_heatmap-orderbytree.pdf",width=15, height=14)
+DoHeatmap(ORN_trans,size = 4,angle = 315, features = dotplot_feature,group.colors =c(myUmapcolors,myUmapcolors))+ scale_fill_gradientn(colors = blueYellow)
+DoHeatmap(ORN_trans,disp.max = 1,slot = "data",size = 4,angle = 315, features = dotplot_feature,group.colors =c(myUmapcolors,myUmapcolors))+ scale_fill_gradientn(colors = blueYellow)
+dev.off()
+
+# Fig2B:supervised clustering ORN 
+pdf("./00_Figure/Fig2/Fig2B-changeID-Supervised_ORN_cluster_WNN_remove_nopower.pdf",width=8,height=6)
+DimPlot(ORN, cols=c(myUmapcolors,myUmapcolors), reduction = "tsne.rna",  label = F, label.size = 5, repel = TRUE)
+dev.off();
+
+# Fig2C-3 # of cells in cluster
+Idents(ORN)<-ORN$cell_group
+cluster_cellnumber<-as.data.frame(table(Idents(ORN)))
+colnames(cluster_cellnumber)<-c("cluster","number")
+cluster_cellnumber$cluster<- factor(cluster_cellnumber$cluster,levels=levels(ORN))
+cluster_cellnumber$color<-c(myUmapcolors,myUmapcolors)[1:length(levels(ORN))]
+
+cluster_cellnumber$cluster<- factor(cluster_cellnumber$cluster,levels=as.character(1:60))
+
+pdf("./00_Figure/Fig2/Fig2C-3-remove_nopower_ORN_cluster_cellnumber.pdf",width=4,height=9)
+p<-ggplot(data = cluster_cellnumber, aes_string(x = "cluster", y = "number", 
+        fill = "cluster")) +  xlab(" ") + ylab("# of cells") + 
+        scale_fill_manual(values = cluster_cellnumber$color) + 
+        geom_bar( stat = "identity", width = 0.6) +
+        theme_classic()+
+        theme(axis.text.x = element_text(angle = 90,vjust = 0.5,hjust = 0.5))+coord_flip();
+p
+#add gene number in plot 
+p+geom_text(aes(label = number), size = 3, hjust = 0.5, vjust = 3) 
+dev.off();
+
+# Fig2F: cross species expression pattern statics 
+# single OR  vs multiple OR cluster porportion 
+single_OR_cluster<- length(levels(ORN))-length(multiOR_cluster)
+multiple_OR_cluster<- length(multiOR_cluster)
+Apis_mellifera<-c(single_OR_cluster,multiple_OR_cluster);
+
+#fly need to use the public datasets
+Drosophila_melanogaster<-c(40,5)
+
+# total:42
+Aedes_aegypti<-c(13,26);
+
+cross_species_cluster_number<-data.frame(species=c(rep("Apis mellifera",2),rep("D.melanogaster",2),rep("Ae.aegypti",2)),
+  exp_pattern=rep(c("single_OR","multiple_OR"),3),
+  cluster_number=c(Apis_mellifera,Drosophila_melanogaster,Aedes_aegypti))
+cross_species_cluster_number$exp_pattern<-factor(cross_species_cluster_number$exp_pattern,levels=c("single_OR","multiple_OR"));
+cross_species_cluster_number$species<-factor(cross_species_cluster_number$species,levels=c("Apis mellifera","D.melanogaster","Ae.aegypti"))
+
+pdf("./00_Figure/Fig2/Fig2F-cross_species_expression_pattern_statics.pdf",width=4,height=4)
+ggplot(data = cross_species_cluster_number, aes_string(x = "species", y = "cluster_number", 
+        fill = "exp_pattern")) +  xlab(" ") + ylab("% Percent of cells") + 
+        scale_fill_manual(values = colors_for_exp_pattern) + 
+        geom_bar(position = "fill", stat = "identity", width = 0.6) +
+        theme_classic()+
+        theme(axis.text.x = element_text(angle = 25,vjust = 0.5,hjust = 0.5));
+
+p<-ggplot(data = cross_species_cluster_number, aes_string(x = "species", y = "cluster_number", 
+        fill = "exp_pattern")) +  xlab(" ") + ylab("# of cluster") + 
+        scale_fill_manual(values = colors_for_exp_pattern) + 
+        geom_bar( stat = "identity", width = 0.6) +
+        theme_classic()+
+        theme(axis.text.x = element_text(angle = 25,vjust = 0.5,hjust = 0.5));
+p
+#add gene number in plot 
+p+geom_text(aes(label = cluster_number), size = 3, hjust = 0.5, vjust = 3, position = "stack") 
+dev.off();
+
+
 
 
 ## Fig2F Upset plot for 4 coreceptor barcode 

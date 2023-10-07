@@ -461,3 +461,29 @@ p
 #add gene number in plot 
 p+geom_text(aes(label = glomeruli), size = 3, hjust = 0.5, vjust = 3) 
 dev.off();
+
+# version 2023.10.7
+
+# Fig1H: "Orco+Neuron","Orco-Neuron","Non-neuron"
+
+ORN<-c(2405,2032,2840)
+other_neuron<- c(30,18,7)
+all<-c(2773,2555,3540)
+Non_ORN<- all-ORN-other_neuron
+color_for_neuron<-c("#6580A8","#63A8A6","#A8A7A7")
+
+data<-data.frame(celltype=c(rep("Orco+Neuron",3),rep("Orco-Neuron",3),rep("Non_Neuron",3)),
+  Stage=rep(c("NE","Nurse","Forager"),3),
+  cellnumber=c(ORN,other_neuron,Non_ORN))
+data$celltype<-factor(data$celltype,levels=c("Orco+Neuron","Orco-Neuron","Non_Neuron"))
+data$Stage<-factor(data$Stage,levels=c("NE","Nurse","Forager"))
+
+pdf("./00_Figure/Fig1/Fig1H-ORNvsNonORN_proportion_among_stages.pdf",width=4,height=4)
+ggplot(data = data, aes_string(x = "Stage", y = "cellnumber", 
+        fill = "celltype")) +  xlab(" ") + ylab("% Percent of cells") + 
+        scale_fill_manual(values = c(color_for_neuron[1:2],"#CACCCC")) + 
+        geom_bar(position = "fill", stat = "identity", width = 0.6) +
+        theme_classic()+
+        theme(axis.text.x = element_text(angle = 25,vjust = 0.5,hjust = 0.5));
+dev.off();
+

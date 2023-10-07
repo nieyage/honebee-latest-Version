@@ -8,6 +8,20 @@ library(BSgenome.Amel.HAv3.1.update.chemoreceptor)
 library(patchwork)
 set.seed(1234)
 honeybee<-readRDS("./02_All_celltype/WNN_honeybee_integrated_all_celltype.rds")
+# version 2023.10.7
+# FigS1B: QC for diff stage 
+library(scCustomize)
+Idents(honeybee)<- honeybee$orig.ident
+pdf('./00_Figure/FigS1/FigS1A-QC for diff stage .pdf', width=6, height=16)
+p1<- VlnPlot(honeybee, features = "nCount_RNA",pt.size = 0,cols = c("#5CC8F2","#009E73","#E69F00"))+geom_boxplot(width=.2,col="black")+ theme(axis.text.x = element_blank(),axis.title.x = element_blank())
+p2<- VlnPlot(honeybee, features = "nFeature_RNA",pt.size = 0,cols = c("#5CC8F2","#009E73","#E69F00"))+geom_boxplot(width=.2,col="black")+ theme(axis.text.x = element_blank(),axis.title.x = element_blank())
+p3<- VlnPlot(honeybee, features = "nCount_ATAC",pt.size = 0,cols = c("#5CC8F2","#009E73","#E69F00"))+geom_boxplot(width=.2,col="black")+ theme(axis.text.x = element_blank(),axis.title.x = element_blank())
+p4<- VlnPlot(honeybee, features = "nFeature_ATAC",pt.size = 0,cols = c("#5CC8F2","#009E73","#E69F00"))+geom_boxplot(width=.2,col="black")+ theme(axis.text.x = element_blank(),axis.title.x = element_blank())
+p5<- VlnPlot(honeybee, features = "percent.mt",pt.size = 0,cols = c("#5CC8F2","#009E73","#E69F00"))+geom_boxplot(width=.2,col="black")+ theme(axis.text.x = element_blank(),axis.title.x = element_blank())
+p6<- VlnPlot(honeybee, features = "nucleosome_signal",pt.size = 0,cols = c("#5CC8F2","#009E73","#E69F00"))+geom_boxplot(width=.2,col="black")+ theme(axis.text.x = element_blank(),axis.title.x = element_blank())
+p7<- VlnPlot(honeybee, features = "TSS.enrichment",pt.size = 0,cols = c("#5CC8F2","#009E73","#E69F00"))+geom_boxplot(width=.2,col="black")+ theme(axis.title.x = element_blank())
+p1/p2/p3/p4/p5/p6/p7
+dev.off()
 
 # FigS1A:
  DefaultAssay(honeybee)<-"RNA"
@@ -100,7 +114,16 @@ markers <- FindAllMarkers(down_obj, only.pos = TRUE, min.pct = 0.25, logfc.thres
 top10 <- markers %>% group_by(cluster) %>% top_n(n = 10, wt = avg_log2FC);
 
 down_obj<-ScaleData(down_obj,features=rownames(down_obj));
-pdf("./00_Figure/FigS1C-Allcelltype_top_markers-DEG_heatmap.pdf",width=10,height=10)
+blueYellow = c("1"="#352A86","2"="#343DAE","3"="#0262E0","4"="#1389D2","5"="#2DB7A3","6"="#A5BE6A","7"="#F8BA43","8"="#F6DA23","9"="#F8FA0D")
+
+pdf("./00_Figure/FigS1/FigS1C-Allcelltype_top_markers-DEG_heatmap.pdf",width=10,height=10)
+DoHeatmap(object = down_obj,features=top10$gene[1:70],label=T, group.colors =c("#66C2A5", "#FC8D62", "#8DA0CB", "#E78AC3", "#A6D854", "#FFD92F", "#E5C494","#B3B3B3" ),
+  disp.min = -1,disp.max = 1,size = 2,group.by = "Annotation") + scale_fill_gradientn(colors = blueYellow)
+DoHeatmap(object = down_obj,features=top10$gene[1:70],label=T, group.colors =c("#66C2A5", "#FC8D62", "#8DA0CB", "#E78AC3", "#A6D854", "#FFD92F", "#E5C494","#B3B3B3" ),
+  disp.min = -2,disp.max = 2,size = 2,group.by = "Annotation") + scale_fill_gradientn(colors = blueYellow)
+DoHeatmap(object = down_obj,features=top10$gene[1:70],label=T, group.colors =c("#66C2A5", "#FC8D62", "#8DA0CB", "#E78AC3", "#A6D854", "#FFD92F", "#E5C494","#B3B3B3" ),
+ size = 2,group.by = "Annotation") + scale_fill_gradientn(colors = blueYellow)
+
 DoHeatmap(object = down_obj,features=top10$gene[1:70],label=T, group.colors =c("#66C2A5", "#FC8D62", "#8DA0CB", "#E78AC3", "#A6D854", "#FFD92F", "#E5C494","#B3B3B3" ),
   disp.min = -1,disp.max = 1,size = 2,group.by = "Annotation") + scale_fill_gradientn(colors = c("#377EB8", "white", "#E41A1C"))
 DoHeatmap(object = down_obj,features=top10$gene[1:70],label=T, group.colors =c("#66C2A5", "#FC8D62", "#8DA0CB", "#E78AC3", "#A6D854", "#FFD92F", "#E5C494","#B3B3B3" ),

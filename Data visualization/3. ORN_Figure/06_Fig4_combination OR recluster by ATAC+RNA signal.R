@@ -792,6 +792,7 @@ do
   bedGraphToBigWig $file1.norm.sorted.bedGraph ~/ref/10X/Amel_HAv3.1/Amel_HAv3_1/star/chrNameLength.txt ../RNA/$file1.norm.bw 
 done
 
+
 #/md01/nieyg/software/subset-bam_linux --bam <FILE> --bam-tag <bam_tag> --cell-barcodes <FILE> --cores <INTEGER> --log-level <log_level> --out-bam <OUTPUT_FILE>
 conda deactivate 
 nohup bash get_bw.sh &

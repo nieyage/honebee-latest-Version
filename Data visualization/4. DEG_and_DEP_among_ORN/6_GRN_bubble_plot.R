@@ -85,22 +85,28 @@ for(nrow in 1:nrow(All_motif_info)){
 	if(length(strsplit(All_motif_info$TF_name[nrow],"::")[[1]])!=1){
 		TF<- strsplit(All_motif_info$TF_name[nrow],"::")[[1]];
 		if(length(which(TF%in%rownames(Avg_data)))){
-			exp_in_cluster<- mean(Avg_data[TF,cluster])
-		  exp_other <- (sum(Avg_data[TF,])-exp_in_cluster)/58
-      All_motif_info$exp[nrow]<- exp_in_cluster/exp_other;
+			exp<- mean(Avg_data[TF[which(TF%in%rownames(Avg_data))],cluster])
+		  exp_in_cluster<- exp
+		  exp_other <- (sum(Avg_data[TF[which(TF%in%rownames(Avg_data))],])-exp_in_cluster*length(TF))/58
+      All_motif_info$FC[nrow]<- exp_in_cluster/exp_other;
+      All_motif_info$exp[nrow]<- exp;
 		}
 		}else{
 			TF<- All_motif_info[nrow,]$TF_name;
 			if(TF%in% rownames(Avg_data)){
 			exp_in_cluster<- Avg_data[TF,cluster]
 			exp_other <- (sum(Avg_data[TF,])-exp_in_cluster)/58
-	    All_motif_info$exp[nrow]<- exp_in_cluster/exp_other;
+	    All_motif_info$exp[nrow]<- exp;
+	    All_motif_info$FC[nrow]<- exp_in_cluster/exp_other;
 			}
 	        
 		}
 }
 
+
 write.csv(All_motif_info,"./05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/DEP_motif_enrich.csv")
+
+All_motif_info<- read.csv("./05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/DEP_motif_enrich.csv")
 # get the TF name form motif(long data frame)
 library(ggplot2)
 library(RColorBrewer)
@@ -110,9 +116,16 @@ motif_data$cluster<- factor(motif_data$cluster,levels=levels(ORN))
 motif_data$TF_name<- factor(motif_data$TF_name,levels=rev(unique(motif_data$TF_name)))
 motif_data<- motif_data[order(motif_data$cluster),]
 
+# read the motif TF family info 
+data<- read.csv("/data/R02/nieyg/project/honeybee/honebee-latest-Version/09_GRN/02_SCENIC/motifs-v10nr_clust-nr.flybase-m0.001-o0.0-trans2honeybee.tbl",sep="\t")
+
+TF_list<- unique(motif_data$TF_name)
+
+data<- data[which(data$gene_name%in%TF_list), ]
+
 pdf("./05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/DEP_motif_enrich_bubbleplot-expFC.pdf",width=10,height=12)
 ggplot(motif_data,aes(x=cluster,y=TF_name))+
-  geom_point(aes(size=fold.enrichment,color=log2(exp+1)),alpha=0.8)+
+  geom_point(aes(size=fold.enrichment,color=log2(FC+1)),alpha=0.8)+
   scale_size(range=c(1,12))+
   scale_color_gradientn(colours=c("#080C26","#A61C68","#D92958","#F26E50","#F2E0D5"))+
   theme_bw()+
@@ -180,13 +193,15 @@ for(nrow in 1:nrow(differential.activity)){
 		}
 }
 write.csv(differential.activity,"./05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/DEP_motif_differential.activity.csv")
+
+differential.activity<- read.csv("./05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/DEP_motif_differential.activity.csv")
 da_data<- na.omit(differential.activity)
 da_data$cluster<- factor(da_data$cluster,levels=levels(ORN))
 da_data$TF_name<- factor(da_data$TF_name,levels=rev(unique(da_data$TF_name)))
 da_data<- da_data[order(da_data$cluster),]
 pdf("./05_ORN_cluster2/07_DEG_and_DEP/02_without_GRN/DEP_motif_differential.activity_bubbleplot-FC.pdf",width=10,height=16)
 ggplot(da_data,aes(x=cluster,y=TF_name))+
-  geom_point(aes(size=avg_diff,color=log10(FC+1)),alpha=0.8)+
+  geom_point(aes(size=avg_diff,color=log10(FC+0.001)),alpha=0.8)+
   scale_size(range=c(1,12))+
   scale_color_gradientn(colours=c("#080C26","#A61C68","#D92958","#F26E50","#F2E0D5"))+
   theme_bw()+
