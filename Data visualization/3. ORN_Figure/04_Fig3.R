@@ -278,7 +278,7 @@ for (i in 1:nrow(OR_pair)){
 
 
 probability<-data.frame(OR_pair_type=c("non co-exp","co-exp"),
-    probability=c(46/46,416/2165),count=c(46,416));
+    probability=c(416/2165,46/46),count=c(46,416));
 probability$OR_pair_type<-factor(probability$OR_pair_type,levels=c("non co-exp","co-exp"))
 pdf("./00_Figure/Fig3/Fig3F-The_probability_OR_pair_appearing_on_same_chromosome.pdf",width=6,height=3)
 p<-ggplot(data = probability, aes_string(x = "OR_pair_type", y = "probability",color="OR_pair_type")) +  
@@ -640,4 +640,49 @@ p1<-CoveragePlot(
 )
 print(p1)
 dev.off()
+
+# # version 2023.10.7
+# Fig3H:
+pdf('./00_Figure/Fig3/Fig3H-multiple-OR-FeaturePlot.pdf', width=16, height=4)
+# Visualize co-expression of two features simultaneously
+FeaturePlot(ORN, features = c("LOC102653695", "LOC102653615"),cols=c("lightgrey", "#E31A1C", "#4DAE49"), max.cutoff =3, blend = TRUE,order=TRUE,)+ggtitle("p3_3:Or85b_LOC102655285")
+dev.off()
+
+# Fig3I:
+DefaultAssay(ORN) <- "SCT"
+### Plotting scatter plot: 1. single-cell level, 2. cluster level
+ORN$LOC102653695_UMIs <- ORN@assays$SCT@counts['LOC102653695',]
+ORN$LOC102653615_UMIs <- ORN@assays$SCT@counts['LOC102653615',]
+#.....................................................................................
+#  LOC107965761 vs. LOC102655285 UMI
+# ....................................................................................
+#  single-cell level
+library(cowplot)
+pmain <- ORN@meta.data %>%
+  ggplot( aes(LOC102653695_UMIs, LOC102653615_UMIs) ) + 
+  geom_point(size=0.3) + 
+  scale_x_log10() + scale_y_log10()
+# coord_cartesian(xlim = c(0, 100))
+xdens <- axis_canvas(pmain, axis = "x")+
+  geom_density(data = ORN@meta.data, aes(x = LOC102653695_UMIs), fill="#B31416") +scale_x_log10()
+ydens <- axis_canvas(pmain, axis = "y", coord_flip = TRUE)+
+  geom_density(data = ORN@meta.data, aes(x = LOC102653615_UMIs), fill="#4DAE49") + scale_x_log10()+
+  coord_flip()
+p1 <- insert_xaxis_grob(pmain, xdens, grid::unit(.3, "null"), position = "top")
+p2 <- insert_yaxis_grob(p1, ydens, grid::unit(.3, "null"), position = "right")
+p3 <- ggdraw(p2)
+p3
+
+filename <- paste0("./00_Figure/Fig3/Fig3I-3-LOC102653695vsLOC102653615_UMI.pdf")
+ggsave(filename, limitsize = FALSE, units = "px", width = 1000, height =1000,p3)
+
+
+
+
+
+
+
+
+
+
 
