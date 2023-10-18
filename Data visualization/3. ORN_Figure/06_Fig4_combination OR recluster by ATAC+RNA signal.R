@@ -808,3 +808,44 @@ do
   sort -k1,1 -k2,2n $file1.norm.bedGraph > $file1.norm.sorted.bedGraph
   bedGraphToBigWig $file1.norm.sorted.bedGraph ~/ref/10X/Amel_HAv3.1/Amel_HAv3_1/star/chrNameLength.txt ../ATAC/$file1.norm.bw 
 done
+
+
+Idents(ORN)<- ORN$cell_group
+combination_group<- c("39","40","41","42")
+combination_group_old<- c("p1:0_1","p1:0_0","p1:4_1","p1:4_0")
+
+obj<-subset(ORN,idents=combination_group);
+obj_features<- unique(dotplot_data[dotplot_data$id%in%combination_group_old,]$features.plot)
+label<- ORgene_name_trans[match(obj_features,ORgene_name_trans$OR_gene),]$last_name
+
+object<- obj
+embeddings <- Embeddings(object = object, reduction = "obj_features_pca")[,1:50]
+data.dims <- lapply(X = levels(x = object), FUN = function(x) {
+    cells <- WhichCells(object = object, idents = x)
+    if (length(x = cells) == 1) {
+        cells <- c(cells, cells)
+    }
+    temp <- colMeans(x = embeddings[cells, ])
+})
+data.dims <- do.call(what = "cbind", args = data.dims)
+colnames(x = data.dims) <- levels(x = object)
+library(lsa)
+cosine_dist <- as.dist(1-cosine(data.dims))
+data.tree <- ape::as.phylo(x = hclust(d = cosine_dist))
+
+library(ggtree)
+p1<-ggtree(data.tree) + geom_tiplab()+ geom_treescale() 
+blueYellow = c("1"="#352A86","2"="#343DAE","3"="#0262E0","4"="#1389D2","5"="#2DB7A3","6"="#A5BE6A","7"="#F8BA43","8"="#F6DA23","9"="#F8FA0D")
+p<-DotPlot(obj,features = obj_features) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
+p2<-p&scale_x_discrete(labels=label)&scale_color_gradientn(colours=blueYellow[1:8])
+
+pdf("./00_Figure/Fig5/Fig5A-tree and dotplot.pdf",width=9, height=4)
+p1+p2
+dev.off()
+
+
+
+
+
+
+

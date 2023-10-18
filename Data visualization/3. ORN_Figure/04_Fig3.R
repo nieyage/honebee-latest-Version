@@ -68,6 +68,9 @@ library(pheatmap)
 DefaultAssay(ORN)<-"SCT"
 matrix<- ORN@assays$SCT[dotplot_feature,]
 cor_data<-cor(as.data.frame(t(matrix)))
+cosine_dist <- (1-cosine(cor_data)
+
+
 dist_data <- cor_data[rev(gene_order),rev(gene_order)]
 Group_info <- unique(chemoreceptor_info_data[,c(1,12)])
 label_pheatmap<- data.frame(Group=Group_info$seqnames)
@@ -82,6 +85,18 @@ pheatmap(dist_data,
         border = F,
          cluster_cols = F,
          cluster_rows = F,
+         cellwidth = 8, cellheight = 8,
+         color = colorRampPalette(c("white", "#3082BD","#1C214F"))(100),
+         annotation_legend = TRUE,
+         annotation_colors = ann_colors,
+         annotation_row = label_pheatmap,
+         show_rownames=T,
+         show_colnames=T
+    )
+pheatmap(dist_data,
+        border = F,
+         cluster_cols = TRUE,
+         cluster_rows = TRUE,
          cellwidth = 8, cellheight = 8,
          color = colorRampPalette(c("white", "#3082BD","#1C214F"))(100),
          annotation_legend = TRUE,
@@ -677,9 +692,76 @@ filename <- paste0("./00_Figure/Fig3/Fig3I-3-LOC102653695vsLOC102653615_UMI.pdf"
 ggsave(filename, limitsize = FALSE, units = "px", width = 1000, height =1000,p3)
 
 
+# 
+# Fig2F: cross species expression pattern statics 
+# single OR  vs multiple OR cluster porportion 
+single_OR_cluster<- length(levels(ORN))-length(multiOR_cluster)
+multiple_OR_cluster<- length(multiOR_cluster)
+Apis_mellifera<-c(single_OR_cluster,multiple_OR_cluster);
 
 
+#fly need to use the public datasets
+Drosophila_melanogaster<-c(40,5)
 
+# total:42
+Aedes_aegypti<-c(23,19);
+
+cross_species_cluster_number<-data.frame(species=c(rep("Apis mellifera",2),rep("D.melanogaster",2),rep("Ae.aegypti",2)),
+  exp_pattern=rep(c("single_OR","multiple_OR"),3),
+  cluster_number=c(Apis_mellifera,Drosophila_melanogaster,Aedes_aegypti))
+cross_species_cluster_number$exp_pattern<-factor(cross_species_cluster_number$exp_pattern,levels=c("single_OR","multiple_OR"));
+cross_species_cluster_number$species<-factor(cross_species_cluster_number$species,levels=c("Apis mellifera","D.melanogaster","Ae.aegypti"))
+
+pdf("./00_Figure/Fig3/Fig3B-cross_species_expression_pattern_statics.pdf",width=4,height=4)
+ggplot(data = cross_species_cluster_number, aes_string(x = "species", y = "cluster_number", 
+        fill = "exp_pattern")) +  xlab(" ") + ylab("% Percent of cells") + 
+        scale_fill_manual(values = colors_for_exp_pattern) + 
+        geom_bar(position = "fill", stat = "identity", width = 0.6) +
+        theme_classic()+
+        theme(axis.text.x = element_text(angle = 25,vjust = 0.5,hjust = 0.5));
+
+p<-ggplot(data = cross_species_cluster_number, aes_string(x = "species", y = "cluster_number", 
+        fill = "exp_pattern")) +  xlab(" ") + ylab("# of cluster") + 
+        scale_fill_manual(values = colors_for_exp_pattern) + 
+        geom_bar( stat = "identity", width = 0.6) +
+        theme_classic()+
+        theme(axis.text.x = element_text(angle = 25,vjust = 0.5,hjust = 0.5));
+p
+#add gene number in plot 
+p+geom_text(aes(label = cluster_number), size = 3, hjust = 0.5, vjust = 3, position = "stack") 
+dev.off();
+
+# Fig3F: the transcript distance between coexp and uncoexp
+library(pheatmap)
+DefaultAssay(ORN)<-"SCT"
+matrix<- ORN@assays$SCT[dotplot_feature,]
+cor_data<-cor(as.data.frame(t(matrix)))
+cosine_dist <- (1-cosine(cor_data);
+
+same_cluster <- c()
+not_same_cluster <- c()
+remaining_gene<-rownames(cosine_dist)
+data<- cosine_dist
+for(gene1 in remaining_gene){
+  remaining_gene<-remaining_gene[-which(remaining_gene%in%gene1)]
+  for (gene2 in remaining_gene){
+    cluster_id<-dotplot_data[which(dotplot_data$features.plot%in%c(gene1,gene2)),]$id
+    dist<-data[gene1,gene2]
+    if(length(which(duplicated(cluster_id)))){
+        same_cluster<-c(same_cluster,dist)
+    }else{not_same_cluster<-c(not_same_cluster,dist)}
+  }
+}
+type<-c(rep("co-exp",length(same_cluster)),rep("non co-exp",length(not_same_cluster)))
+var<-c(same_cluster,not_same_cluster)
+data2<-data.frame(type,var)
+data2$type<-factor(data2$type,levels=c("non co-exp","co-exp"))
+library(ggpubr)
+pdf("./00_Figure/Fig3/Fig3F-OR_transcript_dist_distribution.pdf",width=3,height=3)
+ggboxplot(data2, x="type", y="var", color = "type",width=0.6, notch = F)+
+stat_compare_means()+theme(legend.position="none")+ylab("transcript distance")+
+scale_color_manual(values = colors_for_exp_pattern)
+dev.off()
 
 
 

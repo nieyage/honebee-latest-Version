@@ -27,7 +27,7 @@ myUmapcolors <- c(  '#53A85F', '#F1BB72', '#F3B1A0', '#D6E7A3', '#57C3F3', '#476
 # Fig2A:Unsupervised clustering ORN 
 onecluster <- readRDS("./05_ORN_cluster2/02_second_cluster/ORN_integrated_antenna_withOr2_second_top500.rds")
 pdf("./00_Figure/Fig2/Fig2A-Unsupervised_ORN_cluster_WNN.pdf",width=6,height=6)
-DimPlot(onecluster, cols=c(myUmapcolors,myUmapcolors), reduction = "tsne.rna",  label = T, label.size = 5, repel = TRUE) & NoLegend() 
+DimPlot(onecluster, cols=c(myUmapcolors,myUmapcolors), reduction = "tsne.rna",  label = F, label.size = 5, repel = TRUE) & NoLegend() 
 dev.off()
 
 # Fig2B:supervised clustering ORN 
@@ -393,7 +393,7 @@ Apis_mellifera<-c(single_OR_cluster,multiple_OR_cluster);
 Drosophila_melanogaster<-c(40,5)
 
 # total:42
-Aedes_aegypti<-c(13,26);
+Aedes_aegypti<-c(23,19);
 
 cross_species_cluster_number<-data.frame(species=c(rep("Apis mellifera",2),rep("D.melanogaster",2),rep("Ae.aegypti",2)),
   exp_pattern=rep(c("single_OR","multiple_OR"),3),
@@ -401,7 +401,7 @@ cross_species_cluster_number<-data.frame(species=c(rep("Apis mellifera",2),rep("
 cross_species_cluster_number$exp_pattern<-factor(cross_species_cluster_number$exp_pattern,levels=c("single_OR","multiple_OR"));
 cross_species_cluster_number$species<-factor(cross_species_cluster_number$species,levels=c("Apis mellifera","D.melanogaster","Ae.aegypti"))
 
-pdf("./00_Figure/Fig2/Fig2F-cross_species_expression_pattern_statics.pdf",width=4,height=4)
+pdf("./00_Figure/Fig3/Fig3B-cross_species_expression_pattern_statics.pdf",width=4,height=4)
 ggplot(data = cross_species_cluster_number, aes_string(x = "species", y = "cluster_number", 
         fill = "exp_pattern")) +  xlab(" ") + ylab("% Percent of cells") + 
         scale_fill_manual(values = colors_for_exp_pattern) + 
@@ -419,6 +419,113 @@ p
 #add gene number in plot 
 p+geom_text(aes(label = cluster_number), size = 3, hjust = 0.5, vjust = 3, position = "stack") 
 dev.off();
+
+# version 2023.10.16
+# Fig2C:the proportion of detected OR
+ORN_all<- readRDS("./05_ORN_cluster2/02_second_cluster/05_add_subcluster_info/Unsupervised_ORN_cluster_WNN_add_subcluster.rds")
+
+Orco<- c("Or2","LOC552552","LOC726019","LOC551704")
+all_OR_gene<- unique(chemoreceptor[chemoreceptor$gene_type=="OR",]$gene_name)
+all_OR_gene<- setdiff(all_OR_gene,Orco)
+detected_OR_gene<- rownames(ORN_all)[which(rownames(ORN_all)%in%all_OR_gene)]
+power_OR_gene<- dotplot_feature
+power_OR_gene<- setdiff(power_OR_gene,Orco)
+data<- data.frame(gene=c("total_OR","detected_OR","powerful_OR"),
+    number=c(length(all_OR_gene),length(detected_OR_gene),length(power_OR_gene)))
+data$gene<- factor(data$gene,levels=c("total_OR","detected_OR","powerful_OR"))
+pdf("./00_Figure/Fig2/Fig2C-number_of_detected_OR.pdf",width=3,height=4)
+p<-ggplot(data = data, aes_string(x = "gene", y = "number")) +  
+        xlab(" ") +
+        ylab("# of OR") + 
+        #scale_fill_manual(values = "#FFED6F") + 
+        geom_bar( stat = "identity",width=0.6,color = 'black', fill='grey') +
+        theme_classic()+
+        theme(axis.text.x = element_text(angle = 0,vjust = 0.5,hjust = 0.5));
+p
+#add number in plot 
+round(data$number, 2)
+p+geom_text(aes(label = number), size = 3, hjust = 0.5, vjust = 3) 
+dev.off();
+
+# 2C: cluster number 
+data<- data.frame(type=c("total_cluster","powerful_cluster"),
+    number=c(length(unique(ORN_all$subcluster)),length(levels(ORN))))
+data$type<- factor(data$type,levels=c("total_cluster","powerful_cluster"))
+
+pdf("./00_Figure/Fig2/Fig2C-number_of_cluster.pdf",width=2,height=4)
+p<-ggplot(data = data, aes_string(x = "type", y = "number")) +  
+        xlab(" ") +
+        ylab("# of cluster") + 
+        #scale_fill_manual(values = "#FFED6F") + 
+        geom_bar( stat = "identity",width=0.6,color = 'black', fill='grey') +
+        theme_classic()+
+        theme(axis.text.x = element_text(angle = 0,vjust = 0.5,hjust = 0.5));
+p
+#add number in plot 
+round(data$number, 2)
+p+geom_text(aes(label = number), size = 3, hjust = 0.5, vjust = 3) 
+dev.off();
+
+# Fig2D: dotplot 2 heatmap 
+DefaultAssay(ORN)<-"SCT"
+Idents(ORN)<- ORN$cell_group
+
+dotplot_data<-read.csv("./05_ORN_cluster2/02_second_cluster/06_rm_without_power/dotplot_data_remove_nopower.csv")
+dotplot_feature<-unique(rev(as.character(dotplot_data$features.plot)));
+dotplot_feature<-unique(c(Orco,rev(as.character(dotplot_data$features.plot))))
+
+p<-DotPlot(ORN,features = dotplot_feature,cols=c("lightgrey","#0000CC")) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
+dot_data<- p$data
+heatmap_data<- matrix(nrow=length(dotplot_feature),ncol=length(unique(dot_data$id)))
+rownames(heatmap_data)<- dotplot_feature;
+colnames(heatmap_data)<- unique(dot_data$id);
+for(gene in rownames(heatmap_data)){
+    tmp_data<- dot_data[which(dot_data$features.plot==gene),]
+    for(cluster in colnames(heatmap_data)){
+        tmp<- tmp_data[which(tmp_data$id==cluster),]$avg.exp;
+        heatmap_data[gene,cluster]=tmp;
+    }
+}
+
+heatmap_data<- heatmap_data[dotplot_feature,rev(as.character(c(1:60)))]
+# change OR ID 
+
+ORgene_name_trans<- read.csv("/md01/nieyg/project/honeybee/honebee-latest-Version/04_chemoreceptor/OR_nameing/OR_gene_naming_result.csv")
+tmpID<- ORgene_name_trans[match(colnames(heatmap_data),ORgene_name_trans$OR_gene),]$last_name
+tmpID[2]<- colnames(heatmap_data)[2]
+tmpID[3]<- colnames(heatmap_data)[3]
+tmpID[4]<- colnames(heatmap_data)[4]
+tmpID[33]<- "Gr9"
+
+colnames(heatmap_data)<-tmpID
+library(pheatmap)
+blueYellow = c("1"="#352A86","2"="#343DAE","3"="#0262E0","4"="#1389D2","5"="#2DB7A3","6"="#A5BE6A","7"="#F8BA43","8"="#F6DA23","9"="#F8FA0D")
+
+count=t(scale(t(heatmap_data),scale = T,center = T))
+ORN$cell_group<- factor(ORN$cell_group,levels=as.character(c(1:60)))
+Idents(ORN)<- ORN$cell_group
+pdf("./00_Figure/Fig2/Fig2D-b-heatmap_of_dotplot_data_OR.pdf",width=15, height=14)
+bk <- c(seq(-2.5,-0.1,by=0.01),seq(0,2.5,by=0.01))
+pheatmap(t(count),
+    color = c(colorRampPalette(colors = blueYellow[1:4])(length(bk)/2),
+        colorRampPalette(colors = blueYellow[4:9])(length(bk)/2)),
+    cluster_row = FALSE,
+    cluster_col = FALSE,
+    border=FALSE,breaks=bk
+    )
+blueYellow = c("1"="#352A86","2"="#343DAE","3"="#0262E0","4"="#1389D2","5"="#2DB7A3","6"="#A5BE6A","7"="#F8BA43","8"="#F6DA23","9"="#F8FA0D")
+
+p<-DotPlot(ORN,features = dotplot_feature) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
+p&scale_x_discrete(labels=colnames(heatmap_data))&scale_color_gradientn(colours=blueYellow[1:8])
+dev.off()
+library(scCustomize)
+colors_list <- c(myUmapcolors,myUmapcolors)
+Orco<- c("Or2","LOC552552","LOC551704","LOC726019")
+
+pdf('./00_Figure/Fig2/Fig2F-Orcocoreceptor_VlnPlot_RNA.pdf',width=25, height=8)
+VlnPlot(ORN,col=colors_list,add.noise=F,log=T,stack = F, features = Orco, ncol = 1, pt.size = 0)+ scale_y_log10()
+#Stacked_VlnPlot(seurat_object = ORN,pt.size=0.1, features = Orco, x_lab_rotate = TRUE,plot_spacing = 0.3, plot_legend = T,colors_use = colors_list)+ scale_y_log10()
+dev.off()
 
 
 
