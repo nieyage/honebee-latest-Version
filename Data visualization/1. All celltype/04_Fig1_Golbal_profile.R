@@ -226,7 +226,7 @@ color_for_neuron<-c("#6580A8","#63A8A6","#A8A7A7")
 pdf('./00_Figure/Fig1/Fig1E-Neuron_marker_FeaturePlot_WNN.pdf', width=13, height=4)
 p1<- FeaturePlot(Neuron,reduction = 'wnn.umap',max.cutoff = 10,features = c("LOC413063") ,order=TRUE, ncol = 1)+ggtitle("LOC413063 (pepple)")
 p2<- FeaturePlot(Neuron,cols =c("lightgrey", color_for_neuron[1]), reduction = 'wnn.umap',max.cutoff = 7,features = c("LOC551837") ,order=FALSE, ncol = 1)+ggtitle("LOC551837 (bgm)")
-p3<- FeaturePlot(Neuron,cols =c("lightgrey", color_for_neuron[2]), reduction = 'wnn.umap',max.cutoff = 25,features = c("Or2") ,order=TRUE, ncol = 1)+ggtitle("Or2 (Orco)")
+p3<- FeaturePlot(Neuron,cols =c("lightgrey", color_for_neuron[2]), reduction = 'wnn.umap',max.cutoff = 10,features = c("Or2") ,order=TRUE, ncol = 1)+ggtitle("Or2 (Orco)")
 p1|p2|p3
 dev.off()
 
