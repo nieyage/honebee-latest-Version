@@ -4,6 +4,8 @@
 honeybee_cds=/md01/nieyg/ref/10X/Amel_HAv3.1/kaks_calculate/all_receptor_gene_cds.fa
 honeybee_pep=/md01/nieyg/ref/10X/Amel_HAv3.1/kaks_calculate/all_receptor_gene_pep.aa
 
+# other bee sequence 
+
 awk -F, '{if(NR>1) print ">"$1"\n"$2}' ant_OR_IR_GR_cds.csv > ant_OR_IR_GR_cds.fasta
 awk -F, '{if(NR>1) print ">"$1"\n"$2}' ant_OR_IR_GR_pep.csv > ant_OR_IR_GR_pep.fasta
 

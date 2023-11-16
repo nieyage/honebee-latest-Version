@@ -115,19 +115,14 @@ top10 <- markers %>% group_by(cluster) %>% top_n(n = 10, wt = avg_log2FC);
 
 down_obj<-ScaleData(down_obj,features=rownames(down_obj));
 blueYellow = c("1"="#352A86","2"="#343DAE","3"="#0262E0","4"="#1389D2","5"="#2DB7A3","6"="#A5BE6A","7"="#F8BA43","8"="#F6DA23","9"="#F8FA0D")
+solarExtra<- c("#3361A5", "#248AF3", "#14B3FF" ,"#88CEEF" ,"#C1D5DC", "#EAD397" ,"#FDB31A" ,"#E42A2A","#A31D1D")
 
-pdf("./00_Figure/FigS1/FigS1C-Allcelltype_top_markers-DEG_heatmap.pdf",width=10,height=10)
+pdf("./00_Figure/FigS1/FigS1G-Allcelltype_top_markers-DEG_heatmap.pdf",width=10,height=10)
 DoHeatmap(object = down_obj,features=top10$gene[1:70],label=T, group.colors =c("#66C2A5", "#FC8D62", "#8DA0CB", "#E78AC3", "#A6D854", "#FFD92F", "#E5C494","#B3B3B3" ),
-  disp.min = -1,disp.max = 1,size = 2,group.by = "Annotation") + scale_fill_gradientn(colors = blueYellow)
+  disp.min = -1,disp.max = 1,size = 2,group.by = "Annotation") + scale_fill_gradientn(colors = solarExtra[3:8])
 DoHeatmap(object = down_obj,features=top10$gene[1:70],label=T, group.colors =c("#66C2A5", "#FC8D62", "#8DA0CB", "#E78AC3", "#A6D854", "#FFD92F", "#E5C494","#B3B3B3" ),
-  disp.min = -2,disp.max = 2,size = 2,group.by = "Annotation") + scale_fill_gradientn(colors = blueYellow)
-DoHeatmap(object = down_obj,features=top10$gene[1:70],label=T, group.colors =c("#66C2A5", "#FC8D62", "#8DA0CB", "#E78AC3", "#A6D854", "#FFD92F", "#E5C494","#B3B3B3" ),
- size = 2,group.by = "Annotation") + scale_fill_gradientn(colors = blueYellow)
+  disp.min = -2,disp.max = 2,size = 2,group.by = "Annotation") + scale_fill_gradientn(colors = solarExtra[3:8])
 
-DoHeatmap(object = down_obj,features=top10$gene[1:70],label=T, group.colors =c("#66C2A5", "#FC8D62", "#8DA0CB", "#E78AC3", "#A6D854", "#FFD92F", "#E5C494","#B3B3B3" ),
-  disp.min = -1,disp.max = 1,size = 2,group.by = "Annotation") + scale_fill_gradientn(colors = c("#377EB8", "white", "#E41A1C"))
-DoHeatmap(object = down_obj,features=top10$gene[1:70],label=T, group.colors =c("#66C2A5", "#FC8D62", "#8DA0CB", "#E78AC3", "#A6D854", "#FFD92F", "#E5C494","#B3B3B3" ),
-  size = 2,group.by = "Annotation") + scale_fill_gradientn(colors = c("#377EB8", "white", "#E41A1C"))+NoLegend()
 dev.off();
 
 # FigS1D:
@@ -265,11 +260,12 @@ OBP4_ego$celltype="Obp4+support cell"
 all_ego<-rbind(Neuron_ego,Epithelial_ego,glial_ego,Sheath_ego,OBP4_ego,OBP5_ego)
 write.csv(all_ego,"./00_Figure/FS1D-Allcelltype_GO.csv")
 
-top5_term <- all_ego %>% group_by(celltype) %>% top_n(n = 5, wt = pvalue);
+all_ego<- read.csv("/md01/nieyg/project/honeybee/honebee-latest-Version/00_Figure/FigS1/FS1D-Allcelltype_GO-20231113.csv")
+top5_term <- all_ego 
 library(ggplot2)
 top5_term$celltype<-factor(top5_term$celltype,levels=c("Neuron","Epithelial cell","Glial cell","Sheath cell",
   "Obp4+support cell","Obp5+support cell"))
-pdf("./00_Figure/FigS1D-Allcelltype_GO.pdf",width=10,height=12)
+pdf("./00_Figure/FigS1/FigS1D-Allcelltype_GO.pdf",width=10,height=12)
 p <- ggplot(top5_term,aes(y=Count,x=Description,fill=pvalue)) + 
       geom_bar(stat="identity",position = "dodge") +
       facet_grid(celltype~.,scales = "free",space = "free") + 

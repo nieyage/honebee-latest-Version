@@ -13,9 +13,9 @@ GR_gene<- unique(chemoreceptor[chemoreceptor$gene_type=="GR",]$gene_name)
 IR_gene<- unique(c("LOC412949","LOC100577496","LOC102653640","LOC727346","LOC100578352","LOC552552","LOC726019","LOC551704","LOC410623","LOC100576097","LOC409777"))
 Orco<- c("Or2","LOC552552","LOC726019","LOC551704")
 all_receptor_gene <- unique(c(Orco,OR_gene,IR_gene,GR_gene))
-ORN<- readRDS("./05_ORN_cluster2/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_modify_the_tsne_recall_peak.rds")
+ORN<- readRDS("./05_ORN_cluster2/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_modify_the_tsne_recall_peak_latest.rds")
 DefaultAssay(ORN)<-"raw_RNA"
-dotplot_data<-read.csv("./05_ORN_cluster2/02_second_cluster/06_rm_without_power/dotplot_data_remove_nopower.csv")
+dotplot_data<-read.csv("./05_ORN_cluster2/02_second_cluster/06_rm_without_power/dotplot_data_remove_nopower_latest.csv")
 dotplot_feature<-unique(rev(as.character(dotplot_data$features.plot)));
    Idents(ORN)<- ORN$subcluster
    obj<-subset(ORN,idents="p1:14");

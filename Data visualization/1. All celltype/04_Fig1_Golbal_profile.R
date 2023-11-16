@@ -404,6 +404,8 @@ Apis_mellifera<-c(7277,55,1536);
 #mosquito_all<-readRDS("/data/R02/nieyg/project/honeybee/data/publish_data/mosquito/SeuratObject1_Antenna_mergedBatches_AllCells.rds")
 #mosquito_neuron<-readRDS("/data/R02/nieyg/project/honeybee/data/publish_data/mosquito/SeuratObject2_Antenna_mergedBatches_Neurons.rds")
 #Drosophila_melanogaster<-c(2808,154,3756) #our data 
+
+
 Drosophila_melanogaster<-c(7940,4266,25048)
 Aedes_aegypti<-c(4742,433,8704);
 cross_species_cellnumber<-data.frame(species=c(rep("Apis mellifera",3),rep("D.melanogaster",3),rep("Ae.aegypti",3)),

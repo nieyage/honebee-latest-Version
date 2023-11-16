@@ -78,7 +78,7 @@ dotplot_data<-p$data;
 #filter dotplot ;
 dotplot_data$state<-"No";
 for(i in 1:nrow(dotplot_data)){
-  if(dotplot_data[i,]$pct.exp>35&&dotplot_data[i,]$avg.exp>= 1){dotplot_data[i,]$state="Yes"};
+  if(dotplot_data[i,]$pct.exp>35&&dotplot_data[i,]$avg.exp.scaled>= 2.5){dotplot_data[i,]$state="Yes"};
 }
 dotplot_data<-dotplot_data[which(dotplot_data$state=="Yes"),]
 dotplot_data<-dotplot_data[-which(dotplot_data$features.plot%in% Orco),];
@@ -99,10 +99,13 @@ DefaultAssay(Before_ISAC_trans)<-"SCT"
 blueYellow = c("1"="#352A86","2"="#343DAE","3"="#0262E0","4"="#1389D2","5"="#2DB7A3","6"="#A5BE6A","7"="#F8BA43","8"="#F6DA23","9"="#F8FA0D")
 dotplot_feature<- dotplot_feature[which(dotplot_feature %in% rownames(Before_ISAC_trans))]
 Before_ISAC_trans<- ScaleData(Before_ISAC_trans,features=dotplot_feature)
+solarExtra<- c("#3361A5", "#248AF3", "#14B3FF" ,"#88CEEF" ,"#C1D5DC", "#EAD397" ,"#FDB31A" ,"#E42A2A","#A31D1D")
 
 pdf("./00_Figure/FigS2/FigS2A-2-Before_ISAC-chemoreceptor_gene_heatmap-orderbytree.pdf",width=15, height=20)
-DoHeatmap(Before_ISAC_trans,size = 4, angle = 315, features = dotplot_feature,group.colors =c(myUmapcolors,myUmapcolors,myUmapcolors,myUmapcolors), label=FALSE)+ scale_fill_gradientn(colors = blueYellow)
-DoHeatmap(Before_ISAC_trans,disp.max = 1,slot = "data",size = 4,angle = 315, features = dotplot_feature,group.colors =c(myUmapcolors,myUmapcolors,myUmapcolors,myUmapcolors), label=FALSE)+ scale_fill_gradientn(colors = blueYellow)
+#DoHeatmap(Before_ISAC_trans,disp.max = 2,disp.min = -2,size = 4, slot = "scale.data",angle = 315, features = dotplot_feature,group.colors =c(myUmapcolors,myUmapcolors,myUmapcolors,myUmapcolors), label=FALSE)+ scale_fill_gradientn(colors = solarExtra[4:8])
+#DoHeatmap(Before_ISAC_trans,disp.max = 2,disp.min = -2,size = 4, slot = "scale.data",angle = 315, features = dotplot_feature,group.colors =c(myUmapcolors,myUmapcolors,myUmapcolors,myUmapcolors), label=FALSE)+ scale_fill_gradientn(colors = solarExtra[3:8])
+DoHeatmap(Before_ISAC_trans,draw.lines = FALSE,disp.max = 2,disp.min = -2,size = 4, slot = "scale.data",angle = 315, features = dotplot_feature,group.colors =c(myUmapcolors,myUmapcolors,myUmapcolors,myUmapcolors), label=FALSE)+ scale_fill_gradientn(colors = solarExtra[2:8])
+#DoHeatmap(Before_ISAC_trans,disp.max = 1,disp.min = -1,slot = "scale.data",size = 4,angle = 315, features = dotplot_feature,group.colors =c(myUmapcolors,myUmapcolors,myUmapcolors,myUmapcolors), label=FALSE)+ scale_fill_gradientn(colors = solarExtra[4:8])
 dev.off()
 
 
@@ -178,16 +181,23 @@ for (i in 1:length(dotplot_feature)){
         dotplot_feature[i]=tmp
     }
 }
-
 DefaultAssay(After_ISAC_all_trans)<-"SCT"
 blueYellow = c("1"="#352A86","2"="#343DAE","3"="#0262E0","4"="#1389D2","5"="#2DB7A3","6"="#A5BE6A","7"="#F8BA43","8"="#F6DA23","9"="#F8FA0D")
 dotplot_feature<- dotplot_feature[which(dotplot_feature %in% rownames(After_ISAC_all_trans))]
 After_ISAC_all_trans<- ScaleData(After_ISAC_all_trans,features=dotplot_feature)
 
-pdf("./00_Figure/FigS2/FigS2B-2-After_ISAC_all-chemoreceptor_gene_heatmap-orderbytree.pdf",width=15, height=20)
-DoHeatmap(After_ISAC_all_trans, label=FALSE,size = 4, angle = 315, features = dotplot_feature,group.colors =c(myUmapcolors,myUmapcolors,myUmapcolors,myUmapcolors))+ scale_fill_gradientn(colors = blueYellow)
-DoHeatmap(After_ISAC_all_trans, label=FALSE,disp.max = 1,slot = "data",size = 4,angle = 315, features = dotplot_feature,group.colors =c(myUmapcolors,myUmapcolors,myUmapcolors,myUmapcolors))+ scale_fill_gradientn(colors = blueYellow)
+pdf("./00_Figure/FigS2/FigS2B-2-After_ISAC_all-chemoreceptor_gene_heatmap-orderbytree.pdf",width=18, height=20)
+DoHeatmap(After_ISAC_all_trans,draw.lines = FALSE,disp.max = 2,disp.min = -2,size = 4, slot = "scale.data",angle = 315, features = dotplot_feature,group.colors =c(myUmapcolors,myUmapcolors,myUmapcolors,myUmapcolors), label=FALSE)+ scale_fill_gradientn(colors = solarExtra[2:8])
 dev.off()
+
+
+
+
+
+
+
+
+
 
 
 

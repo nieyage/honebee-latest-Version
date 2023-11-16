@@ -85,6 +85,8 @@ ORN<- object
 cluster_info<-as.data.frame(table(dotplot_data$id))
 multiOR_cluster<-as.character(cluster_info[cluster_info$Freq>1,1])
 library(ggtree)
+colors_for_exp_pattern<- c("#476D87","#E95C59")
+
 pdf("./00_Figure/Fig2/Fig2D-a-remove_nopower-cluster-ORN-tree-cosine.pdf",width=12,height=14)
 tree <- groupOTU(data.tree, .node=multiOR_cluster)
 ggtree(tree,aes(color=group)) + geom_tiplab()+ geom_treescale() + scale_color_manual (values =colors_for_exp_pattern) 
@@ -186,7 +188,6 @@ dev.off()
 
 # fly Ir 
 
-
 ***fly and honybee coreceptor 
 ls *.pdb > pdb_list.txt
 for file1 in $(<pdb_list.txt)
@@ -280,10 +281,23 @@ cluster_info<-as.data.frame(table(dotplot_data$id))
 multiOR_cluster<-as.character(cluster_info[cluster_info$Freq>1,1])
 
 multiOR_cluster<- cell_group[multiOR_cluster]
+DefaultAssay(ORN)<-"SCT"
+p<-DotPlot(ORN,features = all_receptor_gene) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
+dotplot_data<-p$data;
+#filter dotplot ;
+dotplot_data$state<-"No";
+for(i in 1:nrow(dotplot_data)){
+  if(dotplot_data[i,]$pct.exp>35&&dotplot_data[i,]$avg.exp.scaled>= 1){dotplot_data[i,]$state="Yes"};
+}
+
+dotplot_data<-dotplot_data[which(dotplot_data$state=="Yes"),]
+dotplot_data<-dotplot_data[-which(dotplot_data$features.plot%in% Orco),];
+cluster_info<-as.data.frame(table(dotplot_data$id))
+multiOR_cluster<-as.character(cluster_info[cluster_info$Freq>1,1])
 
 library(ggtree)
 pdf("./00_Figure/Fig2/Fig2C-1-remove_nopower-cluster-ORN-tree-cosine.pdf",width=5,height=14)
-tree <- groupOTU(data.tree, .node=multiOR_cluster)
+tree <- groupOTU(data.tree, .node=as.character(multiOR_cluster))
 ggtree(tree,aes(color=group)) + geom_tiplab()+ geom_treescale() + scale_color_manual (values =colors_for_exp_pattern) 
 dev.off()
 
@@ -292,6 +306,7 @@ m<-ggtree(tree,aes(color=group)) + geom_tiplab()+ geom_treescale() + scale_color
 cluster_order<-na.omit(m$data[order(m$data$y),]$label)
 cluster_order<-as.character(cluster_order)
 Idents(ORN)<-factor(ORN$cell_group,levels=cluster_order)
+
 
 # change the OR gene name 
 ORgene_name_trans<- read.csv("/md01/nieyg/project/honeybee/honebee-latest-Version/04_chemoreceptor/OR_nameing/OR_gene_naming_result.csv")
@@ -320,7 +335,7 @@ for (i in 1:length(all_gene)){
 
 ORN_trans <- RenameGenesSeurat_SCT(ORN,newnames = all_gene)
 
-DefaultAssay(ORN)<-"raw_RNA"
+DefaultAssay(ORN)<-"SCT"
 p<-DotPlot(ORN,features = all_receptor_gene) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
 dotplot_data<-p$data;
 #filter dotplot ;
@@ -351,13 +366,15 @@ DefaultAssay(ORN_trans)<-"SCT"
 ORN_trans<- ScaleData(ORN_trans,features=dotplot_feature)
 blueYellow = c("1"="#352A86","2"="#343DAE","3"="#0262E0","4"="#1389D2","5"="#2DB7A3","6"="#A5BE6A","7"="#F8BA43","8"="#F6DA23","9"="#F8FA0D")
 
-pdf("./00_Figure/Fig2/Fig2C-2-remove_nopower-chemoreceptor_gene_heatmap-orderbytree.pdf",width=15, height=14)
-DoHeatmap(ORN_trans,size = 4,angle = 315, features = dotplot_feature,group.colors =c(myUmapcolors,myUmapcolors))+ scale_fill_gradientn(colors = blueYellow)
-DoHeatmap(ORN_trans,disp.max = 1,slot = "data",size = 4,angle = 315, features = dotplot_feature,group.colors =c(myUmapcolors,myUmapcolors))+ scale_fill_gradientn(colors = blueYellow)
+pdf("./00_Figure/Fig2/Fig2C-2-remove_nopower-chemoreceptor_gene_heatmap-orderbytree_yasuo.pdf",width=8, height=13)
+#DoHeatmap(ORN_trans,size = 4,angle = 315, features = dotplot_feature,group.colors =c(myUmapcolors,myUmapcolors))+ scale_fill_gradientn(colors = blueYellow)
+DoHeatmap(ORN_trans,disp.max = 1,slot = "data",size = 2.5,angle = 315, 
+    features = dotplot_feature,draw.lines = FALSE,group.colors =c(myUmapcolors,myUmapcolors))+ 
+scale_fill_gradientn(colors = blueYellow[4:9])
 dev.off()
 
 # Fig2B:supervised clustering ORN 
-pdf("./00_Figure/Fig2/Fig2B-changeID-Supervised_ORN_cluster_WNN_remove_nopower.pdf",width=8,height=6)
+pdf("./00_Figure/Fig2/Fig2B-changeID-Supervised_ORN_cluster_WNN_remove_nopower.pdf",width=8,height=4)
 DimPlot(ORN, cols=c(myUmapcolors,myUmapcolors), reduction = "tsne.rna",  label = F, label.size = 5, repel = TRUE)
 dev.off();
 
@@ -491,13 +508,13 @@ heatmap_data<- heatmap_data[dotplot_feature,rev(as.character(c(1:60)))]
 # change OR ID 
 
 ORgene_name_trans<- read.csv("/md01/nieyg/project/honeybee/honebee-latest-Version/04_chemoreceptor/OR_nameing/OR_gene_naming_result.csv")
-tmpID<- ORgene_name_trans[match(colnames(heatmap_data),ORgene_name_trans$OR_gene),]$last_name
-tmpID[2]<- colnames(heatmap_data)[2]
-tmpID[3]<- colnames(heatmap_data)[3]
-tmpID[4]<- colnames(heatmap_data)[4]
+tmpID<- ORgene_name_trans[match(rownames(heatmap_data),ORgene_name_trans$OR_gene),]$last_name
+tmpID[2]<- rownames(heatmap_data)[2]
+tmpID[3]<- rownames(heatmap_data)[3]
+tmpID[4]<- rownames(heatmap_data)[4]
 tmpID[33]<- "Gr9"
 
-colnames(heatmap_data)<-tmpID
+rownames(heatmap_data)<-tmpID
 library(pheatmap)
 blueYellow = c("1"="#352A86","2"="#343DAE","3"="#0262E0","4"="#1389D2","5"="#2DB7A3","6"="#A5BE6A","7"="#F8BA43","8"="#F6DA23","9"="#F8FA0D")
 
@@ -514,10 +531,12 @@ pheatmap(t(count),
     border=FALSE,breaks=bk
     )
 blueYellow = c("1"="#352A86","2"="#343DAE","3"="#0262E0","4"="#1389D2","5"="#2DB7A3","6"="#A5BE6A","7"="#F8BA43","8"="#F6DA23","9"="#F8FA0D")
-
-p<-DotPlot(ORN,features = dotplot_feature) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
-p&scale_x_discrete(labels=colnames(heatmap_data))&scale_color_gradientn(colours=blueYellow[1:8])
 dev.off()
+pdf("./00_Figure/Fig2/Fig2D-b-blueyellow_of_dotplot_data_OR.pdf",width=15, height=10)
+p<-DotPlot(ORN,features = dotplot_feature) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
+p&scale_x_discrete(labels=rownames(heatmap_data))&scale_color_gradientn(colours=blueYellow[1:8])
+dev.off()
+
 library(scCustomize)
 colors_list <- c(myUmapcolors,myUmapcolors)
 Orco<- c("Or2","LOC552552","LOC551704","LOC726019")
@@ -526,8 +545,84 @@ pdf('./00_Figure/Fig2/Fig2F-Orcocoreceptor_VlnPlot_RNA.pdf',width=25, height=8)
 VlnPlot(ORN,col=colors_list,add.noise=F,log=T,stack = F, features = Orco, ncol = 1, pt.size = 0)+ scale_y_log10()
 #Stacked_VlnPlot(seurat_object = ORN,pt.size=0.1, features = Orco, x_lab_rotate = TRUE,plot_spacing = 0.3, plot_legend = T,colors_use = colors_list)+ scale_y_log10()
 dev.off()
+ORN$cell_group<- factor(ORN$cell_group,level=as.character(1:60))
+Idents(ORN)<- ORN$cell_group
+saveRDS(ORN,"./05_ORN_cluster2/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_modify_the_tsne_recall_peak.rds")
+
+# Fig2B After ISAC Umap plot:
+tSNE_data<- ORN@reductions$tsne.rna@cell.embeddings
+Idents(ORN)<-ORN$cell_group
+tSNE_data<- tSNE_data[rownames(ORN@meta.data),]
+plotData<- data.frame(barcode=rownames(ORN@meta.data),
+    subcluster=ORN@meta.data$cell_group,
+    subcluster_old=ORN@meta.data$subcluster)
+plotData<- cbind(plotData,tSNE_data)
+# add the OR group info:
+dotplot_data$OR_group<- gtf_data[match(dotplot_data$features.plot,gtf_data$gene_name),]$seqnames
+plotData$OR_group<- dotplot_data[match(plotData$subcluster_old,dotplot_data$id),]$OR_group
+
+myUmapcolors <- c(  '#53A85F', '#F1BB72', '#F3B1A0', '#D6E7A3', '#57C3F3', '#476D87',
+         '#E95C59', '#E59CC4', '#AB3282', '#23452F', '#BD956A', '#8C549C', '#585658',
+         '#9FA3A8', '#E0D4CA', '#5F3D69', '#58A4C3', '#AA9A59', '#E63863', '#E39A35', 
+         '#C1E6F3', '#6778AE', '#B53E2B', '#712820', '#DCC1DD', '#CCE0F5', '#625D9E', 
+         '#68A180', '#3A6963', '#968175', '#161853', '#FF9999', '#344CB7', '#FFCC1D', 
+         '#116530', '#678983', '#A19882', '#FFBCBC', '#24A19C', '#FF9A76', "#8DD3C7",
+         "#FFFFB3", "#BEBADA", "#FB8072", "#80B1D3", "#FDB462", "#B3DE69", "#FCCDE5", 
+         "#D9D9D9", "#BC80BD", "#CCEBC5", "#FFED6F", "#E41A1C"  , "#377EB8", "#4DAF4A", 
+         "#FF7F00", "#FFFF33", "#A65628", "#F781BF")
+
+col<- myUmapcolors
+axis <- ggh4x::guide_axis_truncated(
+    trunc_lower = unit(0, "npc"),
+    trunc_upper = unit(3, "cm")
+)
+group_colors<- c("Group1"=myUmapcolors[1],    "Group2"=myUmapcolors[2],    "Group3"=myUmapcolors[3],    "Group4"=myUmapcolors[4],    "Group5"=myUmapcolors[5],    "Group6"=myUmapcolors[6],    "Group7"=myUmapcolors[7],    "Group8"=myUmapcolors[8],    "Group9"=myUmapcolors[9],    "Group10"=myUmapcolors[10],
+    "Group11"=myUmapcolors[11],    "Group12"=myUmapcolors[12],    "Group13"=myUmapcolors[13],    "Group14"=myUmapcolors[14],    "Group15"=myUmapcolors[15],    "Group16"=myUmapcolors[16],    "GroupUN3"=myUmapcolors[17],
+    "GroupUN226"=myUmapcolors[18],    "GroupUN243"=myUmapcolors[19],    "GroupUN248"=myUmapcolors[20])
+
+# Fig2B:supervised clustering ORN 
+library(ggunchull)
+pdf("./00_Figure/Fig2/Fig2B-Supervised_ORN_cluster_WNN_remove_nopower_ggplot1.pdf",width=9,height=6)
+ggplot(plotData, aes(x = rnatSNE_1, y = rnatSNE_2, fill = OR_group, color = subcluster)) +
+    stat_unchull(alpha = 0.5, color = "grey50", size = 0.5, lty = 2) +
+    geom_point(size = 0.01, show.legend = FALSE) +
+    theme(
+        aspect.ratio = 1,
+        panel.background = element_blank(),
+        panel.grid = element_blank(),
+        axis.line = element_line(arrow = arrow(type = "closed")),
+        axis.title = element_text(hjust = 0.05, face = "italic")) +
+    guides(x = axis, y = axis,
+        fill = guide_legend(override.aes = list(colour = "white", linetype = 1, size = 1))) +
+    scale_x_continuous(breaks = NULL) +
+    scale_y_continuous(breaks = NULL) +
+    scale_fill_manual(values = group_colors) +
+    scale_color_manual(values = c(col,col))
+dev.off()
 
 
+# 压扁heatmap 
+
+dotplot_feature<-unique(c(Orco,rev(as.character(dotplot_data$features.plot))))
+
+for (i in 1:length(dotplot_feature)){
+    if(dotplot_feature[i] %in% ORgene_name_trans$OR_gene){
+        tmp=ORgene_name_trans[which(ORgene_name_trans$OR_gene==dotplot_feature[i]),]$last_name;
+        dotplot_feature[i]=tmp
+    }
+}
+
+DefaultAssay(ORN_trans)<-"SCT"
+ORN_trans<- ScaleData(ORN_trans,features=dotplot_feature)
+blueYellow = c("1"="#352A86","2"="#343DAE","3"="#0262E0","4"="#1389D2","5"="#2DB7A3","6"="#A5BE6A","7"="#F8BA43","8"="#F6DA23","9"="#F8FA0D")
+
+
+blueYellow = c("1"="#352A86","2"="#343DAE","3"="#0262E0","4"="#1389D2","5"="#2DB7A3","6"="#A5BE6A","7"="#F8BA43","8"="#F6DA23","9"="#F8FA0D")
+pdf("./00_Figure/Fig2/Fig2D-b-blueyellow_of_dotplot_data_OR.pdf",width=15, height=8)
+p<-DotPlot(ORN,features = dotplot_feature) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
+#p&scale_x_discrete(labels=rownames(heatmap_data))&scale_color_gradientn(colours=blueYellow[1:8])
+
+dev.off()
 
 
 ## Fig2F Upset plot for 4 coreceptor barcode 
@@ -581,3 +676,5 @@ dev.off()
 #upset(data, nintersects = 30, mb.ratio = c(0.5, 0.5), sets = OrcoL,keep.order = TRUE, order.by = c("freq", "degree"), decreasing = c(TRUE,FALSE))
 #upset(data, nintersects = 30, mb.ratio = c(0.5, 0.5), sets = OrcoL,keep.order = TRUE, order.by = c("freq", "degree"), decreasing = c(TRUE,TRUE))
 #dev.off()
+
+

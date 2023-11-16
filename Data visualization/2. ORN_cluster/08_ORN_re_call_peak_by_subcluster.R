@@ -12,7 +12,7 @@ GR_gene<- unique(chemoreceptor[chemoreceptor$gene_type=="GR",]$gene_name)
 IR_gene<- unique(c("LOC412949","LOC100577496","LOC102653640","LOC727346","LOC100578352","LOC552552","LOC726019","LOC551704","LOC410623","LOC100576097","LOC409777"))
 Orco<- c("Or2","LOC552552","LOC726019","LOC551704")
 all_receptor_gene <- unique(c(Orco,OR_gene,IR_gene,GR_gene))
-ORN<- readRDS("./05_ORN_cluster2/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_modify_the_tsne.rds")
+ORN<- readRDS("./05_ORN_cluster2/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_modify_the_tsne_latest.rds")
 library(BSgenome.Amel.HAv3.1.update.chemoreceptor)
 # ORN recall peak for subcluster 
 DefaultAssay(ORN)<-"ATAC"
@@ -41,4 +41,4 @@ ORN[["peaks_ORN_subcluster"]] <- CreateChromatinAssay(
   annotation = Annotation(ORN)
 )
 DefaultAssay(ORN) <- "raw_RNA"
-saveRDS(ORN,"./05_ORN_cluster2/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_modify_the_tsne_recall_peak.rds")
+saveRDS(ORN,"./05_ORN_cluster2/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_modify_the_tsne_recall_peak_latest.rds")
