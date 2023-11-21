@@ -64,7 +64,7 @@ honeybee <- LinkPeaks(
   object = honeybee,
   peak.assay = "peaks",
   expression.assay = "RNA",
-  genes.use = c("Syt1","LOC411079","LOC410151","5-ht7","Obp4","Obp5")
+  genes.use = c("Syt1","LOC411079","LOC410151","5-ht7","Obp4","Obp5","LOC406073")
 )
 ######Visulize track and RNA exp######
 idents.plot <- Idents(honeybee)
@@ -213,6 +213,162 @@ p6<-p6& scale_fill_manual(values=set)&labs(title="Obp5") & theme(strip.text.y.le
 pdf("./00_Figure/Fig1/Fig1D-Marker_gene-select-peaktrack-WNN.pdf",height=8,width=24) 
 p1|p2|p3|p4|p5|p6
 dev.off()
+
+
+######Visulize track and RNA exp######
+idents.plot <- Idents(honeybee)
+# Neuron:
+cov_plot <- CoveragePlot(
+  object = honeybee,
+  region = "Group1-5132500-5137500",
+  #annotation = FALSE,
+  peaks = FALSE,links = F,annotation = F
+)
+gene_plot <- AnnotationPlot(
+  object = honeybee,
+  region = "Group1-5125000-5137500"
+)
+expr_plot <- ExpressionPlot(
+  object = honeybee,
+  features = "Syt1",
+  assay = "RNA"
+)
+p1<-CombineTracks(
+  plotlist = list(cov_plot,gene_plot),
+  expression.plot = expr_plot,
+  heights = c(10, 3),
+  widths = c(10,5)
+)
+# Epithelial cell 
+cov_plot <- CoveragePlot(
+  object = honeybee,
+  region = "Group5-6387000-6396000",
+  #annotation = FALSE,
+  peaks = FALSE,links = F,annotation = F
+)
+gene_plot <- AnnotationPlot(
+  object = honeybee,
+  region = "Group5-6387000-6396000"
+)
+expr_plot <- ExpressionPlot(
+  object = honeybee,
+  features = "LOC411079",
+  assay = "RNA"
+)
+p2<-CombineTracks(
+  plotlist = list(cov_plot,gene_plot),
+  expression.plot = expr_plot,
+  heights = c(10, 3),
+  widths = c(10,5)
+)
+
+# glial cell 
+cov_plot <- CoveragePlot(
+  object = honeybee,
+  region = "Group15-2484000-2489000",
+  #annotation = FALSE,
+  peaks = FALSE,links = F,annotation = F
+)
+gene_plot <- AnnotationPlot(
+  object = honeybee,
+  region = "Group15-2484000-2489000"
+)
+expr_plot <- ExpressionPlot(
+  object = honeybee,
+  features = "LOC410151",
+  assay = "RNA"
+)
+p3<-CombineTracks(
+  plotlist = list(cov_plot,gene_plot),
+  expression.plot = expr_plot,
+  heights = c(10, 3),
+  widths = c(10,5)
+)
+# Sheath cell 
+cov_plot <- CoveragePlot(
+  object = honeybee,
+  region = "Group5-3430000-3440000",
+  #annotation = FALSE,
+  peaks = FALSE,links = F,annotation = F
+)
+gene_plot <- AnnotationPlot(
+  object = honeybee,
+  region = "Group5-3430000-3440000"
+)
+expr_plot <- ExpressionPlot(
+  object = honeybee,
+  features = "LOC406073",
+  assay = "RNA"
+)
+p4<-CombineTracks(
+  plotlist = list(cov_plot,gene_plot),
+  expression.plot = expr_plot,
+  heights = c(10, 3),
+  widths = c(10,5)
+)
+# Obp4
+cov_plot <- CoveragePlot(
+  object = honeybee,
+  region = "Group9-11980000-11983000",
+  #annotation = FALSE,
+  peaks = FALSE,links = F,annotation = F
+)
+gene_plot <- AnnotationPlot(
+  object = honeybee,
+  region = "Group9-11980000-11983000"
+)
+expr_plot <- ExpressionPlot(
+  object = honeybee,
+  features = "Obp4",
+  assay = "SCT"
+)
+p5<-CombineTracks(
+  plotlist = list(cov_plot,gene_plot),
+  expression.plot = expr_plot,
+  heights = c(10, 3),
+  widths = c(10,5)
+)
+# obp5
+cov_plot <- CoveragePlot(
+  object = honeybee,
+  region = "Group9-11944000-11946000",
+  #annotation = FALSE,
+  peaks = FALSE,links = F,annotation = F
+)
+gene_plot <- AnnotationPlot(
+  object = honeybee,
+  region = "Group9-11944000-11946000"
+)
+expr_plot <- ExpressionPlot(
+  object = honeybee,
+  features = "Obp5",
+  assay = "RNA"
+)
+p6<-CombineTracks(
+  plotlist = list(cov_plot,gene_plot),
+  expression.plot = expr_plot,
+  heights = c(10, 3),
+  widths = c(10,5)
+)
+
+set<- c("#8ECC92","#49A5CC",myUmapcolors[6:10])
+p1<-p1& scale_fill_manual(values=set)&labs(title="Syt1")
+p2<-p2& scale_fill_manual(values=set)&labs(title="LOC411079(GRH)") & theme(strip.text.y.left = element_blank(),strip.background = element_blank())
+p3<-p3& scale_fill_manual(values=set)&labs(title="LOC410151(repo)") & theme(strip.text.y.left = element_blank(),strip.background = element_blank())
+p4<-p4& scale_fill_manual(values=set)&labs(title="PROS") & theme(strip.text.y.left = element_blank(),strip.background = element_blank())
+p5<-p5& scale_fill_manual(values=set)&labs(title="Obp4") & theme(strip.text.y.left = element_blank(),strip.background = element_blank())
+p6<-p6& scale_fill_manual(values=set)&labs(title="Obp5") & theme(strip.text.y.left = element_blank(),strip.background = element_blank())
+
+pdf("./00_Figure/Fig1/Fig1D-PROS-Marker_gene-select-peaktrack-WNN.pdf",height=8,width=24) 
+p1|p2|p3|p4|p5|p6
+dev.off()
+
+
+
+
+
+
+
 
 # Fig1E:
 Neuron<-readRDS("./03_Neuron/WNN_Neuron_integrated.rds")
