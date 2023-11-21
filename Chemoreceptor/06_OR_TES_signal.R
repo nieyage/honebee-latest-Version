@@ -17,9 +17,7 @@ gtf$gene_biotype<-"protein_coding"
 gene.coords <- gtf[gtf$gene_biotype == 'protein_coding']
 gene.coords <- gene.coords[gene.coords$gene_name %in% all_receptor_gene]
 gene.coords <- gene.coords[gene.coords$type == "transcript"]
-
 gene.coords <- as.data.frame(gene.coords)
-
 strand_p <- gene.coords[gene.coords$strand == "+",]
 strand_n <- gene.coords[gene.coords$strand == "-",]
 
@@ -110,13 +108,15 @@ RT_OR_TES_location<- OR_TES_location[OR_TES_location$OR%in%RT_OR,]
 
 
 OR_TES_location<- OR_TES_location[OR_TES_location$OR%in% OR_type$dotplot_feature,]
+
+
 for(i in 1:nrow(OR_TES_location)){
 	OR_TES_location_subset <- OR_TES_location[i,];
 	#OR_TES_location_subset$V1<- 1;
 	OR<- OR_TES_location_subset$OR
-	write.table(OR_TES_location_subset[,c(2:4,1,6,5)],paste0("./13_TES_signal/01_OR_TES_location_bed/",OR,".bed"),row.names=F,col.names=F,sep="\t")
+	write.table(OR_TES_location_subset[,c(2:4,1,5)],paste0("./01_OR_TES_location_bed/",OR,".bed"),row.names=F,col.names=F,sep="\t")
 }
-write.table(OR_TES_location[,c(2:5,1)],"./13_TES_signal/OR_TES_location.bed",row.names=F,col.names=F,sep="\t")
+write.table(OR_TES_location[,c(2:5,1)],"./OR_TES_location.bed",row.names=F,col.names=F,sep="\t")
 
 # back to shell 
 sed -i 's/"//g' *.bed
@@ -126,8 +126,6 @@ for file1 in $(<OR_promoter.list)
 do
   bedtools getfasta -fi /md01/nieyg/ref/10X/Amel_HAv3.1/Amel_HAv3_1/fasta/genome.fa -bed $file1 -fo ../02_OR_TES_location_fa/$file1.fa -s -name
 done
-
-
 
 
 

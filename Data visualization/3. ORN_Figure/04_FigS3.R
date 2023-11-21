@@ -10,7 +10,6 @@ GR_gene<- unique(chemoreceptor[chemoreceptor$gene_type=="GR",]$gene_name)
 IR_gene<- unique(c("LOC412949","LOC100577496","LOC102653640","LOC727346","LOC100578352","LOC552552","LOC726019","LOC551704","LOC410623","LOC100576097","LOC409777"))
 Orco<- c("Or2","LOC552552","LOC726019","LOC551704")
 all_receptor_gene <- unique(c(Orco,OR_gene,IR_gene,GR_gene))
-ORN<- readRDS("./05_ORN_cluster2/02_second_cluster/06_rm_without_power/Unsupervised_ORN_remove_nopower_modify_the_tsne_recall_peak_latest.rds")
 DefaultAssay(ORN)<-"raw_RNA"
 
 # Fig3A:two promoter  (Or128 and Or129) 
@@ -109,6 +108,29 @@ pheatmap(t(ORN_matrix),
      show_colnames=F
   )
 dev.off()
+
+coexp_matrix<- ORN_matrix[coexp_barcode,]
+coexp_matrix<-coexp_matrix[order(coexp_matrix$Or128,coexp_matrix$Or129F,decreasing=TRUE),]
+bk <- c(seq(0,2,by=0.1))
+coexp_matrix<-coexp_matrix[,c(2,1)]
+pdf("./00_Figure/FigS3/FigS3F-Or128_129-coexp-heatmap-SCT-only_coexp.pdf",height=3,width=12)
+pheatmap(t(coexp_matrix),
+     cluster_cols = F,
+     cluster_rows = F,
+     border=F,
+     color = colorRampPalette(colors = c("white","#CC0000"))(length(bk)),
+     annotation_legend = TRUE,
+     show_rownames=T,breaks=bk,
+     #annotation_col = label_pheatmap,
+     #annotation_colors = ann_colors,
+     show_colnames=F
+  )
+dev.off()
+     
+write.table(coexp_barcode,"/data/R02/nieyg/project/honeybee/honebee-latest-Version/00_Figure/FigS3/Or128_Or129/raw_barcode_coexp.txt",row.name=F,col.names=F)
+
+
+
 # save the coexp barcode for track 
 barcode<- data.frame(barcode=coexp_barcode)
 barcode_sample<-separate(barcode,"barcode",c("sample","barcode"),"_")
@@ -271,6 +293,49 @@ Or3_barcode<- rownames(ORN_matrix[which(ORN_matrix$Or1==0&ORN_matrix$Or3>0),])
 Or1_barcode<- rownames(ORN_matrix[which(ORN_matrix$Or1>0),])
 coexp_barcode<- rownames(ORN_matrix[which(ORN_matrix$Or1>0&ORN_matrix$Or3>0),])
 
+coexp_barcode<- rownames(ORN_matrix[which(ORN_matrix$Or1>0&ORN_matrix$Or3>0),])
+
+
+coexp_matrix<- ORN_matrix[coexp_barcode,]
+coexp_matrix<-coexp_matrix[order(coexp_matrix$Or1,coexp_matrix$Or3,decreasing=TRUE),]
+bk <- c(seq(0,2,by=0.1))
+pdf("./00_Figure/FigS3/FigS3-Or1_3-coexp-heatmap-SCT-only_coexp.pdf",height=3,width=12)
+pheatmap(t(coexp_matrix),
+     cluster_cols = F,
+     cluster_rows = F,
+     border=F,
+     color = colorRampPalette(colors = c("white","#CC0000"))(length(bk)),
+     annotation_legend = TRUE,
+     show_rownames=T,breaks=bk,
+     #annotation_col = label_pheatmap,
+     #annotation_colors = ann_colors,
+     show_colnames=F
+  )
+dev.off()
+     
+write.table(coexp_barcode,"/data/R02/nieyg/project/honeybee/honebee-latest-Version/00_Figure/FigS3/Or1_Or3/new/raw_barcode_coexp.txt",row.name=F,col.names=F)
+# save the coexp barcode for track 
+barcode<- data.frame(barcode=coexp_barcode)
+barcode_sample<-separate(barcode,"barcode",c("sample","barcode"),"_")
+barcode <- barcode_sample$barcode
+write.table(barcode,"/data/R02/nieyg/project/honeybee/honebee-latest-Version/00_Figure/FigS3/Or1_Or3/new/barcode.txt",row.name=F,col.names=F)
+obj_barcode<-colnames(obj)
+all_barcode<-colnames(ORN)
+set.seed(110)
+random_barcode1<-sample(setdiff(all_barcode,obj_barcode),length(obj_barcode))
+random_barcode2<-sample(setdiff(all_barcode,obj_barcode),length(obj_barcode))
+barcode<- data.frame(barcode=random_barcode1)
+barcode_sample<-separate(barcode,"barcode",c("sample","barcode"),"_")
+barcode <- barcode_sample$barcode
+write.table(barcode,"/data/R02/nieyg/project/honeybee/honebee-latest-Version/00_Figure/FigS3/Or1_Or3/new/random_barcode1.txt",row.name=F,col.names=F)
+barcode<- data.frame(barcode=random_barcode2)
+barcode_sample<-separate(barcode,"barcode",c("sample","barcode"),"_")
+barcode <- barcode_sample$barcode
+write.table(barcode,"/data/R02/nieyg/project/honeybee/honebee-latest-Version/00_Figure/FigS3/Or1_Or3/new/random_barcode2.txt",row.name=F,col.names=F)
+
+
+
+
 # save the coexp barcode for track 
 barcode<- data.frame(barcode=Or1_barcode)
 barcode_sample<-separate(barcode,"barcode",c("sample","barcode"),"_")
@@ -362,6 +427,25 @@ Or12_barcode<- rownames(ORN_matrix[which(ORN_matrix$Or12>0&ORN_matrix$Or13==0&OR
 Or13_barcode<- rownames(ORN_matrix[which(ORN_matrix$Or12==0&ORN_matrix$Or13>0&ORN_matrix$Or14==0),])
 Or14_barcode<- rownames(ORN_matrix[which(ORN_matrix$Or12==0&ORN_matrix$Or13==0&ORN_matrix$Or14>0),])
 Or12_barcode<- rownames(ORN_matrix[which(ORN_matrix$Or12>0),])
+coexp_barcode<- rownames(ORN_matrix[which(ORN_matrix$Or12>0&ORN_matrix$Or13>0&ORN_matrix$Or14>0),])
+
+
+coexp_matrix<- ORN_matrix[coexp_barcode,]
+coexp_matrix<-coexp_matrix[order(coexp_matrix$Or12,coexp_matrix$Or13,coexp_matrix$Or14,decreasing=TRUE),]
+bk <- c(seq(0,2,by=0.1))
+pdf("./00_Figure/FigS3/FigS3_Or12_14-coexp-heatmap-SCT-only_coexp.pdf",height=3,width=12)
+pheatmap(t(coexp_matrix),
+     cluster_cols = F,
+     cluster_rows = F,
+     border=F,
+     color = colorRampPalette(colors = c("white","#CC0000"))(length(bk)),
+     annotation_legend = TRUE,
+     show_rownames=T,breaks=bk,
+     #annotation_col = label_pheatmap,
+     #annotation_colors = ann_colors,
+     show_colnames=F
+  )
+dev.off()
 
 # save the coexp barcode for track 
 barcode<- data.frame(barcode=Or12_barcode)
@@ -369,6 +453,37 @@ barcode_sample<-separate(barcode,"barcode",c("sample","barcode"),"_")
 barcode <- barcode_sample$barcode
 write.table(barcode,"/data/R02/nieyg/project/honeybee/honebee-latest-Version/00_Figure/FigS3/Or12_Or13_Or14/barcode.txt",row.name=F,col.names=F)
 sed -i 's/"//g' barcode.txt
+
+
+
+# save the coexp barcode for track 
+library(tidyr)
+barcode<- data.frame(barcode=coexp_barcode)
+barcode_sample<-separate(barcode,"barcode",c("sample","barcode"),"_")
+barcode <- barcode_sample$barcode
+write.table(barcode,"/data/R02/nieyg/project/honeybee/honebee-latest-Version/00_Figure/FigS3/Or12_Or13_Or14/new/barcode_coexp.txt",row.name=F,col.names=F)
+
+write.table(coexp_barcode,"/data/R02/nieyg/project/honeybee/honebee-latest-Version/00_Figure/FigS3/Or12_Or13_Or14/new/raw_barcode_coexp.txt",row.name=F,col.names=F)
+
+obj_barcode<-colnames(obj)
+all_barcode<-colnames(ORN)
+set.seed(110)
+random_barcode1<-sample(setdiff(all_barcode,obj_barcode),length(obj_barcode))
+random_barcode2<-sample(setdiff(all_barcode,obj_barcode),length(obj_barcode))
+barcode<- data.frame(barcode=random_barcode1)
+barcode_sample<-separate(barcode,"barcode",c("sample","barcode"),"_")
+barcode <- barcode_sample$barcode
+write.table(barcode,"/data/R02/nieyg/project/honeybee/honebee-latest-Version/00_Figure/FigS3/Or12_Or13_Or14/new/random_barcode1.txt",row.name=F,col.names=F)
+barcode<- data.frame(barcode=random_barcode2)
+barcode_sample<-separate(barcode,"barcode",c("sample","barcode"),"_")
+barcode <- barcode_sample$barcode
+write.table(barcode,"/data/R02/nieyg/project/honeybee/honebee-latest-Version/00_Figure/FigS3/Or12_Or13_Or14/new/random_barcode2.txt",row.name=F,col.names=F)
+
+sed -i 's/"//g' *.txt
+
+
+
+
 # subset the RNA bam
 ## PBS configure 
 #PBS -N get_RNA_bw
@@ -443,6 +558,7 @@ dev.off()
 Or169_barcode<- rownames(ORN_matrix[which(ORN_matrix$Or169>0&ORN_matrix$Or170==0),])
 Or170_barcode<- rownames(ORN_matrix[which(ORN_matrix$Or169==0&ORN_matrix$Or170>0),])
 Or169_barcode<- rownames(ORN_matrix[which(ORN_matrix$Or169>0),])
+coexp_barcode<- rownames(ORN_matrix[which(ORN_matrix$Or169>0&ORN_matrix$Or170>0),])
 
 # save the coexp barcode for track 
 barcode<- data.frame(barcode=Or169_barcode)
@@ -450,6 +566,50 @@ barcode_sample<-separate(barcode,"barcode",c("sample","barcode"),"_")
 barcode <- barcode_sample$barcode
 write.table(barcode,"/data/R02/nieyg/project/honeybee/honebee-latest-Version/00_Figure/FigS3/Or169_Or170/barcode.txt",row.name=F,col.names=F)
 sed -i 's/"//g' barcode.txt
+
+
+coexp_matrix<- ORN_matrix[coexp_barcode,]
+coexp_matrix<-coexp_matrix[order(coexp_matrix$Or169,coexp_matrix$Or170,decreasing=TRUE),]
+bk <- c(seq(0,2,by=0.1))
+pdf("./00_Figure/FigS3/FigS3-Or169-170-coexp-heatmap-SCT-only_coexp.pdf",height=3,width=12)
+pheatmap(t(coexp_matrix),
+     cluster_cols = F,
+     cluster_rows = F,
+     border=F,
+     color = colorRampPalette(colors = c("white","#CC0000"))(length(bk)),
+     annotation_legend = TRUE,
+     show_rownames=T,breaks=bk,
+     #annotation_col = label_pheatmap,
+     #annotation_colors = ann_colors,
+     show_colnames=F
+  )
+dev.off()
+     
+write.table(coexp_barcode,"/data/R02/nieyg/project/honeybee/honebee-latest-Version/00_Figure/FigS3/Or169_Or170/new/raw_barcode_coexp.txt",row.name=F,col.names=F)
+
+obj_barcode<-colnames(obj)
+all_barcode<-colnames(ORN)
+set.seed(110)
+random_barcode1<-sample(setdiff(all_barcode,obj_barcode),length(obj_barcode))
+random_barcode2<-sample(setdiff(all_barcode,obj_barcode),length(obj_barcode))
+barcode<- data.frame(barcode=random_barcode1)
+barcode_sample<-separate(barcode,"barcode",c("sample","barcode"),"_")
+barcode <- barcode_sample$barcode
+write.table(barcode,"/data/R02/nieyg/project/honeybee/honebee-latest-Version/00_Figure/FigS3/Or169_Or170/new/random_barcode1.txt",row.name=F,col.names=F)
+barcode<- data.frame(barcode=random_barcode2)
+barcode_sample<-separate(barcode,"barcode",c("sample","barcode"),"_")
+barcode <- barcode_sample$barcode
+write.table(barcode,"/data/R02/nieyg/project/honeybee/honebee-latest-Version/00_Figure/FigS3/Or169_Or170/new/random_barcode2.txt",row.name=F,col.names=F)
+barcode<- data.frame(barcode=coexp_barcode)
+barcode_sample<-separate(barcode,"barcode",c("sample","barcode"),"_")
+barcode <- barcode_sample$barcode
+write.table(barcode,"/data/R02/nieyg/project/honeybee/honebee-latest-Version/00_Figure/FigS3/Or169_Or170/new/barcode_coexp.txt",row.name=F,col.names=F)
+
+
+sed -i 's/"//g' *.txt
+
+
+
 
 # subset the RNA bam
 ## PBS configure 
@@ -527,6 +687,48 @@ dev.off()
 Or39_barcode<- rownames(ORN_matrix[which(ORN_matrix$Or39>0&ORN_matrix$Or40==0),])
 Or40_barcode<- rownames(ORN_matrix[which(ORN_matrix$Or39==0&ORN_matrix$Or40>0),])
 Or39_barcode<- rownames(ORN_matrix[which(ORN_matrix$Or39>0),])
+coexp_barcode<- rownames(ORN_matrix[which(ORN_matrix$Or39>0&ORN_matrix$Or40>0),])
+
+
+coexp_matrix<- ORN_matrix[coexp_barcode,]
+coexp_matrix<-coexp_matrix[order(coexp_matrix$Or39,coexp_matrix$Or40,decreasing=TRUE),]
+bk <- c(seq(0,2,by=0.1))
+pdf("./00_Figure/FigS3/FigS3-Or39_40-coexp-heatmap-SCT-only_coexp.pdf",height=3,width=12)
+pheatmap(t(coexp_matrix),
+     cluster_cols = F,
+     cluster_rows = F,
+     border=F,
+     color = colorRampPalette(colors = c("white","#CC0000"))(length(bk)),
+     annotation_legend = TRUE,
+     show_rownames=T,breaks=bk,
+     #annotation_col = label_pheatmap,
+     #annotation_colors = ann_colors,
+     show_colnames=F
+  )
+dev.off()
+     
+write.table(coexp_barcode,"/data/R02/nieyg/project/honeybee/honebee-latest-Version/00_Figure/FigS3/Or39_Or40/new/raw_barcode_coexp.txt",row.name=F,col.names=F)
+# save the coexp barcode for track 
+barcode<- data.frame(barcode=coexp_barcode)
+barcode_sample<-separate(barcode,"barcode",c("sample","barcode"),"_")
+barcode <- barcode_sample$barcode
+write.table(barcode,"/data/R02/nieyg/project/honeybee/honebee-latest-Version/00_Figure/FigS3/Or39_Or40/new/barcode.txt",row.name=F,col.names=F)
+obj_barcode<-colnames(obj)
+all_barcode<-colnames(ORN)
+set.seed(110)
+random_barcode1<-sample(setdiff(all_barcode,obj_barcode),length(obj_barcode))
+random_barcode2<-sample(setdiff(all_barcode,obj_barcode),length(obj_barcode))
+barcode<- data.frame(barcode=random_barcode1)
+barcode_sample<-separate(barcode,"barcode",c("sample","barcode"),"_")
+barcode <- barcode_sample$barcode
+write.table(barcode,"/data/R02/nieyg/project/honeybee/honebee-latest-Version/00_Figure/FigS3/Or39_Or40/new/random_barcode1.txt",row.name=F,col.names=F)
+barcode<- data.frame(barcode=random_barcode2)
+barcode_sample<-separate(barcode,"barcode",c("sample","barcode"),"_")
+barcode <- barcode_sample$barcode
+write.table(barcode,"/data/R02/nieyg/project/honeybee/honebee-latest-Version/00_Figure/FigS3/Or39_Or40/new/random_barcode2.txt",row.name=F,col.names=F)
+
+
+
 
 # save the coexp barcode for track 
 barcode<- data.frame(barcode=Or39_barcode)
@@ -684,7 +886,7 @@ magick convert -density 300 Or10_rss.ps Or10_rss.pdf # 生成二级结构pdf图
 
 RNAfold --noconv -p < Or64.fa > Or64.res
 /md01/nieyg/software/ViennaRNA-2.6.4/src/Utils/relplot.pl Or64_ss.ps Or64_dp.ps > Or64_rss.ps
-magick convert -density 300 Or64_rss.ps Or64_rss.pdf # 生成二级结构pdf图
+magick convert -density 300 Or64_rss.ps Or64_rss2.pdf # 生成二级结构pdf图
 
 RNAfold --noconv -p < Or150.fa > Or150.res
 /md01/nieyg/software/ViennaRNA-2.6.4/src/Utils/relplot.pl Or150_ss.ps Or150_dp.ps > Or150_rss.ps
@@ -725,11 +927,61 @@ mv /md01/nieyg/project/honeybee/honebee-latest-Version/13_TES_signal/RNAfold/Or6
 
 
 
+Idents(ORN) <- ORN$cell_group
+obj <- subset(ORN,idents=c("19"))
+DefaultAssay(obj)<-"peaks_ORN_subcluster"
+obj_barcode<-colnames(obj)
+all_barcode<-colnames(ORN)
+set.seed(110)
+random_barcode<-sample(setdiff(all_barcode,obj_barcode),length(obj_barcode))
+obj <- subset(ORN,cells=c(obj_barcode,random_barcode))
+obj$cell_group<-as.character(obj$cell_group)
+for (i in 1:length(obj$cell_group)){
+  if(obj$cell_group[i]!="19"){obj$cell_group[i]="other"}
+}
+Idents(obj)<-obj$cell_group
+
+pdf("./00_Figure/FigS3/Or12_Or13_Or14_fragmentplot_C19.pdf",width=16,height=12)
+CoveragePlot(
+  object = obj,
+  region = "Group2-10013251-10019530",
+  window = 150,
+  extend.upstream = 700,
+  annotation = TRUE,
+  extend.downstream = 700,
+  tile = TRUE,
+  tile.size = 100,
+  tile.cells = 30,
+  links=F
+)
+dev.off()
+
+
+CoveragePlot(
+    object = obj,
+    region = ranges.show,
+    window = 150,
+    extend.upstream = 200,
+    annotation = TRUE,
+    extend.downstream = 600,
+    tile = TRUE,
+    tile.size = 100,
+    tile.cells = 30,
+    links=F
+  )
+
+
+# 提取 Or10 genebody and downstream TES region and label the hairpin location 
+
+>Or10
+TAATTTTATTCCTTGTCATAATTCGTACCTAAACATCATGAAACTATTCG
 
 
 
 
 
+
+gtgtataattttttcctccagtatcctttttatttattttatatttaccaaAGAATAGTAATAATTGTAAACTTTATAAACAATACAATGATATTCtggagatttataaattatagtcaTTATgctagaatttataaataataaattctctcacaattatcataaatatatattttcatgtaagatattttttcaaatattttataattttctattataagtttgatttttgaaaaattatcagaatAATCATATTCGAGGTATCGAGTATTTAaagtttacaaaaaaataaattcatcaataaaataattttctataaaatgtaatttatgctAAAGATGTATACAaccaattttcataaaaatttaaattgtttcgcAATCTTTTCGTGTTTTACGATTATTCTCATAACAGTAACAGAATATCCTGTAACATTTCATATtcttaaatacaataaaattgaaatgagtACAGTAATGTTAGCAATTACGAATTATgacaatagaataattttattccttgtCATAATTCGTACCTAAACATCATGAAactattcgttttttttaaatataaacacatagtcaaaatatatttctactttaccaaaaagaagatttagtcttttattttttatttcatttaacttGATCTCAGAAAtctgataaaattttgcagaaaagaaaagaagaaaattatcatgaaaaaattaaaatgttgattTCGCATATCaaacaaatatatgattttagtgtgataaataaagaaatttaatataatattgaaattgaagaaatattacttatttatcattaattgaaaatctgtGAATTTTCatcaggaatatatatatatataccatagctataataatcattgtttcgtattaaattattggattCTTTCATTCTAGAAAAATAGATCTTTAAATCGAAAAACACTAAGATTGCTACACATTTTTTaaggaataatatatactGAATCATGAGATTATTTTTGCGAT
 
 
 

@@ -72,7 +72,7 @@ sed -i 's/"//g' *.txt
 ls *.txt> ORN_barcode.list
 for file1 in $(<ORN_barcode.list)
 do
-  /md01/nieyg/software/subset-bam_linux --bam /md01/nieyg/project/honeybee/honebee-latest-Version/08_ORN_cluster_bw/ATAC-merged.bam --cell-barcodes $file1 --cores 10 --out-bam ./$file1.bam
+  /md01/nieyg/software/subset-bam_linux --bam /md01/nieyg/project/honeybee/honebee-latest-Version/08_ORN_cluster_bw/ATAC-merged.bam --cell-barcodes $file1 --cores 30 --out-bam ./$file1.bam
   bedtools  genomecov  -bg -split -ibam ./$file1.bam  > ./$file1.bedGraph
   perl /data/R02/nieyg/pipeline/ATACseq/norm_bedGraph.pl ./$file1.bedGraph ./$file1.norm.bedGraph &> ./$file1.norm.bedGraph.log
   sort -k1,1 -k2,2n ./$file1.norm.bedGraph > ./$file1.norm.sorted.bedGraph

@@ -35,57 +35,68 @@ DefaultAssay(obj)<-"raw_RNA"
 obj_data<-as.data.frame(t(as.matrix(obj@assays$SCT[obj_features,])))
 barcode_label<- barcode_label[order(barcode_label$label),]
 obj_data<- obj_data[rownames(barcode_label),]
+
+
 C39_data<-obj_data[rownames(barcode_label[barcode_label$label=="C39",]),]
 C40_data<-obj_data[rownames(barcode_label[barcode_label$label=="C40",]),]
 C41_data<-obj_data[rownames(barcode_label[barcode_label$label=="C41",]),]
 C42_data<-obj_data[rownames(barcode_label[barcode_label$label=="C42",]),]
 
+C39_data<- C39_data[which(rowSums(C39_data)>0),]
+C40_data<- C40_data[which(rowSums(C40_data)>0),]
+C41_data<- C41_data[which(rowSums(C41_data)>0),]
+C42_data<- C42_data[which(rowSums(C42_data)>0),]
+
+C39_data<- C39_data[order(C39_data$LOC100578045,C39_data$LOC107963999,C39_data$LOC410603,C39_data$`Or63-b`),]
+C40_data<- C40_data[order(C40_data$LOC100578045,C40_data$LOC107963999,C40_data$LOC410603,C40_data$`Or63-b`),]
+C41_data<- C41_data[order(C41_data$LOC100578045,C41_data$LOC107963999,C41_data$LOC410603,C41_data$`Or63-b`),]
+C42_data<- C42_data[order(C42_data$LOC100578045,C42_data$LOC107963999,C42_data$LOC410603,C42_data$`Or63-b`),]
+
+
 library(pheatmap)
+# 
+# clusterMatrix <- function(input_matrix) {
+#   # Define the clustering method and other parameters
+#   clustering_method <- "complete"  # You can change this to other methods like "ward.D", "single", etc.
+#   # Perform clustering
+#   p <- pheatmap(
+#     input_matrix,
+#     clustering_method = clustering_method,
+#     cluster_cols = F,
+#     cluster_rows = T,
+#   )
+#   clustered_matrix <- input_matrix[p$tree_row$order,]
+#   # Return the clustered matrix
+#   return(clustered_matrix)
+# }
+# smooth_column <- function(col) {
+#   smoothed <- numeric(length(col))
+#   for (i in 2:(length(col) - 1)) {
+#     smoothed[i] <- (col[i - 1] + col[i] + col[i + 1]) / 3
+#   }
+#   smoothed[1] <- (col[1] + col[2]) / 2
+#   smoothed[length(col)] <- (col[length(col) - 1] + col[length(col)]) / 2
+#   return(smoothed)
+# }
+# 
+# C39_data_clustered<- clusterMatrix(C39_data)
+# C39_data_clustered_smoothed_data <- as.data.frame(lapply(C39_data_clustered, smooth_column))
+# rownames(C39_data_clustered_smoothed_data)<- rownames(C39_data_clustered)
+# C40_data_clustered<- clusterMatrix(C40_data)
+# C40_data_clustered_smoothed_data <- as.data.frame(lapply(C40_data_clustered, smooth_column))
+# rownames(C40_data_clustered_smoothed_data)<- rownames(C40_data_clustered)
+# C41_data_clustered<- clusterMatrix(C41_data)
+# C41_data_clustered_smoothed_data <- as.data.frame(lapply(C41_data_clustered, smooth_column))
+# rownames(C41_data_clustered_smoothed_data)<- rownames(C41_data_clustered)
+# C42_data_clustered<- clusterMatrix(C42_data)
+# C42_data_clustered_smoothed_data <- as.data.frame(lapply(C42_data_clustered, smooth_column))
+# rownames(C42_data_clustered_smoothed_data)<- rownames(C42_data_clustered)
 
-clusterMatrix <- function(input_matrix) {
-  # Define the clustering method and other parameters
-  clustering_method <- "complete"  # You can change this to other methods like "ward.D", "single", etc.
-  # Perform clustering
-  p <- pheatmap(
-    input_matrix,
-    clustering_method = clustering_method,
-    cluster_cols = F,
-    cluster_rows = T,
-  )
-  clustered_matrix <- input_matrix[p$tree_row$order,]
-  # Return the clustered matrix
-  return(clustered_matrix)
-}
-smooth_column <- function(col) {
-  smoothed <- numeric(length(col))
-  for (i in 2:(length(col) - 1)) {
-    smoothed[i] <- (col[i - 1] + col[i] + col[i + 1]) / 3
-  }
-  smoothed[1] <- (col[1] + col[2]) / 2
-  smoothed[length(col)] <- (col[length(col) - 1] + col[length(col)]) / 2
-  return(smoothed)
-}
-
-C39_data_clustered<- clusterMatrix(C39_data)
-C39_data_clustered_smoothed_data <- as.data.frame(lapply(C39_data_clustered, smooth_column))
-rownames(C39_data_clustered_smoothed_data)<- rownames(C39_data_clustered)
-
-C40_data_clustered<- clusterMatrix(C40_data)
-C40_data_clustered_smoothed_data <- as.data.frame(lapply(C40_data_clustered, smooth_column))
-rownames(C40_data_clustered_smoothed_data)<- rownames(C40_data_clustered)
-C41_data_clustered<- clusterMatrix(C41_data)
-C41_data_clustered_smoothed_data <- as.data.frame(lapply(C41_data_clustered, smooth_column))
-rownames(C41_data_clustered_smoothed_data)<- rownames(C41_data_clustered)
-C42_data_clustered<- clusterMatrix(C42_data)
-C42_data_clustered_smoothed_data <- as.data.frame(lapply(C42_data_clustered, smooth_column))
-rownames(C42_data_clustered_smoothed_data)<- rownames(C42_data_clustered)
-
-
-clustered_smoothed_data<- rbind(C39_data_clustered_smoothed_data,
-	C40_data_clustered_smoothed_data,
-	C41_data_clustered_smoothed_data,
-	C42_data_clustered_smoothed_data)
-
+# clustered_smoothed_data<- rbind(C39_data_clustered_smoothed_data,
+# 	C40_data_clustered_smoothed_data,
+# 	C41_data_clustered_smoothed_data,
+# 	C42_data_clustered_smoothed_data)
+# 
 # 对每一列进行平滑
 my47colors <- c('#E5D2DD', '#53A85F', '#F1BB72', '#F3B1A0', '#D6E7A3', '#57C3F3', '#476D87',
          '#E95C59', '#E59CC4', '#AB3282', '#23452F', '#BD956A', '#8C549C', '#585658',
@@ -95,18 +106,15 @@ my47colors <- c('#E5D2DD', '#53A85F', '#F1BB72', '#F3B1A0', '#D6E7A3', '#57C3F3'
          '#968175', '#161853', '#FF9999', '#344CB7', '#FFCC1D', '#116530', '#678983',
          '#678983', '#A19882', '#FFBCBC', '#24A19C', '#FF9A76')
 color_for_cluster<- c("#4BA9D1",my47colors[6:8])
-barcode_label_pheatmap<-data.frame(label=c(rep("C39",nrow(C39_data)),rep("C40",nrow(C40_data)),rep("C41",nrow(C41_data)),rep("C42",nrow(C42_data))))
-rownames(barcode_label_pheatmap)<-rownames(clustered_smoothed_data)
+barcode_label_pheatmap<-data.frame(label=c(rep("C1",nrow(C39_data)),rep("C2",nrow(C40_data)),rep("C3",nrow(C41_data)),rep("C4",nrow(C42_data))))
+last_data_heatmap<- rbind(C39_data,C40_data,C41_data,C42_data)
+rownames(barcode_label_pheatmap)<-rownames(last_data_heatmap)
 col <- color_for_cluster[1:length(unique(barcode_label_pheatmap$label))]
 names(col)<-unique(barcode_label_pheatmap$label)
 ann_colors= list(label = col)
 
-smoothed_data <- as.data.frame(lapply(obj_data, smooth_column))
-rownames(smoothed_data)<- rownames(obj_data)
-barcode_label_pheatmap<-data.frame(label=c(rep("C39",nrow(C39_data)),rep("C40",nrow(C40_data)),rep("C41",nrow(C41_data)),rep("C42",nrow(C42_data))))
-rownames(barcode_label_pheatmap)<-rownames(smoothed_data)
-pdf("./00_Figure/Fig5/Fig5E_4gene_heatmap.pdf",height=4,width=8)
-pheatmap(t(smoothed_data),
+pdf("./00_Figure/Fig5/Fig5E_4gene_heatmap.pdf",height=3,width=8)
+pheatmap(t(last_data_heatmap),
              cluster_cols = F,
              cluster_rows = F,
              color = colorRampPalette(c("white", "#CC0000"))(100),

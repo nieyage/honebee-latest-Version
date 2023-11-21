@@ -44,6 +44,68 @@ DoHeatmap(object = obj,features=markers$gene,label=T, group.colors =color_for_cl
   disp.min = -2,disp.max = 2,size = 2,group.by = "Annotation") + scale_fill_gradientn(colors = solarExtra[3:8])
 dev.off();
 
+# show select gene exp and ATAC signal
+gene<- unique(markers$gene)
+library(BSgenome.Amel.HAv3.1.update.chemoreceptor)
+DefaultAssay(obj)<-"peaks_ORN_subcluster"
+  # first compute the GC content for each peak
+  obj <- RegionStats(obj, genome = BSgenome.Amel.HAv3.1.update.chemoreceptor)
+  Annotation(obj)$tx_id <-Annotation(obj)$transcript_id
+  ######Visulize track and RNA exp#####
+  idents.plot <- Idents(obj)
+  # plot region 
+pdf("./00_Figure/FigS4/FigS4-DEG-track.pdf",width=10,height=5)
+for(i in gene){
+    p1<-CoveragePlot(
+    object = obj,
+    region = i,
+    features=i,
+    window = 150,
+    expression.assay = "raw_RNA",
+    expression.slot = "data",
+    extend.upstream = 500,
+    annotation = TRUE,
+    extend.downstream = 500
+  )
+   p2<-  p1 + scale_fill_manual(color_for_cluster)
+print(p2)
+}
+
+
+dev.off()
+library(dittoSeq)
+pdf("./00_Figure/FigS4/FigS4_DEG_label_heatmap.pdf",width=5,height=5)
+
+dittoHeatmap(obj, genes = top10$gene,
+             annot.by = c("Annotation"),
+             scaled.to.max = F,
+             treeheight_row = 10,
+             heatmap.colors = colorRampPalette(c('#1A5592','white',"#B83D3D"))(50),
+             show_rownames=F,
+             highlight.features = gene)
+dev.off()
+
+# label DEG in heatmap 
+library(ComplexHeatmap)
+DefaultAssay(obj)<-"raw_RNA"
+mat<-GetAssayData(obj,slot='scale.data')
+cluster_info<- sort(obj$Annotation)
+mat<- as.matrix(mat[unique(top10$gene),names(cluster_info)])
+gene<- unique(gene)
+gene_pos<- which(rownames(mat)%in% gene)
+row_anno<- rowAnnotation(gene=anno_mark(at=gene_pos,label=gene))
+pdf("./00_Figure/FigS4/FigS4_DEG_label_heatmap.pdf",width=5,height=5)
+Heatmap(mat,
+  cluster_rows=F,
+  cluster_columns=F,
+  show_column_names=F,
+  show_row_names =F,
+  column_split=cluster_info,
+  right_annotation=row_anno
+  )
+dev.off()
+
+
 # Find the DEP among the 4 cluster:
 DefaultAssay(obj)<- "peaks_ORN_subcluster"
 markers <- FindAllMarkers(obj, only.pos = TRUE, min.pct = 0.5, logfc.threshold = 0.5)

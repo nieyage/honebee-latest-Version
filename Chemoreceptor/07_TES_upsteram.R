@@ -248,43 +248,37 @@ stat_compare_means()+theme(legend.position="none")+ylab("Intergenic region lengt
 
 dev.off()
 
-# co-exp vs non-co-exp Intergenic region length
+
+# for all OR gene 
 
 
-
-
-
-
-
-find_palindromes <- function(sequence) {
-  sequence <- toupper(dna_sequence)  # 将序列转换为大写字母以确保大小写不敏感
-  length_seq <- nchar(sequence)
-  palindrome_positions <- list()
-
-  for (start in 1:length_seq) {
-    for (end in (start + 2):(length_seq + 1)) {
-      subsequence <- substr(sequence, start, end - 1)
-      if (subsequence == rev(subsequence)) {  # 检查子序列是否是回文序列
-        palindrome_positions <- c(palindrome_positions, list(start = start, end = end))
-      }
-    }
+library(Biostrings)
+# for NRT_OR
+OR_fasta<-readDNAStringSet("/md01/nieyg/project/honeybee/honebee-latest-Version/13_TES_signal/NRT_OR_TES_location.fa", format="fasta",nrec=-1L, skip=0L, seek.first.rec=FALSE, use.names=TRUE)
+upstream_sequence <- data.frame()
+pattern <- "TTTTT"
+max_length <- 50
+for(i in 1:53){
+  name<- strsplit(names(NRT_OR_fasta[i]),split="::")[[1]][1];
+  sequence <- toString(NRT_OR_fasta[i])
+  if(name %in% strand_p_gene){
+      upstream_sequence_subset <- extract_upstream_sequence_strand_p(sequence, pattern,max_length);
+      tmp<- data.frame(name,sequence=upstream_sequence_subset)
+      upstream_sequence <- rbind(upstream_sequence,tmp)
   }
-
-  return(palindrome_positions)
+  if(name %in% strand_n_gene){
+      upstream_sequence_subset <- extract_upstream_sequence_strand_n(sequence, pattern,max_length);
+      tmp<- data.frame(name,sequence=upstream_sequence_subset)
+      upstream_sequence <- rbind(upstream_sequence,tmp)
+  };
 }
-
-# 在下面的示例中，您可以将您的DNA序列作为输入
-dna_sequence <- "AGCTTACGTACGAAGCT"
-palindrome_positions <- find_palindromes(dna_sequence)
-
-if (length(palindrome_positions) > 0) {
-  cat("回文序列位置：\n")
-  for (pos in palindrome_positions) {
-    cat("从位置", pos$start, "到位置", pos$end, ":", substr(dna_sequence, pos$start, pos$end - 1), "\n")
-  }
-} else {
-  cat("未找到回文序列。\n")
-}
+upstream_sequence_last <- upstream_sequence[upstream_sequence$sequence!="",]
+upstream_sequence_last <- upstream_sequence_last[!duplicated(upstream_sequence_last),]
+# 将数据框转换为FASTA格式的对象
+fasta_obj <- DNAStringSet(as.character(upstream_sequence_last$sequence))
+names(fasta_obj)<- upstream_sequence_last$name
+# 使用writeXStringSet函数保存为FASTA文件
+writeXStringSet(fasta_obj, file = "/md01/nieyg/project/honeybee/honebee-latest-Version/13_TES_signal/NRT_OR_TES_upstream50bp.fa")
 
 
 

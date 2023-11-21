@@ -29,5 +29,41 @@ magick convert -density 300 LOC100578045_rss.ps LOC100578045_rss.pdf # 生成二
 
 
 
+OR_fasta<-readDNAStringSet("/data/R02/nieyg/project/honeybee/honebee-latest-Version/13_TES_signal/02_OR_TES_location_fa/all_OR_TES.fa", format="fasta",nrec=-1L, skip=0L, seek.first.rec=FALSE, use.names=TRUE)
+upstream_sequence <- data.frame()
+pattern <- "TTTTT"
+max_length <- 50
+for(i in 1:177){
+  name<- strsplit(names(OR_fasta[i]),split="::")[[1]][1];
+  sequence <- toString(OR_fasta[i])
+  if(name %in% strand_p_gene){
+      upstream_sequence_subset <- extract_upstream_sequence_strand_p(sequence, pattern,max_length);
+      tmp<- data.frame(name,sequence=upstream_sequence_subset)
+      upstream_sequence <- rbind(upstream_sequence,tmp)
+  }
+  if(name %in% strand_n_gene){
+      upstream_sequence_subset <- extract_upstream_sequence_strand_n(sequence, pattern,max_length);
+      tmp<- data.frame(name,sequence=upstream_sequence_subset)
+      upstream_sequence <- rbind(upstream_sequence,tmp)
+  };
+}
+upstream_sequence_last <- upstream_sequence[upstream_sequence$sequence!="",]
+upstream_sequence_last <- upstream_sequence_last[!duplicated(upstream_sequence_last),]
+# 将数据框转换为FASTA格式的对象
+fasta_obj <- DNAStringSet(as.character(upstream_sequence_last$sequence))
+names(fasta_obj)<- upstream_sequence_last$name
+# 使用writeXStringSet函数保存为FASTA文件
+writeXStringSet(fasta_obj, file = "/md01/nieyg/project/honeybee/honebee-latest-Version/13_TES_signal/OR_TES_upstream50bp.fa")
+
+
+RNAfold -j6 --noconv --auto-id OR_TES_upstream50bp.fa > OR_TES_upstream50bp.out
+
+grep ">" OR_TES_upstream50bp.fa>OR_ID
+grep -E -o "\(.+?\)" OR_TES_upstream50bp.out >all_RNAfold_result
+paste OR_ID all_RNAfold_result |sort -k1,1 
+
+
+
+
 
 

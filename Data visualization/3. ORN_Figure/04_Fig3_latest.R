@@ -304,17 +304,17 @@ write.table(coexp_barcode,"/data/R02/nieyg/project/honeybee/honebee-latest-Versi
 
 obj_barcode<-colnames(obj)
 all_barcode<-colnames(ORN)
-set.seed(110)
+set.seed(5678)
 random_barcode1<-sample(setdiff(all_barcode,obj_barcode),length(obj_barcode))
 random_barcode2<-sample(setdiff(all_barcode,obj_barcode),length(obj_barcode))
 barcode<- data.frame(barcode=random_barcode1)
 barcode_sample<-separate(barcode,"barcode",c("sample","barcode"),"_")
 barcode <- barcode_sample$barcode
-write.table(barcode,"/data/R02/nieyg/project/honeybee/honebee-latest-Version/00_Figure/Fig3/Or25_Or26_Or27/random_barcode1.txt",row.name=F,col.names=F)
+write.table(barcode,"/data/R02/nieyg/project/honeybee/honebee-latest-Version/00_Figure/Fig3/Or25_Or26_Or27/random_barcode3.txt",row.name=F,col.names=F)
 barcode<- data.frame(barcode=random_barcode2)
 barcode_sample<-separate(barcode,"barcode",c("sample","barcode"),"_")
 barcode <- barcode_sample$barcode
-write.table(barcode,"/data/R02/nieyg/project/honeybee/honebee-latest-Version/00_Figure/Fig3/Or25_Or26_Or27/random_barcode2.txt",row.name=F,col.names=F)
+write.table(barcode,"/data/R02/nieyg/project/honeybee/honebee-latest-Version/00_Figure/Fig3/Or25_Or26_Or27/random_barcode4.txt",row.name=F,col.names=F)
 
 sed -i 's/"//g' *.txt
 
@@ -363,13 +363,13 @@ cd /data/R02/nieyg/project/honeybee/honebee-latest-Version/00_Figure/Fig3/Or25_O
   sort -k1,1 -k2,2n barcode_coexp_ATAC.norm.bedGraph > barcode_coexp_ATAC.norm.sorted.bedGraph
   bedGraphToBigWig barcode_coexp_ATAC.norm.sorted.bedGraph ~/ref/10X/Amel_HAv3.1/Amel_HAv3_1/star/chrNameLength.txt barcode_coexp_ATAC.norm.bw
 
-  /md01/nieyg/software/subset-bam_linux --bam /md01/nieyg/project/honeybee/honebee-latest-Version/08_ORN_cluster_bw/merged.bam --cell-barcodes random_barcode1.txt --cores 20 --out-bam random_barcode1_ATAC.bam
+  /md01/nieyg/software/subset-bam_linux --bam /md01/nieyg/project/honeybee/honebee-latest-Version/08_ORN_cluster_bw/ATAC-merged.bam --cell-barcodes random_barcode1.txt --cores 20 --out-bam random_barcode1_ATAC.bam
   bedtools  genomecov  -bg -split -ibam ./random_barcode1_ATAC.bam  > ./random_barcode1_ATAC.bedGraph
   perl /data/R02/nieyg/pipeline/ATACseq/norm_bedGraph.pl random_barcode1_ATAC.bedGraph random_barcode1_ATAC.norm.bedGraph &> random_barcode1_ATAC.norm.bedGraph.log
   sort -k1,1 -k2,2n random_barcode1_ATAC.norm.bedGraph > random_barcode1_ATAC.norm.sorted.bedGraph
   bedGraphToBigWig random_barcode1_ATAC.norm.sorted.bedGraph ~/ref/10X/Amel_HAv3.1/Amel_HAv3_1/star/chrNameLength.txt random_barcode1_ATAC.norm.bw
 
-  /md01/nieyg/software/subset-bam_linux --bam /md01/nieyg/project/honeybee/honebee-latest-Version/08_ORN_cluster_bw/merged.bam --cell-barcodes random_barcode2.txt --cores 20 --out-bam random_barcode2_ATAC.bam
+  /md01/nieyg/software/subset-bam_linux --bam /md01/nieyg/project/honeybee/honebee-latest-Version/08_ORN_cluster_bw/ATAC-merged.bam --cell-barcodes random_barcode2.txt --cores 20 --out-bam random_barcode2_ATAC.bam
   bedtools  genomecov  -bg -split -ibam ./random_barcode2_ATAC.bam  > ./random_barcode2_ATAC.bedGraph
   perl /data/R02/nieyg/pipeline/ATACseq/norm_bedGraph.pl random_barcode2_ATAC.bedGraph random_barcode2_ATAC.norm.bedGraph &> random_barcode2_ATAC.norm.bedGraph.log
   sort -k1,1 -k2,2n random_barcode2_ATAC.norm.bedGraph > random_barcode2_ATAC.norm.sorted.bedGraph

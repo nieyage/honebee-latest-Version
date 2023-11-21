@@ -118,34 +118,31 @@ library(treeio)
 library(ggnewscale)
 myUmapcolors <- c(  '#53A85F', '#F1BB72', '#F3B1A0', '#D6E7A3', '#57C3F3', '#476D87',
                     '#E95C59', '#E59CC4', '#AB3282', '#23452F', '#BD956A', '#8C549C', 
-                    '#E0D4CA', '#5F3D69', '#58A4C3', '#AA9A59', '#E63863', '#E39A35', 
-                    '#C1E6F3', '#6778AE', '#B53E2B', '#DCC1DD', '#CCE0F5', '#625D9E', 
-                    '#68A180', '#3A6963', '#968175', '#FF9999', '#344CB7', '#FFCC1D', 
-                    '#116530', '#24A19C', '#FF9A76', 
-                    "#FFFFB3", "#BEBADA", "#FB8072", "#80B1D3", "#FDB462", "#B3DE69", "#FCCDE5", 
-                    "#BC80BD", "#CCEBC5", "#FFED6F", 
-                    "#FF7F00", "#FFFF33", "#A65628", "#F781BF",'#9FA3A8', "#D9D9D9")
+                    '#E0D4CA', '#58A4C3', '#AA9A59', '#E63863', '#E39A35', '#C1E6F3', 
+                    '#6778AE', '#B53E2B', '#DCC1DD', '#CCE0F5', '#625D9E', 
+                    '#68A180', '#968175', '#FF9999', '#344CB7', '#FFCC1D', 
+                    '#24A19C', '#FF9A76',"#BC80BD", "#CCEBC5", "#FFED6F", 
+                    "#E95C59", "#476D87",'#9FA3A8')
 
+
+tree_anno<- read.csv("/data/R02/nieyg/project/honeybee/honebee-latest-Version/00_Figure/FigS5/OR_gene_tree_anno2.csv")
 Group =    c("Group1"=myUmapcolors[1],    "Group2"=myUmapcolors[2],    "Group3"=myUmapcolors[3],    "Group4"=myUmapcolors[4],    "Group5"=myUmapcolors[5],    "Group6"=myUmapcolors[6],    "Group7"=myUmapcolors[7],    "Group8"=myUmapcolors[8],    "Group9"=myUmapcolors[9],    "Group10"=myUmapcolors[10],
     "Group11"=myUmapcolors[11],    "Group12"=myUmapcolors[12],    "Group13"=myUmapcolors[13],    "Group14"=myUmapcolors[14],    "Group15"=myUmapcolors[15],    "Group16"=myUmapcolors[16],    "GroupUN3"=myUmapcolors[17],
     "GroupUN226"=myUmapcolors[18],    "GroupUN243"=myUmapcolors[19],    "GroupUN248"=myUmapcolors[20])
-
 rownames(tree_anno)<- tree_anno$last_name
-data<-  as.data.frame(tree_anno[,c(5,6,8,7,13,16)])
+data<-  as.data.frame(tree_anno[,c(5,6,9,8)])
 data_long<- melt(data, id.vars = c("last_name"), #需保留的不参与聚合的变量列名
-                  measure.vars = c('seqnames','subfamily','exp_pattern','Pherobase','origin'),
+                  measure.vars = c('seqnames','subfamily','exp_pattern2'),
                   variable.name = c('POS'),#聚合变量的新列名
                   value.name = 'value')
-
 order<- c("Group1","Group2" ,"Group4","Group5","Group7","Group9","Group10",
 "Group11","Group12","Group13","Group14","Group15","Group16","GroupUN243","GroupUN248",
 unique(data$subfamily)[2:19],
-unique(data$exp_pattern)[c(1,2,4,5)],
-unique(data$Pherobase)[2:9],
-unique(data$origin)[2:4],"undefine"
+unique(data$exp_pattern)[c(1,2)],
+"undefine"
 )
 data_long$value<- factor(data_long$value,levels=order)
-pdf("./00_Figure/FigS5/FigS5-OR_sequence_protein_similarity-tree_add_anno.pdf",width=20,height=20)
+pdf("./00_Figure/FigS5/FigS5-OR_sequence_protein_similarity-tree_add_anno.pdf",width=15,height=15)
 p1<- ggtree(tree, layout="fan",size=0.5) + geom_tiplab(size=3)
 p1
 p2<- p1+ new_scale_fill() + 
@@ -154,35 +151,34 @@ p2<- p1+ new_scale_fill() +
           geom=geom_tile,
           mapping=aes(y=last_name, x=POS,fill=value),
           offset=0.2,   # The distance between external layers, default is 0.03 times of x range of tree.
-          pwidth=0.4 # width of the external layer, default is 0.2 times of x range of tree.
+          pwidth=0.2 # width of the external layer, default is 0.2 times of x range of tree.
       ) +
       scale_fill_manual(
-          values=c(myUmapcolors,"#00AED7"),
-          guide=guide_legend(keywidth=0.5, keyheight=0.5, order=3)
+          values=c(myUmapcolors),
+          guide=guide_legend(keywidth=1, keyheight=1, order=3)
       ) 
-data2<-  tree_anno[,c(5,17)]
-p3<-p2+
-      geom_fruit(
-          data = data2,
-          geom = geom_col,
-          mapping = aes(y=last_name, x=TSS_AT_percent,),
-      ) + 
-      new_scale_fill()
-data3<-  tree_anno[,c(5,18)]
-p4<-p3+
-      geom_fruit(
-          data = data3,
-          geom = geom_col,
-          mapping = aes(y=last_name, x=TES_length),
-      ) + 
-      new_scale_fill()
-
-p4
+p2
+##data2<-  tree_anno[,c(5,17)]
+#p3<-p2+
+#      geom_fruit(
+#          data = data2,
+#          geom = geom_col,
+#          mapping = aes(y=last_name, x=TSS_AT_percent,),
+#      ) + 
+#      new_scale_fill()
+#data3<-  tree_anno[,c(5,18)]
+#p4<-p3+
+#      geom_fruit(
+#          data = data3,
+#          geom = geom_col,
+#          mapping = aes(y=last_name, x=TES_length),
+#      ) + 
+#      new_scale_fill()
+#
+#p4
 dev.off()
 
 cluster_info<-as.data.frame(table(dotplot_data$id))
-
-
 tree_anno<- read.csv("/data/R02/nieyg/project/honeybee/honebee-latest-Version/00_Figure/FigS5/OR_gene_tree_anno2.csv")
 
 dotplot_data<-read.csv("./05_ORN_cluster2/02_second_cluster/06_rm_without_power/dotplot_data_remove_nopower_latest.csv")
@@ -257,3 +253,72 @@ p<-ggplot(data = data, aes_string(x = "origin", y = "Freq",
         theme(axis.text.x = element_text(angle = 25,vjust = 0.5,hjust = 0.5));
 p
 dev.off();
+
+# the OR count 
+coexp_OR<- tree_anno[tree_anno$exp_pattern2=="co-exp",]$OR_gene
+single_OR<- tree_anno[tree_anno$exp_pattern2=="single_OR",]$OR_gene
+
+all_OR<- c(coexp_OR,single_OR)
+OR_data<- t(as.matrix(ORN@assays$RNA[all_OR,]))
+obj_data<-colSums(as.data.frame(t(as.matrix(ORN@assays$RNA[all_OR,]))))
+OR_data[OR_data>1]=1
+
+dotplot_data<- data.frame(OR=names(obj_data),total=obj_data,total_cell=colSums(OR_data))
+dotplot_data$exp_pattern=tree_anno[match(dotplot_data$OR,tree_anno$OR_gene),]$exp_pattern2
+dotplot_data$avg_exp<- dotplot_data$total/dotplot_data$total_cell
+
+dotplot_data$OR_symbol=tree_anno[match(dotplot_data$OR,tree_anno$OR_gene),]$last_name
+dotplot_data<- dotplot_data[-1,]
+# plot the dot plot (order OR)
+
+pdf("./00_Figure/FigS5-OR_exp_order_dotplot.pdf",width=12,height=6)
+# the total count in cells
+dotplot_data<- dotplot_data[order(dotplot_data$total,decreasing=TRUE),]
+dotplot_data$OR_symbol<- factor(dotplot_data$OR_symbol,levels=unique(dotplot_data$OR_symbol))
+
+ggplot(dotplot_data, aes(x = OR_symbol, y = total, color = exp_pattern)) +
+  geom_point(alpha = 0.7) +
+  labs(x = "OR", y = "Total UMI", title = "Total UMI of OR gene") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+
+# the total cell in cells
+dotplot_data<- dotplot_data[order(dotplot_data$total_cell,decreasing=TRUE),]
+dotplot_data$OR_symbol<- factor(dotplot_data$OR_symbol,levels=unique(dotplot_data$OR_symbol))
+
+ggplot(dotplot_data, aes(x = OR_symbol, y = total_cell, color = exp_pattern)) +
+  geom_point(alpha = 0.7) +
+  labs(x = "OR", y = "Total total_cell", title = "Total total_cell of OR gene") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+
+# the avg  in cells
+dotplot_data<- dotplot_data[order(dotplot_data$avg_exp,decreasing=TRUE),]
+dotplot_data$OR_symbol<- factor(dotplot_data$OR_symbol,levels=unique(dotplot_data$OR_symbol))
+
+ggplot(dotplot_data, aes(x = OR_symbol, y = avg_exp, color = exp_pattern)) +
+  geom_point(alpha = 0.7) +
+  labs(x = "OR", y = "avg exp", title = "The avg exp of OR gene") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+dev.off()
+
+
+
+pdf("./00_Figure/FigS5-OR_exp_order_ECDF.pdf",width=12,height=6)
+ggplot(dotplot_data, aes(x = avg_exp,color = exp_pattern)) +
+  stat_ecdf()
+  labs(x = "OR", y = "avg exp", title = "The ECDF of avg exp") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
