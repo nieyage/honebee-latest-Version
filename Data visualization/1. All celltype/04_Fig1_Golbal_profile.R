@@ -516,12 +516,13 @@ Non_Neuron_top<-markers[markers$cluster=="Non-Neuron",7]
 
 Neuron_marker <- c("LOC726238","LOC724243","LOC100820634","LOC726770")
 #Neuron_marker <- intersect(Orco_n_Neuron_top,Orco_p_Neuron_top)
-Orco_marker <- c("LOC552552","LOC726019","LOC551704")
+Orco_marker <- c("Or2","LOC552552","LOC726019","LOC551704")
 Orco_n_marker <- Orco_n_Neuron_top[1:4]
-Idents(honeybee)<- factor(Idents(honeybee),levels=c("Non-neuron","Orco-Neuron","Orco+Neuron"))
+
+Idents(honeybee)<- factor(Idents(honeybee),levels=c("Orco-Neuron","Orco+Neuron","Non-neuron"))
 DefaultAssay(honeybee)<-"SCT"
 pdf("./00_Figure/Fig1/Fig1F-b-dotplot.pdf",width=8,height=4)
-DotPlot(honeybee,features = c(Neuron_marker,Orco_n_marker,Orco_marker)) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
+DotPlot(honeybee,features = c(Neuron_marker,Orco_marker,Orco_n_marker)) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
 dev.off()
 
 

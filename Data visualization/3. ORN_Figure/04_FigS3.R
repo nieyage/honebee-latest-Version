@@ -905,6 +905,11 @@ paste ID result |sort -k1,1
 >LOC100578045
 ATATTAAAACAAATATTTTAACGATATAGAAGAATCTAAAAATTTATGTTA
 
+cd /data/R02/nieyg/project/honeybee/honebee-latest-Version/13_TES_signal/RNAfold/LOC100578045_rss.pdf
+
+
+
+
 RNAfold --noconv -p < Or67.fa > Or67.res
 /md01/nieyg/software/ViennaRNA-2.6.4/src/Utils/relplot.pl Or67_ss.ps Or67_dp.ps > Or67_rss.ps
 magick convert -density 300 Or67_rss.ps Or67_rss.pdf # 生成二级结构pdf图

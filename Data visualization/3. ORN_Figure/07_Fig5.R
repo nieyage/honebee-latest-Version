@@ -23,12 +23,10 @@ ggtree(data.tree,layout="circular") +
 geom_tiplab()+ 
 geom_hilight(node=c(68,98,99),fill = "blue",alpha = 0.6)
 dev.off()
-# Fig5E: 
-obj<- readRDS("./05_ORN_cluster2/05_combination_group_recluster/obj_recluster.rds")
-Idents(obj)<-obj$Annotation
-identityMapping <- c('C1' = 'C39', 'C2' = 'C40','C3' = 'C41', 'C4' = 'C42')
 
-obj <- RenameIdents(obj, identityMapping )
+
+obj<- readRDS("./00_Figure/Fig4/Fig4-last-data-obj.rds")
+Idents(obj)<-obj$group_manully
 obj_features<- c("Or63-b","LOC410603","LOC107963999","LOC100578045")
 barcode_label<-data.frame(barcode=colnames(obj),label=Idents(obj))
 DefaultAssay(obj)<-"raw_RNA"
@@ -37,23 +35,93 @@ barcode_label<- barcode_label[order(barcode_label$label),]
 obj_data<- obj_data[rownames(barcode_label),]
 
 
-C39_data<-obj_data[rownames(barcode_label[barcode_label$label=="C39",]),]
-C40_data<-obj_data[rownames(barcode_label[barcode_label$label=="C40",]),]
-C41_data<-obj_data[rownames(barcode_label[barcode_label$label=="C41",]),]
-C42_data<-obj_data[rownames(barcode_label[barcode_label$label=="C42",]),]
+C39_data<-obj_data[rownames(barcode_label[barcode_label$label=="C1",]),]
+C40_data<-obj_data[rownames(barcode_label[barcode_label$label=="C2",]),]
+C41_data<-obj_data[rownames(barcode_label[barcode_label$label=="C3",]),]
+C42_data<-obj_data[rownames(barcode_label[barcode_label$label=="C4",]),]
 
 C39_data<- C39_data[which(rowSums(C39_data)>0),]
 C40_data<- C40_data[which(rowSums(C40_data)>0),]
 C41_data<- C41_data[which(rowSums(C41_data)>0),]
 C42_data<- C42_data[which(rowSums(C42_data)>0),]
 
+C42_data<- C42_data[order(C42_data$LOC100578045),]
+C41_data<- C41_data[order(C41_data$LOC100578045,C41_data$LOC107963999),]
 C39_data<- C39_data[order(C39_data$LOC100578045,C39_data$LOC107963999,C39_data$LOC410603,C39_data$`Or63-b`),]
 C40_data<- C40_data[order(C40_data$LOC100578045,C40_data$LOC107963999,C40_data$LOC410603,C40_data$`Or63-b`),]
-C41_data<- C41_data[order(C41_data$LOC100578045,C41_data$LOC107963999,C41_data$LOC410603,C41_data$`Or63-b`),]
-C42_data<- C42_data[order(C42_data$LOC100578045,C42_data$LOC107963999,C42_data$LOC410603,C42_data$`Or63-b`),]
+last_data_heatmap<- rbind(C39_data,C40_data,C41_data,C42_data)
 
+write.csv(last_data_heatmap,"00_Figure/Fig4/Fig4E_4gene_heatmap_data.csv")
+
+last_data_heatmap<- read.csv("/data/R02/nieyg/project/honeybee/honebee-latest-Version/00_Figure/Fig4/Fig4E_4gene_heatmap_data.csv",row.names=1)
+smooth_column <- function(col) {
+  smoothed <- numeric(length(col))
+  for (i in 2:(length(col) - 1)) {
+    smoothed[i] <- (col[i - 1] + col[i] + col[i + 1]) / 3
+  }
+  smoothed[1] <- (col[1] + col[2]) / 2
+  smoothed[length(col)] <- (col[length(col) - 1] + col[length(col)]) / 2
+  return(smoothed)
+}
+
+smooth_column_5cell <- function(col) {
+  smoothed <- numeric(length(col))
+  for (i in 3:(length(col) - 2)) {
+    smoothed[i] <- (col[i - 2] + col[i - 1] + col[i] + col[i + 1] + col[i + 2]) / 5
+  }
+  smoothed[1] <- (col[1] + col[2] + col[3]) / 3
+  smoothed[2] <- (col[1] + col[2] + col[3] + col[4]) / 4
+  smoothed[length(col) - 1] <- (col[length(col) - 3] + col[length(col) - 2] + col[length(col) - 1] + col[length(col)]) / 4
+  smoothed[length(col)] <- (col[length(col) - 2] + col[length(col) - 1] + col[length(col)]) / 3
+  return(smoothed)
+}
 
 library(pheatmap)
+
+
+# 对每一列进行平滑
+my47colors <- c('#E5D2DD', '#53A85F', '#F1BB72', '#F3B1A0', '#D6E7A3', '#57C3F3', '#476D87',
+         '#E95C59', '#E59CC4', '#AB3282', '#23452F', '#BD956A', '#8C549C', '#585658',
+         '#9FA3A8', '#E0D4CA', '#5F3D69', '#C5DEBA', '#58A4C3', '#E4C755', '#F7F398',
+         '#AA9A59', '#E63863', '#E39A35', '#C1E6F3', '#6778AE', '#91D0BE', '#B53E2B',
+         '#712820', '#DCC1DD', '#CCE0F5', '#CCC9E6', '#625D9E', '#68A180', '#3A6963',
+         '#968175', '#161853', '#FF9999', '#344CB7', '#FFCC1D', '#116530', '#678983',
+         '#678983', '#A19882', '#FFBCBC', '#24A19C', '#FF9A76')
+color_for_cluster<- c("#4BA9D1",my47colors[6:8])
+barcode_label_pheatmap<-data.frame(label=c(rep("C1",nrow(C39_data)),rep("C2",nrow(C40_data)),rep("C3",nrow(C41_data)),rep("C4",nrow(C42_data))))
+rownames(barcode_label_pheatmap)<-rownames(last_data_heatmap)
+col <- color_for_cluster[1:length(unique(barcode_label_pheatmap$label))]
+names(col)<-unique(barcode_label_pheatmap$label)
+ann_colors= list(label = col)
+last_data_heatmap_smoothed_data <- as.data.frame(lapply(last_data_heatmap, smooth_column))
+rownames(last_data_heatmap_smoothed_data)<- rownames(last_data_heatmap)
+
+
+pdf("./00_Figure/Fig4/Fig4E_4gene_heatmap.pdf",height=3,width=8)
+pheatmap(t(last_data_heatmap),
+             cluster_cols = F,
+             cluster_rows = F,
+             color = colorRampPalette(c("white", "#CC0000"))(100),
+             annotation_col = barcode_label_pheatmap,
+             annotation_colors = ann_colors,
+             #annotation_row = barcode_label_pheatmap,
+             annotation_legend = TRUE,
+             show_rownames=T,
+             show_colnames=F
+      )
+pheatmap(t(last_data_heatmap_smoothed_data),
+             cluster_cols = F,
+             cluster_rows = F,
+             color = colorRampPalette(c("white", "#CC0000"))(100),
+             annotation_col = barcode_label_pheatmap,
+             annotation_colors = ann_colors,
+             #annotation_row = barcode_label_pheatmap,
+             annotation_legend = TRUE,
+             show_rownames=T,
+             show_colnames=F
+      )
+dev.off()
+
 # 
 # clusterMatrix <- function(input_matrix) {
 #   # Define the clustering method and other parameters
@@ -97,35 +165,7 @@ library(pheatmap)
 # 	C41_data_clustered_smoothed_data,
 # 	C42_data_clustered_smoothed_data)
 # 
-# 对每一列进行平滑
-my47colors <- c('#E5D2DD', '#53A85F', '#F1BB72', '#F3B1A0', '#D6E7A3', '#57C3F3', '#476D87',
-         '#E95C59', '#E59CC4', '#AB3282', '#23452F', '#BD956A', '#8C549C', '#585658',
-         '#9FA3A8', '#E0D4CA', '#5F3D69', '#C5DEBA', '#58A4C3', '#E4C755', '#F7F398',
-         '#AA9A59', '#E63863', '#E39A35', '#C1E6F3', '#6778AE', '#91D0BE', '#B53E2B',
-         '#712820', '#DCC1DD', '#CCE0F5', '#CCC9E6', '#625D9E', '#68A180', '#3A6963',
-         '#968175', '#161853', '#FF9999', '#344CB7', '#FFCC1D', '#116530', '#678983',
-         '#678983', '#A19882', '#FFBCBC', '#24A19C', '#FF9A76')
-color_for_cluster<- c("#4BA9D1",my47colors[6:8])
-barcode_label_pheatmap<-data.frame(label=c(rep("C1",nrow(C39_data)),rep("C2",nrow(C40_data)),rep("C3",nrow(C41_data)),rep("C4",nrow(C42_data))))
-last_data_heatmap<- rbind(C39_data,C40_data,C41_data,C42_data)
-rownames(barcode_label_pheatmap)<-rownames(last_data_heatmap)
-col <- color_for_cluster[1:length(unique(barcode_label_pheatmap$label))]
-names(col)<-unique(barcode_label_pheatmap$label)
-ann_colors= list(label = col)
 
-pdf("./00_Figure/Fig5/Fig5E_4gene_heatmap.pdf",height=3,width=8)
-pheatmap(t(last_data_heatmap),
-             cluster_cols = F,
-             cluster_rows = F,
-             color = colorRampPalette(c("white", "#CC0000"))(100),
-             annotation_col = barcode_label_pheatmap,
-             annotation_colors = ann_colors,
-             #annotation_row = barcode_label_pheatmap,
-             annotation_legend = TRUE,
-             show_rownames=T,
-             show_colnames=F
-      )
-dev.off()
 
 colors_list<- colorRampPalette(c("white", "#CC0000"))(100)
 
