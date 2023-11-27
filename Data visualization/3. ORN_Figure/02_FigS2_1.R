@@ -72,7 +72,7 @@ for (i in 1:length(all_gene)){
 
 Before_ISAC_trans <- RenameGenesSeurat_SCT(Before_ISAC,newnames = all_gene)
 
-DefaultAssay(Before_ISAC)<-"raw_RNA"
+DefaultAssay(Before_ISAC)<-"SCT"
 p<-DotPlot(Before_ISAC,features = all_receptor_gene) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
 dotplot_data<-p$data;
 #filter dotplot ;
@@ -87,6 +87,14 @@ gtf<- gtf[gtf$type=="transcript",]
 gtf_data<- as.data.frame(gtf[gtf$gene_name%in% all_receptor_gene])
 gtf_data<-gtf_data[order(gtf_data$seqnames,gtf_data$start),]
 gene_order<- unique(gtf_data$gene_name)
+Orco<- c("Or2","LOC552552","LOC726019","LOC551704")
+
+dotplot_data$features.plot<- factor(dotplot_data$features.plot,levels=gene_order)
+dotplot_data<- dotplot_data[order(dotplot_data$id),]
+dotplot_feature<-unique(c(Orco,rev(as.character(dotplot_data$features.plot)),gene_order))
+
+gene_order<- dotplot_feature
+
 dotplot_feature<- gene_order
 for (i in 1:length(dotplot_feature)){
     if(dotplot_feature[i] %in% ORgene_name_trans$OR_gene){
@@ -107,6 +115,18 @@ pdf("./00_Figure/FigS2/FigS2A-2-Before_ISAC-chemoreceptor_gene_heatmap-orderbytr
 DoHeatmap(Before_ISAC_trans,draw.lines = FALSE,disp.max = 2,disp.min = -2,size = 4, slot = "scale.data",angle = 315, features = dotplot_feature,group.colors =c(myUmapcolors,myUmapcolors,myUmapcolors,myUmapcolors), label=FALSE)+ scale_fill_gradientn(colors = solarExtra[2:8])
 #DoHeatmap(Before_ISAC_trans,disp.max = 1,disp.min = -1,slot = "scale.data",size = 4,angle = 315, features = dotplot_feature,group.colors =c(myUmapcolors,myUmapcolors,myUmapcolors,myUmapcolors), label=FALSE)+ scale_fill_gradientn(colors = solarExtra[4:8])
 dev.off()
+
+pdf("./00_Figure/FigS2/FigS2A-b-remove_nopower-dotplot-orderbytree_lastest.pdf",width=22, height=10)
+p<-DotPlot(Before_ISAC,features = gene_order) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
+p&scale_x_discrete(labels=dotplot_feature)
+p<-DotPlot(Before_ISAC,features = gene_order[-1:-4]) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
+p&scale_x_discrete(labels=dotplot_feature[-1:-4])
+dev.off()
+
+dotplot_data$features.plot<- factor(dotplot_data$features.plot,levels=gene_order)
+dotplot_data<- dotplot_data[order(dotplot_data$id),]
+
+dotplot_feature<-unique(c(Orco,rev(as.character(dotplot_data$features.plot))))
 
 
 
@@ -133,7 +153,7 @@ cosine_dist <- as.dist(1-cosine(data.dims))
 data.tree <- ape::as.phylo(x = hclust(d = cosine_dist))
 
 library(ggtree)
-pdf("./00_Figure/FigS2/FigS2B-1-After_ISAC_all-cluster-ORN-tree-cosine.pdf",width=12,height=20)
+pdf("./00_Figure/FigS2/FigS2C-1-After_ISAC_all-cluster-ORN-tree-cosine.pdf",width=12,height=20)
 ggtree(data.tree) + geom_tiplab()+ geom_treescale()
 dev.off()
 
@@ -169,11 +189,29 @@ for (i in 1:length(all_gene)){
 }
 
 After_ISAC_all_trans <- RenameGenesSeurat_SCT(After_ISAC_all,newnames = all_gene)
+DefaultAssay(After_ISAC_all)<-"SCT"
+p<-DotPlot(After_ISAC_all,features = all_receptor_gene) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
+dotplot_data<-p$data;
+#filter dotplot ;
+dotplot_data$state<-"No";
+for(i in 1:nrow(dotplot_data)){
+  if(dotplot_data[i,]$pct.exp>35&&dotplot_data[i,]$avg.exp.scaled>= 2.5){dotplot_data[i,]$state="Yes"};
+}
+dotplot_data<-dotplot_data[which(dotplot_data$state=="Yes"),]
+dotplot_data<-dotplot_data[-which(dotplot_data$features.plot%in% Orco),];
 gtf <- rtracklayer::import('/data/R02/nieyg/ref/10X/Amel_HAv3.1/Amel_HAv3_1/genes/genes.gtf.gz')
 gtf<- gtf[gtf$type=="transcript",]
 gtf_data<- as.data.frame(gtf[gtf$gene_name%in% all_receptor_gene])
 gtf_data<-gtf_data[order(gtf_data$seqnames,gtf_data$start),]
 gene_order<- unique(gtf_data$gene_name)
+Orco<- c("Or2","LOC552552","LOC726019","LOC551704")
+
+dotplot_data$features.plot<- factor(dotplot_data$features.plot,levels=gene_order)
+dotplot_data<- dotplot_data[order(dotplot_data$id),]
+dotplot_feature<-unique(c(Orco,rev(as.character(dotplot_data$features.plot)),gene_order))
+
+gene_order<- dotplot_feature
+
 dotplot_feature<- gene_order
 for (i in 1:length(dotplot_feature)){
     if(dotplot_feature[i] %in% ORgene_name_trans$OR_gene){
@@ -181,6 +219,8 @@ for (i in 1:length(dotplot_feature)){
         dotplot_feature[i]=tmp
     }
 }
+
+
 DefaultAssay(After_ISAC_all_trans)<-"SCT"
 blueYellow = c("1"="#352A86","2"="#343DAE","3"="#0262E0","4"="#1389D2","5"="#2DB7A3","6"="#A5BE6A","7"="#F8BA43","8"="#F6DA23","9"="#F8FA0D")
 dotplot_feature<- dotplot_feature[which(dotplot_feature %in% rownames(After_ISAC_all_trans))]
@@ -188,6 +228,14 @@ After_ISAC_all_trans<- ScaleData(After_ISAC_all_trans,features=dotplot_feature)
 
 pdf("./00_Figure/FigS2/FigS2B-2-After_ISAC_all-chemoreceptor_gene_heatmap-orderbytree.pdf",width=18, height=20)
 DoHeatmap(After_ISAC_all_trans,draw.lines = FALSE,disp.max = 2,disp.min = -2,size = 4, slot = "scale.data",angle = 315, features = dotplot_feature,group.colors =c(myUmapcolors,myUmapcolors,myUmapcolors,myUmapcolors), label=FALSE)+ scale_fill_gradientn(colors = solarExtra[2:8])
+dev.off()
+
+pdf("./00_Figure/FigS2/FigS2C-b-remove_nopower-dotplot-orderbytree_lastest.pdf",width=22, height=22)
+p<-DotPlot(After_ISAC_all,features = gene_order) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
+p&scale_x_discrete(labels=dotplot_feature)
+p<-DotPlot(After_ISAC_all,features = gene_order[-1:-4]) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
+p&scale_x_discrete(labels=dotplot_feature[-1:-4])
+
 dev.off()
 
 
