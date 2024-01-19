@@ -210,7 +210,6 @@ Apis_mellifera<-c(single_OR_cluster,multiple_OR_cluster);
 
 #fly need to use the public datasets
 Drosophila_melanogaster<-c(40,5)
-
 # total:42
 Aedes_aegypti<-c(23,19);
 cross_species_cluster_number<-data.frame(species=c(rep("Apis mellifera",2),rep("D.melanogaster",2),rep("Ae.aegypti",2)),

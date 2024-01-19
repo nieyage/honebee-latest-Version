@@ -293,3 +293,5 @@ p3 <- DimPlot(Neuron, cols=c("#5CC8F2","#009E73","#E69F00"),reduction = "wnn.uma
 p1 +p2+p3 & NoLegend() & theme(plot.title = element_text(hjust = 0.5))
 dev.off()
 
+ cols=c("#F0A04B", "#183A1D"),
+ 

@@ -47,6 +47,7 @@ ORN$LOC551704_Exp <- ORN@assays$RNA@data['LOC551704',]
 
 library(tidyr)
 library(ggrepel)
+library(cowplot)
 # 2. in cluster level
 DefaultAssay(ORN)<-"SCT"
 p<-DotPlot(ORN,features = all_receptor_gene) +  xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5, size = 9)) 
@@ -60,6 +61,7 @@ plot_avgExp.clusters.df <-
 pmain=  plot_avgExp.clusters.df %>%
   ggplot(aes(Or2, LOC552552, color=id)) + 
   geom_point() +
+  scale_color_manual(values=colors_list)+
   geom_text_repel(aes(label=id), hjust=0) + 
   theme(legend.position = "none") +
   scale_x_log10() + scale_y_log10()+
@@ -86,7 +88,7 @@ plot_avgExp.clusters.df <-
   pivot_wider(names_from = features.plot, values_from = avg.exp) %>% as.data.frame() 
 pmain=  plot_avgExp.clusters.df %>%
   ggplot(aes(Or2, LOC726019, color=id)) + 
-  geom_point() +
+  geom_point() +scale_color_manual(values=colors_list)+
   geom_text_repel(aes(label=id), hjust=0) + 
   theme(legend.position = "none") +
   scale_x_log10() + scale_y_log10()+
@@ -115,7 +117,7 @@ plot_avgExp.clusters.df <-
 
 pmain=  plot_avgExp.clusters.df %>%
   ggplot(aes(Or2, LOC551704, color=id)) + 
-  geom_point() +
+  geom_point() +scale_color_manual(values=colors_list)+
   geom_text_repel(aes(label=id), hjust=0) + 
   theme(legend.position = "none") +
   scale_x_log10() + scale_y_log10()+

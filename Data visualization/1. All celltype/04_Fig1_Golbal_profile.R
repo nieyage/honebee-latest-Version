@@ -364,7 +364,15 @@ p1|p2|p3|p4|p5|p6
 dev.off()
 
 
-
+# Fig1D:
+Neuron<-readRDS("./03_Neuron/WNN_Neuron_integrated.rds")
+Idents(Neuron) <- Neuron$Annotation
+pdf("./00_Figure/FigS1E-Neuron_cluster_WNN.pdf",width=15,height=5)
+p1 <- DimPlot(Neuron, reduction = "wnn.umap", group.by = "seurat_clusters",label = TRUE, label.size = 3.5, repel = TRUE) + ggtitle("cluster")
+p2 <- DimPlot(Neuron, cols=c("#F0A04B", "#183A1D"),reduction = "wnn.umap", label = TRUE, label.size = 3.5, repel = TRUE) + ggtitle("annotation")
+p3 <- DimPlot(Neuron, cols=c("#5CC8F2","#009E73","#E69F00"),reduction = "wnn.umap", group.by = "orig.ident", shuffle=TRUE,label = F, label.size = 5, repel = TRUE) + ggtitle("stage")
+p1 +p2+p3 & NoLegend() & theme(plot.title = element_text(hjust = 0.5))
+dev.off()
 
 
 
@@ -380,9 +388,9 @@ color_for_neuron<-c("#6580A8","#63A8A6","#A8A7A7")
 # ORN: 
 # Non-ORN: 
 pdf('./00_Figure/Fig1/Fig1E-Neuron_marker_FeaturePlot_WNN.pdf', width=13, height=4)
-p1<- FeaturePlot(Neuron,reduction = 'wnn.umap',max.cutoff = 10,features = c("LOC413063") ,order=TRUE, ncol = 1)+ggtitle("LOC413063 (pepple)")
-p2<- FeaturePlot(Neuron,cols =c("lightgrey", color_for_neuron[1]), reduction = 'wnn.umap',max.cutoff = 7,features = c("LOC551837") ,order=FALSE, ncol = 1)+ggtitle("LOC551837 (bgm)")
-p3<- FeaturePlot(Neuron,cols =c("lightgrey", color_for_neuron[2]), reduction = 'wnn.umap',max.cutoff = 10,features = c("Or2") ,order=TRUE, ncol = 1)+ggtitle("Or2 (Orco)")
+p1<- FeaturePlot(Neuron,cols =c("lightgrey", "#8ECC92"),reduction = 'wnn.umap',max.cutoff = 10,features = c("LOC413063") ,order=TRUE, ncol = 1)+ggtitle("LOC413063 (pepple)")
+p2<- FeaturePlot(Neuron,cols =c("lightgrey", "#956DB3"), reduction = 'wnn.umap',max.cutoff = 7,features = c("LOC551837") ,order=FALSE, ncol = 1)+ggtitle("LOC551837 (bgm)")
+p3<- FeaturePlot(Neuron,cols =c("lightgrey", "#2E9234"), reduction = 'wnn.umap',max.cutoff = 10,features = c("Or2") ,order=TRUE, ncol = 1)+ggtitle("Or2 (Orco)")
 p1|p2|p3
 dev.off()
 
@@ -514,10 +522,10 @@ Orco_p_Neuron_top<-markers[markers$cluster=="Orco+Neuron",7]
 Non_Neuron_top<-markers[markers$cluster=="Non-Neuron",7]
 
 
-Neuron_marker <- c("LOC726238","LOC724243","LOC100820634","LOC726770")
+Neuron_marker <- c("LOC413063","LOC726238","LOC724243","LOC100820634")
 #Neuron_marker <- intersect(Orco_n_Neuron_top,Orco_p_Neuron_top)
 Orco_marker <- c("Or2","LOC552552","LOC726019","LOC551704")
-Orco_n_marker <- Orco_n_Neuron_top[1:4]
+Orco_n_marker <- c("LOC551837",Orco_n_Neuron_top[1:3])
 
 Idents(honeybee)<- factor(Idents(honeybee),levels=c("Orco-Neuron","Orco+Neuron","Non-neuron"))
 DefaultAssay(honeybee)<-"SCT"
