@@ -242,7 +242,13 @@ ggboxplot(data, x="exp_type", y="dist",
   bxp.errorbar = T,width=0.6, notch = F)+
 stat_compare_means(comparisons = my_comparisons, method='t.test')+theme(legend.position="none")+ylab("Intergenic region length")
 dev.off()
+pdf("./Intergenic_region_length_distribution.pdf",width=8,height=4)
+ggplot(data, aes(dist)) +
+  geom_density()+xlim(0,10000)
+ggplot(data, aes(dist)) +
+  geom_density()+xlim(0,20000)
 
+dev.off()
 # Fig5K: Number of "AAUAAA"
 # trans to mRNA
 
