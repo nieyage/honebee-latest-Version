@@ -276,6 +276,7 @@ intersections_last<- rbind(strand_n_intersections,strand_p_intersections)
 
 intersections_last$type <- dotplot_data[match(intersections_last$OR,dotplot_data$features.plot),]$gene_type
 intersections_last <- na.omit(intersections_last)
+intersections_last$OR_symbol<- ORgene_name_trans[match(intersections_last$OR,ORgene_name_trans$gene_name),]$last_name
 
 intersections_last$type<-factor(intersections_last$type,levels=c("single_OR","coexp(NRT)","coexp(RT)"))
 library(ggpubr)
@@ -293,6 +294,12 @@ ggboxplot(intersections_last, x="type", y="intersections",
   bxp.errorbar = T,width=0.6, notch = F)+
 stat_compare_means(comparisons = my_comparisons)+theme(legend.position="none")+ylab("Intergenic region length")
 dev.off()
+
+
+
+
+write.csv(intersections_last,"intersections_last.csv")
+
 
 # Step2: dN/dS(compare with single exp OR) coexp (NRT vs RT) 
 library(ggpubr)

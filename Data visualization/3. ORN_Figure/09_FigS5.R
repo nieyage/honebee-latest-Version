@@ -99,8 +99,11 @@ OR_fasta<-readAAStringSet("/md01/nieyg/ref/10X/Amel_HAv3.1/OR_transcript_pep.aa"
 GR_fasta<-readAAStringSet("/md01/nieyg/ref/10X/Amel_HAv3.1/GR_transcript_pep.aa", format="fasta",nrec=-1L, skip=0L, seek.first.rec=FALSE, use.names=TRUE)
 IR_fasta<-readAAStringSet("/md01/nieyg/ref/10X/Amel_HAv3.1/IR_transcript_pep.aa", format="fasta",nrec=-1L, skip=0L, seek.first.rec=FALSE, use.names=TRUE)
 supply_fasta<-readAAStringSet("/md01/nieyg/ref/10X/Amel_HAv3.1/supply.aa", format="fasta",nrec=-1L, skip=0L, seek.first.rec=FALSE, use.names=TRUE)
+pub<-readAAStringSet("/md01/nieyg/ref/10X/Amel_HAv3.1/OR_transcript_pep_tree.aa")
+
+
 #OR2 is placed in the last column;
-all_OR_gene_fasta<- c(OR_fasta,supply_fasta)
+all_OR_gene_fasta<- c(pub,supply_fasta[c(1,4,5)])
 
 all_OR_gene_fasta<- all_OR_gene_fasta[which(names(all_OR_gene_fasta)%in% tree_anno$OR_gene),]
 names(all_OR_gene_fasta) <- tree_anno$last_name[match(names(all_OR_gene_fasta),tree_anno$OR_gene)]
@@ -108,7 +111,7 @@ names(all_OR_gene_fasta) <- tree_anno$last_name[match(names(all_OR_gene_fasta),t
 aln <- muscle::muscle(all_OR_gene_fasta)
 auto <- maskGaps(aln, min.fraction=0.5, min.block.width=4)
 sdist <- stringDist(as(auto,"AAStringSet"), method="hamming")
-clust <- hclust(sdist,method="complete")#"ward.D"’, ‘"ward.D2"’,‘"single"’, ‘"complete"’, ‘"average"’ (= UPGMA), ‘"mcquitty"’, ‘"median"’ or ‘"centroid"’ (= UPGMC)
+clust <- hclust(sdist,method="ward.D")#"ward.D"’, ‘"ward.D2"’,‘"single"’, ‘"complete"’, ‘"average"’ (= UPGMA), ‘"mcquitty"’, ‘"median"’ or ‘"centroid"’ (= UPGMC)
 tree <- as.phylo(clust)
 
 library(ggtreeExtra)
@@ -130,52 +133,35 @@ Group =    c("Group1"=myUmapcolors[1],    "Group2"=myUmapcolors[2],    "Group3"=
     "Group11"=myUmapcolors[11],    "Group12"=myUmapcolors[12],    "Group13"=myUmapcolors[13],    "Group14"=myUmapcolors[14],    "Group15"=myUmapcolors[15],    "Group16"=myUmapcolors[16],    "GroupUN3"=myUmapcolors[17],
     "GroupUN226"=myUmapcolors[18],    "GroupUN243"=myUmapcolors[19],    "GroupUN248"=myUmapcolors[20])
 rownames(tree_anno)<- tree_anno$last_name
-data<-  as.data.frame(tree_anno[,c(5,6,9,8)])
+data<-  as.data.frame(tree_anno[,c(5,6,9)])
 data_long<- melt(data, id.vars = c("last_name"), #需保留的不参与聚合的变量列名
-                  measure.vars = c('seqnames','subfamily','exp_pattern2'),
+                  measure.vars = c('seqnames','exp_pattern3'),
                   variable.name = c('POS'),#聚合变量的新列名
                   value.name = 'value')
 order<- c("Group1","Group2" ,"Group4","Group5","Group7","Group9","Group10",
 "Group11","Group12","Group13","Group14","Group15","Group16","GroupUN243","GroupUN248",
-unique(data$subfamily)[2:19],
-unique(data$exp_pattern)[c(1,2)],
+"single_OR","MP","SP",
 "undefine"
 )
 data_long$value<- factor(data_long$value,levels=order)
 pdf("./00_Figure/FigS5/FigS5-OR_sequence_protein_similarity-tree_add_anno.pdf",width=15,height=15)
+clust <- hclust(sdist,method="ward.D")#"ward.D"’, ‘"ward.D2"’,‘"single"’, ‘"complete"’, ‘"average"’ (= UPGMA), ‘"mcquitty"’, ‘"median"’ or ‘"centroid"’ (= UPGMC)
+tree <- as.phylo(clust)
 p1<- ggtree(tree, layout="fan",size=0.5) + geom_tiplab(size=3)
-p1
 p2<- p1+ new_scale_fill() + 
       geom_fruit(
           data=data_long,
           geom=geom_tile,
           mapping=aes(y=last_name, x=POS,fill=value),
           offset=0.2,   # The distance between external layers, default is 0.03 times of x range of tree.
-          pwidth=0.2 # width of the external layer, default is 0.2 times of x range of tree.
+          pwidth=0.1 # width of the external layer, default is 0.2 times of x range of tree.
       ) +
       scale_fill_manual(
-          values=c(myUmapcolors),
+          values=c(myUmapcolors[1:15],"#129FAF", "#DE7C5B","#FBD277","grey"),
           guide=guide_legend(keywidth=1, keyheight=1, order=3)
       ) 
 p2
-##data2<-  tree_anno[,c(5,17)]
-#p3<-p2+
-#      geom_fruit(
-#          data = data2,
-#          geom = geom_col,
-#          mapping = aes(y=last_name, x=TSS_AT_percent,),
-#      ) + 
-#      new_scale_fill()
-#data3<-  tree_anno[,c(5,18)]
-#p4<-p3+
-#      geom_fruit(
-#          data = data3,
-#          geom = geom_col,
-#          mapping = aes(y=last_name, x=TES_length),
-#      ) + 
-#      new_scale_fill()
-#
-#p4
+
 dev.off()
 
 cluster_info<-as.data.frame(table(dotplot_data$id))

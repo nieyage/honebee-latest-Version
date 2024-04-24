@@ -231,16 +231,19 @@ write.csv(tmp_data,"./OR_info.csv")
 
 data<- read.csv("./OR_info.csv")
 data<- na.omit(data)
-data$dist[data$dist>10000]<- 10000;
+data$dist[data$dist>15000]<- 15000;
+data$exp_type[data$exp_type=="co-exp_MP"]<- "co-exp"
+data$exp_type[data$exp_type=="co-exp_RT"]<- "co-exp"
+
 library(ggpubr)
 library(cowplot)
-my_comparisons <- list( c("single_OR", "co-exp_MP"), c("single_OR", "co-exp_RT"), c("co-exp_MP", "co-exp_RT") )
-data$exp_type<- factor(data$exp_type,levels=c("single_OR","co-exp_RT","co-exp_MP"))
-pdf("./00_Figure/Fig5/Fig5J_singlevsNRTvsRT_Intergenic_region_length_distribution.pdf",width=4,height=4)
+#my_comparisons <- list( c("single_OR", "co-exp_MP"), c("single_OR", "co-exp_RT"), c("co-exp_MP", "co-exp_RT") )
+data$exp_type<- factor(data$exp_type,levels=c("single_OR","co-exp"))
+pdf("./00_Figure/Fig2/Fig2F_singlevscoexp_Intergenic_region_length_distribution.pdf",width=4,height=4)
 
 ggboxplot(data, x="exp_type", y="dist", 
   bxp.errorbar = T,width=0.6, notch = F)+
-stat_compare_means(comparisons = my_comparisons, method='t.test')+theme(legend.position="none")+ylab("Intergenic region length")
+stat_compare_means( method='t.test')+theme(legend.position="none")+ylab("Intergenic region length")
 dev.off()
 pdf("./Intergenic_region_length_distribution.pdf",width=8,height=4)
 ggplot(data, aes(dist)) +

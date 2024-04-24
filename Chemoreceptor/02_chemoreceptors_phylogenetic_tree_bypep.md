@@ -25,6 +25,10 @@ pdf("/data/R02/nieyg/project/honeybee/honebee-latest-Version/04_chemoreceptor/OR
 ggtree(tree, layout="fan", ladderize = FALSE, branch.length = "none",aes(color=group)) + geom_tiplab2(size=3) + theme(legend.position = "right")
 dev.off()
 
+pdf("/data/R02/nieyg/project/honeybee/honebee-latest-Version/04_chemoreceptor/last_name_OR_sequence_protein_similarity-tree_add_groupinfo.pdf",width=16,height=16)
+ggtree(tree, layout="fan", ladderize = FALSE, branch.length = "none") + geom_tiplab2(size=3) + theme(legend.position = "right")
+dev.off()
+
 # get the similarity rate matrix 
 dist_matrix <- as.matrix(sdist)
 dist_percent<-(max(dist_matrix)-dist_matrix)/max(dist_matrix)*100

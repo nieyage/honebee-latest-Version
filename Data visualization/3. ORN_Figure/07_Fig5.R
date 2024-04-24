@@ -718,8 +718,11 @@ dev.off()
 
 
 # MP OR pair vs single exp OR pair 
-MP_gene1<- c("LOC102656904","LOC100577101","LOC107965761","LOC725052")
-MP_gene2<- c("LOC102656221","Or41","LOC102655285","LOC100576839")
+#MP_gene1<- c("LOC102656904","LOC100577101","LOC107965761","LOC725052")
+#MP_gene2<- c("LOC102656221","Or41","LOC102655285","LOC100576839")
+MP_gene1<- c("LOC102656904","LOC102653615","LOC107965761","LOC725052","Or57","Or58")
+MP_gene2<- c("LOC102656221","LOC102653695","LOC102655285","LOC100576839","Or58","LOC102653637")
+
 MP_OR_pair<- data.frame(gene1=MP_gene1,gene2=MP_gene2)
 dotplot_data<-read.csv("./05_ORN_cluster2/02_second_cluster/06_rm_without_power/dotplot_data_remove_nopower_latest.csv")
 dotplot_feature<-unique(rev(as.character(dotplot_data$features.plot)));
@@ -739,6 +742,13 @@ for(gene1 in remaining_gene){
     Single_OR_pair<- rbind(Single_OR_pair,tmp)
   }
 }
+OR_pair<- read.csv("/data/R02/nieyg/project/honeybee/honebee-latest-Version/ORpairtype.csv")
+SP_OR_pair<- OR_pair[OR_pair$exp_type=="RT",1:2]
+colnames(SP_OR_pair)<-c("gene1","gene2")
+ORgene_name_trans<- read.csv("/md01/nieyg/project/honeybee/honebee-latest-Version/04_chemoreceptor/OR_nameing/OR_gene_naming_result.csv")
+SP_OR_pair$gene1 <- ORgene_name_trans[match(SP_OR_pair$gene1,ORgene_name_trans$last_name),]$OR_gene
+SP_OR_pair$gene2 <- ORgene_name_trans[match(SP_OR_pair$gene2,ORgene_name_trans$last_name),]$OR_gene
+
 
 # promoter similarity 
 library(Biostrings)
@@ -771,15 +781,34 @@ for (i in 1:nrow(Single_OR_pair)){
   tmp_data<- data.frame(gene1=gene1,gene2=gene2,promoter_sequence_similarity=dist_percent[gene1,gene2],type="Single_exp")
   Single_pair_seq_data<- rbind(Single_pair_seq_data,tmp_data)
 }
-last_pair_seq_data<- rbind(Single_pair_seq_data,MP_pair_seq_data)
+SP_OR_pair$gene1[-which(SP_OR_pair$gene1 %in% colnames(dist_percent))]
+SP_OR_pair$gene2[-which(SP_OR_pair$gene2 %in% colnames(dist_percent))]
+
+SP_OR_pair<- SP_OR_pair[which(SP_OR_pair$gene1 %in% colnames(dist_percent)),]
+SP_OR_pair<- SP_OR_pair[which(SP_OR_pair$gene2 %in% colnames(dist_percent)),]
+
+SP_OR_pair_seq_data<- data.frame()
+for (i in 1:nrow(SP_OR_pair)){
+  gene1<- SP_OR_pair[i,1]
+  gene2<- SP_OR_pair[i,2]
+  tmp_data<- data.frame(gene1=gene1,gene2=gene2,promoter_sequence_similarity=dist_percent[gene1,gene2],type="SP_exp")
+  SP_OR_pair_seq_data<- rbind(SP_OR_pair_seq_data,tmp_data)
+}
+
+last_pair_seq_data<- rbind(Single_pair_seq_data,MP_pair_seq_data,SP_OR_pair_seq_data)
 library(ggpubr)
-colors_for_exp_pattern<- c("#476D87","#E95C59")
-last_pair_seq_data$type<-factor(last_pair_seq_data$type,levels=c("Single_exp","MP_coexp"))
-pdf("./00_Figure/Fig5/Fig5I-MPvsSingle_sequence_similarity.pdf",width=3,height=3)
+colors_for_exp_pattern<- c("#129FAF", "#DE7C5B","#FBD277")
+last_pair_seq_data$type<-factor(last_pair_seq_data$type,levels=c("Single_exp","MP_coexp","SP_exp"))
+
+my_comparisons <- list( c(c("MP_coexp", "Single_exp"),"MP_coexp", "SP_exp"),c("SP_exp", "Single_exp") )
+pdf("./00_Figure/Fig5/Fig5I-MPvsSinglevsSP_sequence_similarity.pdf",width=3,height=3)
 ggboxplot(last_pair_seq_data, x="type", y="promoter_sequence_similarity", color = "type",width=0.6, notch = F)+
-stat_compare_means()+theme(legend.position="none")+ylab("sequence similarity of OR pair promoter")+
+stat_compare_means(comparisons = my_comparisons)+theme(legend.position="none")+ylab("sequence similarity of OR pair promoter")+
 scale_color_manual(values = colors_for_exp_pattern)
 dev.off()
+
+# single vs MP vs SP
+
 
 
 # kmer correlation
@@ -809,13 +838,23 @@ for (i in 1:nrow(Single_OR_pair)){
   tmp_data<- data.frame(gene1=gene1,gene2=gene2,kmer_cor=OR_kmer_cor[gene1,gene2],type="Single_exp")
   Single_pair_kmer_cor_data<- rbind(Single_pair_kmer_cor_data,tmp_data)
 }
-last_pair_kmer_cor_data<- rbind(Single_pair_kmer_cor_data,MP_pair_kmer_cor_data)
+
+SP_OR_pair_kmer_cor_data<- data.frame()
+for (i in 1:nrow(SP_OR_pair)){
+  gene1<- SP_OR_pair[i,1]
+  gene2<- SP_OR_pair[i,2]
+  tmp_data<- data.frame(gene1=gene1,gene2=gene2,kmer_cor=OR_kmer_cor[gene1,gene2],type="SP_exp")
+  SP_OR_pair_kmer_cor_data<- rbind(SP_OR_pair_kmer_cor_data,tmp_data)
+}
+
+last_pair_kmer_cor_data<- rbind(Single_pair_kmer_cor_data,MP_pair_kmer_cor_data,SP_OR_pair_kmer_cor_data)
 library(ggpubr)
-colors_for_exp_pattern<- c("#476D87","#E95C59")
-last_pair_kmer_cor_data$type<-factor(last_pair_kmer_cor_data$type,levels=c("Single_exp","MP_coexp"))
-pdf("./00_Figure/Fig5/Fig5J-MPvsSingle_kmer_cor.pdf",width=3,height=3)
+#colors_for_exp_pattern<- c("#476D87","#E95C59")
+last_pair_kmer_cor_data<- last_pair_kmer_cor_data[-258:-259,]
+last_pair_kmer_cor_data$type<-factor(last_pair_kmer_cor_data$type,levels=c("Single_exp","MP_coexp","SP_exp"))
+pdf("./00_Figure/Fig5/Fig5J-MPvsSinglevsSP_kmer_cor.pdf",width=3,height=3)
 ggboxplot(last_pair_kmer_cor_data, x="type", y="kmer_cor", color = "type",width=0.6, notch = F)+
-stat_compare_means()+theme(legend.position="none")+ylab("kmer correlation of OR pair promoter")+
+stat_compare_means(comparisons = my_comparisons)+theme(legend.position="none")+ylab("kmer correlation of OR pair promoter")+
 scale_color_manual(values = colors_for_exp_pattern)
 dev.off()
 
