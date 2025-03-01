@@ -800,7 +800,7 @@ library(ggpubr)
 colors_for_exp_pattern<- c("#129FAF", "#DE7C5B","#FBD277")
 last_pair_seq_data$type<-factor(last_pair_seq_data$type,levels=c("Single_exp","MP_coexp","SP_exp"))
 
-my_comparisons <- list( c(c("MP_coexp", "Single_exp"),"MP_coexp", "SP_exp"),c("SP_exp", "Single_exp") )
+my_comparisons <- list(c("MP_coexp", "Single_exp"),c("MP_coexp", "SP_exp"),c("SP_exp", "Single_exp") )
 pdf("./00_Figure/Fig5/Fig5I-MPvsSinglevsSP_sequence_similarity.pdf",width=3,height=3)
 ggboxplot(last_pair_seq_data, x="type", y="promoter_sequence_similarity", color = "type",width=0.6, notch = F)+
 stat_compare_means(comparisons = my_comparisons)+theme(legend.position="none")+ylab("sequence similarity of OR pair promoter")+

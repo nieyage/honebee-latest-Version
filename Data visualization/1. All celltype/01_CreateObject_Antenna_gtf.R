@@ -149,6 +149,7 @@ raw_assay <- CreateAssayObject(counts = NE_data)
 # add this assay to the previously created Seurat object
 NE[["raw_RNA"]] <- raw_assay
 
+
 Nurse_data<-read.table("/md01/nieyg/project/honeybee/data/cellranger/Nurse/Nurse-NCBI-manually/outs/counts_no_double_umi_001.tsv.gz")
 Nurse_data = spread(Nurse_data, V3, V2)
 Nurse_data[is.na(Nurse_data)] <- 0
@@ -176,6 +177,8 @@ Forager_data<-Forager_data[,Forager_barcode]
 raw_assay <- CreateAssayObject(counts = Forager_data)
 # add this assay to the previously created Seurat object
 Forager[["raw_RNA"]] <- raw_assay
+
+
 
 # get MT gtf 
 cat GCF_003254395.2_Amel_HAv3.1_genomic_UPDATED_chemoreceptors_CORRECTED_geneid.sorted.gtf | awk '{if($1 == "MT"){print $0}}' > GCF_003254395.2_Amel_HAv3.1_genomic_MitoFeatures.gtf
@@ -292,31 +295,45 @@ for (i in seq_len(length(objList))) {
 library(ggplot2)
 
 
+pdf("DensityScatter_QC.pdf")
+DensityScatter(objList[[1]], x = 'nCount_ATAC', y = 'TSS.enrichment', log_x = TRUE, quantiles = TRUE)
+DensityScatter(objList[[2]], x = 'nCount_ATAC', y = 'TSS.enrichment', log_x = TRUE, quantiles = TRUE)
+DensityScatter(objList[[3]], x = 'nCount_ATAC', y = 'TSS.enrichment', log_x = TRUE, quantiles = TRUE)
+dev.off()
+
 # plot TSS and fragrament distribution plot 
 # NE
   pdf("./01_QC/3a_TSS_distribution_NE.pdf")
   objList[[1]]$high.tss<-ifelse(objList[[1]]$TSS.enrichment > 1, 'High', 'Low')
   TSS<-TSSPlot(objList[[1]], group.by = 'high.tss') + NoLegend()+ labs(title = "NE")
-  objList[[1]]$nucleosome_group <- ifelse(objList[[1]]$nucleosome_signal > 2, 'NS > 2', 'NS < 2')
-  #Frag<-FragmentHistogram(object = objList[[1]], group.by = 'nucleosome_group')+ labs(title = "NE")
-  print(TSS);#print(Frag);
+  objList[[1]]$nucleosome_group <- ifelse(objList[[1]]$nucleosome_signal > 5, 'NS > 2', 'NS < 2')
+  Frag<-FragmentHistogram(object = objList[[1]], group.by = 'nucleosome_group')+ labs(title = "NE")
+  print(TSS);
+  print(Frag);
   dev.off();
 # Nurse
   pdf("./01_QC/3a_TSS_distribution_Nurse.pdf")
   objList[[2]]$high.tss<-ifelse(objList[[2]]$TSS.enrichment > 1, 'High', 'Low')
   TSS<-TSSPlot(objList[[2]], group.by = 'high.tss') + NoLegend()+ labs(title = "Nurse")
   objList[[2]]$nucleosome_group <- ifelse(objList[[2]]$nucleosome_signal > 2, 'NS > 2', 'NS < 2')
-  #Frag<-FragmentHistogram(object = objList[[2]], group.by = 'nucleosome_group')+ labs(title = "Nurse")
-  print(TSS);#print(Frag);
+  Frag<-FragmentHistogram(object = objList[[2]], group.by = 'nucleosome_group')+ labs(title = "Nurse")
+  print(TSS);print(Frag);
   dev.off();
 # Forager
   pdf("./01_QC/3a_TSS_distribution_Forager.pdf")
   objList[[3]]$high.tss<-ifelse(objList[[3]]$TSS.enrichment > 1, 'High', 'Low')
   TSS<-TSSPlot(objList[[3]], group.by = 'high.tss') + NoLegend()+ labs(title = "Forager")
   objList[[3]]$nucleosome_group <- ifelse(objList[[3]]$nucleosome_signal > 2.5, 'NS > 2', 'NS < 2')
-  #Frag<-FragmentHistogram(object = objList[[3]], group.by = 'nucleosome_group')+ labs(title = "Forager")
-  print(TSS);#print(Frag);
+  Frag<-FragmentHistogram(object = objList[[3]], group.by = 'nucleosome_group')+ labs(title = "Forager")
+  print(TSS);
+  print(Frag);
   dev.off();
+
+pdf("FragmentHistogram_QC.pdf")
+FragmentHistogram(objList[[1]], group.by = 'nucleosome_group', region = "chr1-1-20000000")
+FragmentHistogram(objList[[2]], group.by = 'nucleosome_group', region = "chr1-1-20000000")
+FragmentHistogram(objList[[3]], group.by = 'nucleosome_group', region = "chr1-1-20000000")
+dev.off()
 
 
 for (i in seq_len(length(objList))) {
@@ -446,7 +463,6 @@ for (i in seq_len(length(honeybee.list))) {
 honeybee.features <- SelectIntegrationFeatures(object.list = honeybee.list, nfeatures = 3000)
 honeybee.list <- PrepSCTIntegration(object.list = honeybee.list, anchor.features = honeybee.features)
 #integrate RNA using rpca
-
 honeybee_list <- lapply(
   X = honeybee.list,
   FUN = RunPCA,

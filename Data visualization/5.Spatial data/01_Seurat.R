@@ -238,9 +238,7 @@ VlnPlot(ORN, features = c("nCount_Spatial", "nFeature_Spatial", "nCount_SCT","nF
 dev.off()
 
 ORN_count<-ORN@assays$SCT
-
 gene_total_UMI<- rowSums(ORN_count)
-
 gene_total_UMI<- gene_total_UMI[order(gene_total_UMI,decreasing=TRUE)]
 data<- data.frame(gene_total_UMI=gene_total_UMI,gene=names(gene_total_UMI))
 
